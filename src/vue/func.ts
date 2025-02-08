@@ -4,7 +4,7 @@
  * @param args 参数
  */
 
-import { consoleError } from "src/console";
+import { consoleError } from "../console";
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 export const execFunction = async <T = void>(fn: Function, ...args: any[]): Promise<T> => {

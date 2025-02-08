@@ -1,5 +1,5 @@
 import { isNil, isString } from "lodash-unified";
-import { FastError } from "src/error";
+import { FastError } from "../error";
 
 /**
  * 打印 Log 日志

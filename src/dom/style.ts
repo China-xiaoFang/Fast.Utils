@@ -1,5 +1,5 @@
 import { isNumber, isString } from "lodash-unified";
-import { consoleWarn } from "src/console";
+import { consoleWarn } from "../console";
 
 const isStringNumber = (val: string): boolean => {
 	if (!isString(val)) {

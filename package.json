@@ -1,7 +1,7 @@
 {
 	"name": "@fast-china/utils",
 	"author": "小方",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "Fast 工具库.",
 	"type": "module",
 	"keywords": [
@@ -24,31 +24,12 @@
 	},
 	"scripts": {
 		"check": "vue-tsc",
-		"build": "vue-tsc && tsup",
+		"update:version": "tsx scripts/update-version.ts",
+		"build": "tsx scripts/build.ts && vue-tsc && vite build --config vite.umd-iife.config.ts && vite build --config vite.es-lib.config.ts && tsx scripts/move-file.ts",
+		"publish": "cd @fast-china/utils && npm publish",
 		"lint:eslint": "eslint --max-warnings 0 \"src/**/*.{vue,js,ts,tsx}\" --fix",
 		"lint:prettier": "prettier --write \"src/**/*.{vue,js,ts,jsx,tsx,md,json,css,scss,less,html}\"",
 		"lint": "pnpm lint:eslint && pnpm lint:prettier"
-	},
-	"main": "./dist/index.js",
-	"module": "./dist/index.js",
-	"types": "./dist/index.d.ts",
-	"exports": {
-		".": {
-			"import": "./dist/index.js",
-			"require": "./dist/index.cjs"
-		}
-	},
-	"unpkg": "dist/index.global.min.js",
-	"jsdelivr": "dist/index.global.min.js",
-	"files": [
-		"./Fast.png",
-		"./LICENSE",
-		"./README.md",
-		"./README.zh.md",
-		"./dist"
-	],
-	"peerDependencies": {
-		"vue": "^3.5.13"
 	},
 	"dependencies": {
 		"@types/crypto-js": "^4.2.0",
@@ -61,6 +42,7 @@
 	},
 	"devDependencies": {
 		"@dcloudio/types": "*",
+		"@rollup/plugin-terser": "^0.4.4",
 		"@types/node": "*",
 		"@typescript-eslint/eslint-plugin": "^8.19.1",
 		"@typescript-eslint/parser": "^8.19.1",
@@ -72,8 +54,11 @@
 		"eslint-plugin-prettier": "^5.2.1",
 		"eslint-plugin-vue": "^9.32.0",
 		"prettier": "^3.3.3",
-		"tsup": "^8.3.6",
+		"terser": "^5.38.1",
+		"tsx": "^4.19.2",
 		"typescript": "^5.7.3",
+		"vite": "^6.1.0",
+		"vite-plugin-dts": "^4.5.0",
 		"vue": "3.5.13",
 		"vue-tsc": "^2.2.0"
 	},

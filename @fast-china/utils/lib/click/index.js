@@ -1,0 +1,2 @@
+"use strict";Object.defineProperty(exports,Symbol.toStringTag,{value:"Module"});let e=null,t=!1;const o={debounce(t,o=500){e&&clearTimeout(e),e=setTimeout((()=>{t()}),o)},debounceAsync:async(t,o=500)=>new Promise(((c,s)=>{e&&clearTimeout(e),e=setTimeout((async()=>{try{await t(),c()}catch(e){s(e)}}),o)})),throttle(e,o=500){t||(t=!0,e(),setTimeout((()=>{t=!1}),o))},throttleAsync:async(e,o=500)=>new Promise(((c,s)=>{t||(t=!0,e().then((()=>{c()})).catch((e=>{s(e)})).finally((()=>{setTimeout((()=>{t=!1}),o)})))}))};exports.clickUtil=o;
+//# sourceMappingURL=index.js.map

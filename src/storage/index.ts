@@ -1,6 +1,6 @@
 import { computed, reactive } from "vue";
-import { base64Util } from "src/base64";
-import { consoleError } from "src/console";
+import { base64Util } from "../base64";
+import { consoleError } from "../console";
 
 const state = reactive({
 	prefix: "fast__",

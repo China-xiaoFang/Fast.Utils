@@ -1,5 +1,5 @@
 import { AES, MD5, SHA1, enc, mode } from "crypto-js";
-import { consoleError } from "src/console";
+import { consoleError } from "../console";
 
 /**
  * 加密解密

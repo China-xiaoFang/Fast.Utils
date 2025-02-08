@@ -1,0 +1,1 @@
+{"version":3,"file":"index.mjs","sources":["../../../../src/error/index.ts"],"sourcesContent":["export class FastError extends Error {\n\tconstructor(m: string) {\n\t\tsuper(m);\n\t\tthis.name = \"FastError\";\n\t}\n}\n"],"names":[],"mappings":"AAAO,MAAM,kBAAkB,MAAM;AAAA,EACpC,YAAY,GAAW;AACtB,UAAM,CAAC;AACP,SAAK,OAAO;AAAA,EAAA;AAEd;"}
