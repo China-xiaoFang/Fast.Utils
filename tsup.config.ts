@@ -2,12 +2,13 @@ import { defineConfig } from "tsup";
 
 export default defineConfig([
 	{
+		globalName: "FastUtils",
 		// 入口文件
 		entry: ["src/index.ts"],
 		// 输出目录
 		outDir: "dist",
 		// 输出格式
-		format: ["cjs", "esm"],
+		format: ["iife", "cjs", "esm"],
 		// 生成类型定义文件
 		dts: true,
 		// 启用代码拆分
@@ -24,21 +25,31 @@ export default defineConfig([
 		external: ["vue"],
 	},
 	{
+		globalName: "FastUtils",
 		entry: ["src/index.ts"],
 		outDir: "dist",
-		format: ["cjs", "esm"],
+		format: ["iife", "cjs", "esm"],
 		dts: false,
 		splitting: true,
 		sourcemap: true,
-		clean: true,
+		clean: false,
 		minify: true,
 		treeshake: true,
 		external: ["vue"],
 		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 		outExtension({ format }) {
-			return {
-				js: format === "cjs" ? ".min.cjs" : ".min.js",
-			};
+			let ext;
+			switch (format) {
+				case "cjs":
+					ext = ".min.cjs";
+					break;
+				case "iife":
+					ext = ".global.min.js";
+					break;
+				default:
+					ext = ".min.js";
+			}
+			return { js: ext };
 		},
 	},
 ]);
