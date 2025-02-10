@@ -32,7 +32,7 @@
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
 	},
 	"testing.automaticallyOpenPeekView": "never",
-	"cSpell.words": ["bota", "Unplugin"],
+	"cSpell.words": ["bota"],
 	"editor.fontSize": 14,
 	"typescript.tsdk": "node_modules/typescript/lib",
 	"typescript.enablePromptUseWorkspaceTsdk": true,

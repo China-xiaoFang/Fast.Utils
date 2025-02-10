@@ -1,5 +1,4 @@
 import type { ConfigEnv, UserConfig } from "vite";
-// 打包优化插件
 import vitePluginDts from "vite-plugin-dts";
 import { globalDependenciesMapping, peerDependencies } from "./vite.build.config";
 
@@ -20,8 +19,6 @@ const ViteConfig = (_: ConfigEnv): UserConfig => {
 			},
 			/** 打包清空目录 */
 			emptyOutDir: true,
-			/** 启用/禁用 CSS 代码拆分 */
-			cssCodeSplit: true,
 			/** 静态资源打包处理 */
 			rollupOptions: {
 				// 确保外部化处理那些你不想打包进库的依赖

@@ -6,6 +6,7 @@ export * from "./crypto";
 export * from "./date";
 export * from "./dom";
 export * from "./error";
+export * from "./identity";
 export * from "./object";
 export * from "./storage";
 export * from "./string";

@@ -6,6 +6,7 @@ import { cryptoUtil } from "./crypto/index.mjs";
 import { dateUtil } from "./date/index.mjs";
 import "./dom/index.mjs";
 import { FastError } from "./error/index.mjs";
+import { useIdentity } from "./identity/index.mjs";
 import { objectUtil } from "./object/index.mjs";
 import { CACHE_EXPIRE_SUFFIX, CACHE_PREFIX, Local, Session, useStorage } from "./storage/index.mjs";
 import { stringUtil } from "./string/index.mjs";
@@ -41,6 +42,7 @@ export {
   stringUtil,
   throwError,
   useExpose,
+  useIdentity,
   useProps,
   useRender,
   useStorage,
