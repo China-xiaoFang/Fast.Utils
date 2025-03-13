@@ -117,6 +117,10 @@ export const dateUtil = {
 			return "";
 		}
 	},
+	/**
+	 * 获取默认时间
+	 * @returns [00:00:00, 23:59:59]
+	 */
 	getDefaultTime(): Date[] {
 		const end = new Date();
 		const start = new Date();
@@ -125,11 +129,18 @@ export const dateUtil = {
 		end.setHours(23, 59, 59);
 		return [start, end];
 	},
+	/**
+	 * 获取简单的日期时间
+	 * @returns xxxx-xx-xx 00:00:00
+	 */
 	getSimpleTime(): Date {
 		const start = new Date();
 		start.setHours(0, 0, 0);
 		return start;
 	},
+	/**
+	 * 获取简单的日期时间范围
+	 */
 	getSimpleShortcuts(): {
 		text: string;
 		value: () => Date;
@@ -181,6 +192,9 @@ export const dateUtil = {
 			},
 		];
 	},
+	/**
+	 * 获取日期范围
+	 */
 	getShortcuts(): {
 		text: string;
 		value: () => Date[];
@@ -265,6 +279,9 @@ export const dateUtil = {
 			},
 		];
 	},
+	/**
+	 * 判断传入的时间是否大于当前时间
+	 */
 	getDisabledDate(time: Date): boolean {
 		return time.getTime() > Date.now();
 	},

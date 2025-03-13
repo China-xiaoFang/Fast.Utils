@@ -1,3 +1,6 @@
+/**
+ * 颜色工具类
+ */
 export declare const colorUtil: {
     /**
      * hex颜色转rgb颜色

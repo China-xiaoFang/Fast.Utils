@@ -1,6 +1,9 @@
 let _debounceTimeout: ReturnType<typeof setTimeout> | null = null;
 let _throttleRunning = false;
 
+/**
+ * 点击工具类
+ */
 export const clickUtil = {
 	/**
 	 * 防抖

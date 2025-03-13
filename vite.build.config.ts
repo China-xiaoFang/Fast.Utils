@@ -21,7 +21,6 @@ const removedDevDependencies = [
 	"eslint-plugin-vue",
 	"prettier",
 	"terser",
-	"tsx",
 	"typescript",
 	"vite",
 	"vite-plugin-dts",

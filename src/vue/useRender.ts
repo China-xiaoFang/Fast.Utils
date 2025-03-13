@@ -1,5 +1,6 @@
 import type { VNode } from "vue";
 import { getCurrentInstance } from "vue";
+import { FastError } from "../error";
 
 /**
  * 使用渲染
@@ -8,7 +9,7 @@ import { getCurrentInstance } from "vue";
 export const useRender = (render: () => VNode): void => {
 	const vm = getCurrentInstance() as any;
 	if (!vm) {
-		throw new Error("useRender must be called from inside a setup function");
+		throw new FastError("useRender must be called from inside a setup function");
 	}
 	vm.render = render;
 };

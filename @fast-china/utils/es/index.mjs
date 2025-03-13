@@ -1,3 +1,4 @@
+import { arrayUtil } from "./array/index.mjs";
 import { base64Util } from "./base64/index.mjs";
 import { clickUtil } from "./click/index.mjs";
 import { colorUtil } from "./color/index.mjs";
@@ -5,6 +6,7 @@ import { consoleDebug, consoleError, consoleLog, consoleWarn, throwError } from 
 import { cryptoUtil } from "./crypto/index.mjs";
 import { dateUtil } from "./date/index.mjs";
 import "./dom/index.mjs";
+import { envUtil } from "./env/index.mjs";
 import { FastError } from "./error/index.mjs";
 import { useIdentity } from "./identity/index.mjs";
 import { objectUtil } from "./object/index.mjs";
@@ -26,6 +28,7 @@ export {
   Local,
   Session,
   addUnit,
+  arrayUtil,
   base64Util,
   clickUtil,
   colorUtil,
@@ -36,6 +39,7 @@ export {
   cryptoUtil,
   dateUtil,
   definePropType,
+  envUtil,
   execFunction,
   makeSlots,
   objectUtil,

@@ -30,6 +30,43 @@ const stringUtil = {
     return false;
   },
   /**
+   * 切割骆驼命名式字符串
+   */
+  splitCamelCase(value) {
+    if (!value) return [];
+    if (value.length === 1) return [value];
+    return value.split(new RegExp("(?=\\p{Lu}\\p{Ll})|(?<=\\p{Ll})(?=\\p{Lu})", "u")).filter((token) => token.length > 0);
+  },
+  /**
+   * 将字符串转为 camelCase 格式，支持 - 或 _ 分隔的字符串
+   * 例如：'hello-world' 或 'hello_world' => 'helloWorld'
+   */
+  toCamelCase(value) {
+    if (!value) return "";
+    return value.replace(/[-_](\w)/g, (_, c) => c ? c.toUpperCase() : "");
+  },
+  /**
+   * 字符串首字母大写
+   */
+  firstCharToUpper(value) {
+    if (!value) return "";
+    return value.charAt(0).toUpperCase() + value.slice(1);
+  },
+  /**
+   * 字符串首字母小写
+   */
+  firstCharToLower(value) {
+    if (!value) return "";
+    return value.charAt(0).toLowerCase() + value.slice(1);
+  },
+  /**
+   * 截取指定长度的字符串
+   */
+  subStringWithEllipsis(value, length, suffix = "...") {
+    if (!value) return "";
+    return value.length > length ? value.substring(0, length) + suffix : value;
+  },
+  /**
    * 生成随机字符串
    */
   generateRandomString(length) {

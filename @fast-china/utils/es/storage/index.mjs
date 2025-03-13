@@ -1,6 +1,7 @@
 import { reactive, computed } from "vue";
 import { base64Util } from "../base64/index.mjs";
 import { consoleError } from "../console/index.mjs";
+import { FastError } from "../error/index.mjs";
 const state = reactive({
   prefix: "fast__",
   expireSuffix: "__Expire",
@@ -83,7 +84,7 @@ const Local = {
       encrypt ?? (encrypt = state.crypto);
       if (expire) {
         if (isNaN(expire) || expire < 1) {
-          throw new Error("有效期应为一个有效数值");
+          throw new FastError("有效期应为一个有效数值");
         }
         const expireData = {
           time: Date.now(),
@@ -190,7 +191,7 @@ const Session = {
       encrypt ?? (encrypt = state.crypto);
       if (expire) {
         if (isNaN(expire) || expire < 1) {
-          throw new Error("有效期应为一个有效数值");
+          throw new FastError("有效期应为一个有效数值");
         }
         const expireData = {
           time: Date.now(),

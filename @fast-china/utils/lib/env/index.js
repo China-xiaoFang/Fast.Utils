@@ -1,0 +1,2 @@
+"use strict";Object.defineProperty(exports,Symbol.toStringTag,{value:"Module"});const e={isUni:()=>"undefined"!=typeof uni,isWeb:()=>"undefined"!=typeof window&&void 0!==window.document,isMobile(){if(!this.isWeb())return!1;const e=navigator.userAgent||"";return/Mobile|iPhone|Android.*Mobile|Windows Phone/i.test(e)},isIpad(){if(!this.isWeb())return!1;const e=navigator.userAgent||"";return/iPad|Android(?!.*Mobile)|Tablet/i.test(e)}};exports.envUtil=e;
+//# sourceMappingURL=index.js.map

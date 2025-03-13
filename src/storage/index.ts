@@ -1,6 +1,7 @@
 import { computed, reactive } from "vue";
 import { base64Util } from "../base64";
 import { consoleError } from "../console";
+import { FastError } from "../error";
 
 const state = reactive({
 	prefix: "fast__",
@@ -101,7 +102,7 @@ export const Local = {
 			// 判断是否存在缓存过期时间
 			if (expire) {
 				if (isNaN(expire) || expire < 1) {
-					throw new Error("有效期应为一个有效数值");
+					throw new FastError("有效期应为一个有效数值");
 				}
 				// 设置过期时间的缓存
 				const expireData = {
@@ -221,7 +222,7 @@ export const Session = {
 			// 判断是否存在缓存过期时间
 			if (expire) {
 				if (isNaN(expire) || expire < 1) {
-					throw new Error("有效期应为一个有效数值");
+					throw new FastError("有效期应为一个有效数值");
 				}
 				// 设置过期时间的缓存
 				const expireData = {

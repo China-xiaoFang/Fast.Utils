@@ -99,6 +99,10 @@ const dateUtil = {
       return "";
     }
   },
+  /**
+   * 获取默认时间
+   * @returns [00:00:00, 23:59:59]
+   */
   getDefaultTime() {
     const end = /* @__PURE__ */ new Date();
     const start = /* @__PURE__ */ new Date();
@@ -107,11 +111,18 @@ const dateUtil = {
     end.setHours(23, 59, 59);
     return [start, end];
   },
+  /**
+   * 获取简单的日期时间
+   * @returns xxxx-xx-xx 00:00:00
+   */
   getSimpleTime() {
     const start = /* @__PURE__ */ new Date();
     start.setHours(0, 0, 0);
     return start;
   },
+  /**
+   * 获取简单的日期时间范围
+   */
   getSimpleShortcuts() {
     return [
       {
@@ -160,6 +171,9 @@ const dateUtil = {
       }
     ];
   },
+  /**
+   * 获取日期范围
+   */
   getShortcuts() {
     return [
       {
@@ -241,6 +255,9 @@ const dateUtil = {
       }
     ];
   },
+  /**
+   * 判断传入的时间是否大于当前时间
+   */
   getDisabledDate(time) {
     return time.getTime() > Date.now();
   }

@@ -72,6 +72,9 @@ function getRandomStr(str = randomStr, prefixStrLength = randomPrefixStrLength) 
   return result;
 }
 const base64Util = {
+  /**
+   * 将字符串编码为Base64格式
+   */
   bota(string) {
     string = String(string);
     let bitmap, a, b, c, result = "", i = 0, rest = string.length % 3;
@@ -85,6 +88,9 @@ const base64Util = {
     }
     return rest ? result.slice(0, rest - 3) + "===".substring(rest) : result;
   },
+  /**
+   * 将Base64编码的字符串解码回其原始格式。
+   */
   atob(string) {
     string = String(string).replace(/[\t\n\f\r ]+/g, "");
     if (!b64re.test(string)) throw new TypeError("Failed to execute 'atob' on 'Window': The string to be decoded is not correctly encoded.");

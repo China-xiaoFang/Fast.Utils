@@ -1,3 +1,6 @@
+/**
+ * 点击工具类
+ */
 export declare const clickUtil: {
     /**
      * 防抖

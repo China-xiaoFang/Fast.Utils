@@ -1,3 +1,4 @@
+import { FastError } from "../error/index.mjs";
 const colorUtil = {
   /**
    * hex颜色转rgb颜色
@@ -7,7 +8,7 @@ const colorUtil = {
   hexToRgb(str) {
     let hex = "";
     const reg = /^#?[0-9A-Fa-f]{6}$/;
-    if (!reg.test(str)) throw new Error("输入错误的hex");
+    if (!reg.test(str)) throw new FastError("输入错误的hex");
     str = str.replace("#", "");
     hex = str.match(/../g);
     for (let i = 0; i < 3; i++) hex[i] = parseInt(hex[i], 16);
@@ -22,7 +23,7 @@ const colorUtil = {
    */
   rgbToHex(r, g, b) {
     const reg = /^\d{1,3}$/;
-    if (!reg.test(r) || !reg.test(g) || !reg.test(b)) throw new Error("输入错误的rgb颜色值");
+    if (!reg.test(r) || !reg.test(g) || !reg.test(b)) throw new FastError("输入错误的rgb颜色值");
     const hex = [r.toString(16), g.toString(16), b.toString(16)];
     for (let i = 0; i < 3; i++) if (hex[i].length === 1) hex[i] = `0${hex[i]}`;
     return `#${hex.join("")}`;
@@ -35,7 +36,7 @@ const colorUtil = {
    */
   getDarkColor(color, level) {
     const reg = /^#?[0-9A-Fa-f]{6}$/;
-    if (!reg.test(color)) throw new Error("输入错误的hex颜色值");
+    if (!reg.test(color)) throw new FastError("输入错误的hex颜色值");
     const rgb = this.hexToRgb(color);
     for (let i = 0; i < 3; i++) rgb[i] = Math.round(20.5 * level + rgb[i] * (1 - level));
     return this.rgbToHex(rgb[0], rgb[1], rgb[2]);
@@ -48,7 +49,7 @@ const colorUtil = {
    */
   getLightColor(color, level) {
     const reg = /^#?[0-9A-Fa-f]{6}$/;
-    if (!reg.test(color)) throw new Error("输入错误的hex颜色值");
+    if (!reg.test(color)) throw new FastError("输入错误的hex颜色值");
     const rgb = this.hexToRgb(color);
     for (let i = 0; i < 3; i++) rgb[i] = Math.round(255 * level + rgb[i] * (1 - level));
     return this.rgbToHex(rgb[0], rgb[1], rgb[2]);
