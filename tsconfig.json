@@ -17,7 +17,7 @@
 		"isolatedModules": true,
 		"esModuleInterop": true,
 		/* 项目是否需要编译 Enable project compilation */
-		"composite": true,
+		"composite": false,
 		"lib": ["ESNext", "DOM"],
 		"skipLibCheck": true,
 		"allowImportingTsExtensions": true,
