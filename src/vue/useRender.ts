@@ -1,6 +1,6 @@
-import type { VNode } from "vue";
 import { getCurrentInstance } from "vue";
 import { FastError } from "../error";
+import type { VNode } from "vue";
 
 /**
  * 使用渲染

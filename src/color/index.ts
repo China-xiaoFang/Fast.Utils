@@ -11,7 +11,7 @@ export const colorUtil = {
 	 */
 	hexToRgb(str: any): any {
 		let hex: any = "";
-		const reg = /^#?[0-9A-Fa-f]{6}$/;
+		const reg = /^#?[0-9A-F]{6}$/i;
 		if (!reg.test(str)) throw new FastError("输入错误的hex");
 		str = str.replace("#", "");
 		hex = str.match(/../g);
@@ -39,7 +39,7 @@ export const colorUtil = {
 	 * @returns 返回处理后的颜色值
 	 */
 	getDarkColor(color: string, level: number): string {
-		const reg = /^#?[0-9A-Fa-f]{6}$/;
+		const reg = /^#?[0-9A-F]{6}$/i;
 		if (!reg.test(color)) throw new FastError("输入错误的hex颜色值");
 		const rgb = this.hexToRgb(color);
 		for (let i = 0; i < 3; i++) rgb[i] = Math.round(20.5 * level + rgb[i] * (1 - level));
@@ -52,7 +52,7 @@ export const colorUtil = {
 	 * @returns 返回处理后的颜色值
 	 */
 	getLightColor(color: string, level: number): string {
-		const reg = /^#?[0-9A-Fa-f]{6}$/;
+		const reg = /^#?[0-9A-F]{6}$/i;
 		if (!reg.test(color)) throw new FastError("输入错误的hex颜色值");
 		const rgb = this.hexToRgb(color);
 		for (let i = 0; i < 3; i++) rgb[i] = Math.round(255 * level + rgb[i] * (1 - level));

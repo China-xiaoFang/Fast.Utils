@@ -1,6 +1,6 @@
-import type { ComputedRef, PropType } from "vue";
 import { computed } from "vue";
 import { omit, pick } from "lodash-unified";
+import type { ComputedRef, PropType } from "vue";
 
 export const definePropType = <T>(val: any): PropType<T> => val;
 

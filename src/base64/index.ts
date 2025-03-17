@@ -1,5 +1,5 @@
 const b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-const b64re = /^(?:[A-Za-z\d+/]{4})*?(?:[A-Za-z\d+/]{2}(?:==)?|[A-Za-z\d+/]{3}=?)?$/;
+const b64re = /^(?:[A-Z\d+/]{4})*?(?:[A-Z\d+/]{2}(?:==)?|[A-Z\d+/]{3}=?)?$/i;
 
 /**加密字典 */
 const base64PwdDic = [

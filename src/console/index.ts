@@ -21,10 +21,8 @@ export const consoleLog = (name: string, message?: string | false, error?: any):
  */
 export const consoleWarn = (name: string, message?: string | false, error?: any): void => {
 	if (error) {
-		// eslint-disable-next-line no-console
 		console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
 	} else {
-		// eslint-disable-next-line no-console
 		console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`);
 	}
 };
@@ -54,7 +52,6 @@ export const consoleError = (name: string, message?: any): void => {
 	if (isString(message)) {
 		console.error(new FastError(`[Fast-${name}] ${message}`));
 	} else {
-		// eslint-disable-next-line no-console
 		console.error(`[Fast-Error-${name}]`, message);
 	}
 };
