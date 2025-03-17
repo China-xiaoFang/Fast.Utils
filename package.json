@@ -1,7 +1,6 @@
 {
 	"name": "@fast-china/utils",
-	"author": "小方",
-	"version": "1.0.5",
+	"version": "1.0.6",
 	"description": "Fast 工具库.",
 	"type": "module",
 	"keywords": [
@@ -11,16 +10,17 @@
 		"utils"
 	],
 	"license": "Apache-2.0",
-	"publishConfig": {
-		"access": "public"
-	},
 	"homepage": "https://fastdotnet.com",
+	"bugs": {
+		"url": "https://gitee.com/China-xiaoFang/fast.utils/issues"
+	},
 	"repository": {
 		"type": "git",
 		"url": "https://gitee.com/China-xiaoFang/fast.utils"
 	},
-	"bugs": {
-		"url": "https://gitee.com/China-xiaoFang/fast.utils/issues"
+	"author": "小方",
+	"publishConfig": {
+		"access": "public"
 	},
 	"scripts": {
 		"check": "vue-tsc",
@@ -50,7 +50,7 @@
 		"prettier": "^3.5.3",
 		"terser": "^5.39.0",
 		"typescript": "^5.8.2",
-		"vite": "^6.2.1",
+		"vite": "^6.2.2",
 		"vite-plugin-dts": "^4.5.3",
 		"vue": "^3.5.0",
 		"vue-tsc": "^2.2.8"

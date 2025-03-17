@@ -19,9 +19,9 @@ const stringUtil = {
   isJson(value) {
     if (!isString(value)) return false;
     value = value.replace(/\s/g, "").replace(/\n|\r/, "");
-    if (/^\{(.*?)\}$/.test(value)) return /"(.*?)":(.*?)/g.test(value);
-    if (/^\[(.*?)\]$/.test(value)) {
-      return value.replace(/^\[/, "").replace(/\]$/, "").replace(/},{/g, "}\n{").split(/\n/).map((s) => {
+    if (/^\{.*?\}$/.test(value)) return /".*?":/.test(value);
+    if (/^\[.*?\]$/.test(value)) {
+      return value.replace(/^\[/, "").replace(/\]$/, "").replace(/\},\{/g, "}\n{").split(/\n/).map((s) => {
         return stringUtil.isJson(s);
       }).reduce((prev, curr) => {
         return !!curr;

@@ -5,7 +5,7 @@ const state = reactive({
   cacheKey: "__DEVICE_ID",
   deviceId: ""
 });
-const uuidRegExp = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+const uuidRegExp = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const makeIdentity = () => {
   if (state.deviceId && uuidRegExp.test(state.deviceId)) {
     Local.set(state.cacheKey, state.deviceId);

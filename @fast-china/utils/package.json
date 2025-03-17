@@ -1,7 +1,7 @@
 {
   "name": "@fast-china/utils",
   "author": "小方",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Fast 工具库.",
   "type": "module",
   "keywords": [
@@ -88,6 +88,7 @@
   },
   "devDependencies": {
     "@dcloudio/types": "latest",
+    "@fast-china/eslint-config": "^1.0.15",
     "@types/node": "latest",
     "vue": "^3.5.0"
   }

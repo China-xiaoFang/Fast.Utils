@@ -58,11 +58,11 @@ importers:
         specifier: ^5.8.2
         version: 5.8.2
       vite:
-        specifier: ^6.2.1
-        version: 6.2.1(@types/node@22.13.10)(terser@5.39.0)(tsx@4.19.2)
+        specifier: ^6.2.2
+        version: 6.2.2(@types/node@22.13.10)(terser@5.39.0)(tsx@4.19.2)
       vite-plugin-dts:
         specifier: ^4.5.3
-        version: 4.5.3(@types/node@22.13.10)(rollup@4.34.6)(typescript@5.8.2)(vite@6.2.1(@types/node@22.13.10)(terser@5.39.0)(tsx@4.19.2))
+        version: 4.5.3(@types/node@22.13.10)(rollup@4.34.6)(typescript@5.8.2)(vite@6.2.2(@types/node@22.13.10)(terser@5.39.0)(tsx@4.19.2))
       vue:
         specifier: ^3.5.0
         version: 3.5.13(typescript@5.8.2)
@@ -2039,8 +2039,8 @@ packages:
       vite:
         optional: true
 
-  vite@6.2.1:
-    resolution: {integrity: sha512-n2GnqDb6XPhlt9B8olZPrgMD/es/Nd1RdChF6CBD/fHW6pUyUTt2sQW2fPRX5GiD9XEa6+8A6A4f2vT6pSsE7Q==}
+  vite@6.2.2:
+    resolution: {integrity: sha512-yW7PeMM+LkDzc7CgJuRLMW2Jz0FxMOsVJ8Lv3gpgW9WLcb9cTW+121UEr1hvmfR7w3SegR5ItvYyzVz1vxNJgQ==}
     engines: {node: ^18.0.0 || ^20.0.0 || >=22.0.0}
     hasBin: true
     peerDependencies:
@@ -4252,7 +4252,7 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
-  vite-plugin-dts@4.5.3(@types/node@22.13.10)(rollup@4.34.6)(typescript@5.8.2)(vite@6.2.1(@types/node@22.13.10)(terser@5.39.0)(tsx@4.19.2)):
+  vite-plugin-dts@4.5.3(@types/node@22.13.10)(rollup@4.34.6)(typescript@5.8.2)(vite@6.2.2(@types/node@22.13.10)(terser@5.39.0)(tsx@4.19.2)):
     dependencies:
       '@microsoft/api-extractor': 7.52.1(@types/node@22.13.10)
       '@rollup/pluginutils': 5.1.4(rollup@4.34.6)
@@ -4265,13 +4265,13 @@ snapshots:
       magic-string: 0.30.17
       typescript: 5.8.2
     optionalDependencies:
-      vite: 6.2.1(@types/node@22.13.10)(terser@5.39.0)(tsx@4.19.2)
+      vite: 6.2.2(@types/node@22.13.10)(terser@5.39.0)(tsx@4.19.2)
     transitivePeerDependencies:
       - '@types/node'
       - rollup
       - supports-color
 
-  vite@6.2.1(@types/node@22.13.10)(terser@5.39.0)(tsx@4.19.2):
+  vite@6.2.2(@types/node@22.13.10)(terser@5.39.0)(tsx@4.19.2):
     dependencies:
       esbuild: 0.25.1
       postcss: 8.5.3
