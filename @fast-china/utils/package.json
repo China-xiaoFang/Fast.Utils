@@ -1,95 +1,94 @@
 {
-  "name": "@fast-china/utils",
-  "author": "小方",
-  "version": "1.0.6",
-  "description": "Fast 工具库.",
-  "type": "module",
-  "keywords": [
-    "fast-china",
-    "fast",
-    "typescript",
-    "utils"
-  ],
-  "license": "Apache-2.0",
-  "publishConfig": {
-    "access": "public"
-  },
-  "homepage": "https://fastdotnet.com",
-  "repository": {
-    "type": "git",
-    "url": "https://gitee.com/China-xiaoFang/fast.utils"
-  },
-  "bugs": {
-    "url": "https://gitee.com/China-xiaoFang/fast.utils/issues"
-  },
-  "main": "lib/index.js",
-  "module": "es/index.mjs",
-  "types": "es/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./es/index.d.ts",
-      "import": "./es/index.mjs",
-      "require": "./lib/index.js"
-    },
-    "./es": {
-      "types": "./es/index.d.ts",
-      "import": "./es/index.mjs"
-    },
-    "./lib": {
-      "types": "./lib/index.d.ts",
-      "require": "./lib/index.js"
-    },
-    "./es/*.mjs": {
-      "types": "./es/*.d.ts",
-      "import": "./es/*.mjs"
-    },
-    "./es/*": {
-      "types": [
-        "./es/*.d.ts",
-        "./es/*/index.d.ts"
-      ],
-      "import": "./es/*.mjs"
-    },
-    "./lib/*.js": {
-      "types": "./lib/*.d.ts",
-      "require": "./lib/*.js"
-    },
-    "./lib/*": {
-      "types": [
-        "./lib/*.d.ts",
-        "./lib/*/index.d.ts"
-      ],
-      "require": "./lib/*.js"
-    },
-    "./*": "./*"
-  },
-  "unpkg": "dist/index.global.min.js",
-  "jsdelivr": "dist/index.global.min.js",
-  "files": [
-    "./Fast.png",
-    "./LICENSE",
-    "./README.md",
-    "./README.zh.md",
-    "./dist",
-    "./es",
-    "./lib"
-  ],
-  "peerDependencies": {
-    "vue": "^3.5.0"
-  },
-  "dependencies": {
-    "@types/crypto-js": "^4.2.0",
-    "@types/lodash": "latest",
-    "@types/lodash-es": "latest",
-    "crypto-js": "^4.2.0",
-    "lodash": "^4.17.21",
-    "lodash-es": "^4.17.21",
-    "lodash-unified": "^1.0.3"
-  },
-  "devDependencies": {
-    "@dcloudio/types": "latest",
-    "@fast-china/eslint-config": "^1.0.15",
-    "@types/node": "latest",
-    "vue": "^3.5.0"
-  }
+	"name": "@fast-china/utils",
+	"version": "1.0.8",
+	"description": "Fast 工具库.",
+	"type": "module",
+	"keywords": [
+		"fast-china",
+		"fast",
+		"typescript",
+		"utils"
+	],
+	"license": "Apache-2.0",
+	"homepage": "https://fastdotnet.com",
+	"bugs": {
+		"url": "https://gitee.com/China-xiaoFang/fast.utils/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://gitee.com/China-xiaoFang/fast.utils"
+	},
+	"author": "小方",
+	"files": [
+		"./Fast.png",
+		"./LICENSE",
+		"./README.md",
+		"./README.zh.md",
+		"./dist",
+		"./es",
+		"./lib"
+	],
+	"main": "lib/index.js",
+	"module": "es/index.mjs",
+	"types": "es/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./es/index.d.ts",
+			"require": "./lib/index.js",
+			"import": "./es/index.mjs"
+		},
+		"./es": {
+			"types": "./es/index.d.ts",
+			"import": "./es/index.mjs"
+		},
+		"./lib": {
+			"types": "./lib/index.d.ts",
+			"require": "./lib/index.js"
+		},
+		"./es/*.mjs": {
+			"types": "./es/*.d.ts",
+			"import": "./es/*.mjs"
+		},
+		"./es/*": {
+			"types": [
+				"./es/*.d.ts",
+				"./es/*/index.d.ts"
+			],
+			"import": "./es/*.mjs"
+		},
+		"./lib/*.js": {
+			"types": "./lib/*.d.ts",
+			"require": "./lib/*.js"
+		},
+		"./lib/*": {
+			"types": [
+				"./lib/*.d.ts",
+				"./lib/*/index.d.ts"
+			],
+			"require": "./lib/*.js"
+		},
+		"./*": "./*"
+	},
+	"unpkg": "dist/index.global.min.js",
+	"jsdelivr": "dist/index.global.min.js",
+	"publishConfig": {
+		"access": "public"
+	},
+	"peerDependencies": {
+		"vue": "^3.5.0"
+	},
+	"dependencies": {
+		"@types/crypto-js": "^4.2.0",
+		"@types/lodash": "latest",
+		"@types/lodash-es": "latest",
+		"crypto-js": "^4.2.0",
+		"lodash": "^4.17.21",
+		"lodash-es": "^4.17.21",
+		"lodash-unified": "^1.0.3"
+	},
+	"devDependencies": {
+		"@dcloudio/types": "latest",
+		"@types/node": "latest",
+		"vue": "^3.5.0"
+	}
 }
