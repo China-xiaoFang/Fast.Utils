@@ -34,8 +34,8 @@ importers:
         specifier: latest
         version: 3.4.14
       '@fast-china/eslint-config':
-        specifier: ^1.0.20
-        version: 1.0.20(eslint@9.22.0)(prettier@3.5.3)(typescript@5.8.2)
+        specifier: ^1.0.21
+        version: 1.0.21(eslint@9.22.0)(prettier@3.5.3)(typescript@5.8.2)
       '@rollup/plugin-terser':
         specifier: ^0.4.4
         version: 0.4.4(rollup@4.34.6)
@@ -437,8 +437,8 @@ packages:
     resolution: {integrity: sha512-JubJ5B2pJ4k4yGxaNLdbjrnk9d/iDz6/q8wOilpIowd6PJPgaxCuHBnBszq7Ce2TyMrywm5r4PnKm6V3iiZF+g==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@fast-china/eslint-config@1.0.20':
-    resolution: {integrity: sha512-P/3zsrb3NrMgsWxnZqEDSQZIAr3jtnRcmKfx+5E5NfsEzA1m1g0tZHXeRiNhbQqVUx4Qm9/6C0GcOnHiyu2fnw==}
+  '@fast-china/eslint-config@1.0.21':
+    resolution: {integrity: sha512-biwkXELEqwTdGnRvxTHNpak54io4AKF+6m7d0lV8KS2u881JPssWNxEx3YcZrEAoIjxHrUMyTq3zg5SU/WWseg==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       eslint: ^8 || ^9
@@ -2347,7 +2347,7 @@ snapshots:
       '@eslint/core': 0.12.0
       levn: 0.4.1
 
-  '@fast-china/eslint-config@1.0.20(eslint@9.22.0)(prettier@3.5.3)(typescript@5.8.2)':
+  '@fast-china/eslint-config@1.0.21(eslint@9.22.0)(prettier@3.5.3)(typescript@5.8.2)':
     dependencies:
       '@eslint/js': 9.22.0
       '@typescript-eslint/eslint-plugin': 8.26.1(@typescript-eslint/parser@8.26.1(eslint@9.22.0)(typescript@5.8.2))(eslint@9.22.0)(typescript@5.8.2)

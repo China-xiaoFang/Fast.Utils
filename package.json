@@ -1,6 +1,6 @@
 {
 	"name": "@fast-china/utils",
-	"version": "1.0.8",
+	"version": "1.0.9",
 	"description": "Fast 工具库.",
 	"type": "module",
 	"keywords": [
@@ -42,7 +42,7 @@
 	},
 	"devDependencies": {
 		"@dcloudio/types": "latest",
-		"@fast-china/eslint-config": "^1.0.20",
+		"@fast-china/eslint-config": "^1.0.21",
 		"@rollup/plugin-terser": "^0.4.4",
 		"@types/node": "latest",
 		"@vue/tsconfig": "^0.7.0",
