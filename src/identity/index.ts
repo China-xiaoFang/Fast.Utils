@@ -34,7 +34,7 @@ const makeIdentity = (deviceID?: string): string => {
 	return deviceID;
 };
 
-export const useIdentity = (): typeof state & { makeIdentity: () => string } => {
+export const useIdentity = (): typeof state & { makeIdentity: typeof makeIdentity } => {
 	return {
 		...state,
 		makeIdentity,
