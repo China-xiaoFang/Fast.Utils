@@ -6,12 +6,14 @@ const state = reactive({
   deviceId: ""
 });
 const uuidRegExp = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const makeIdentity = () => {
-  if (state.deviceId && uuidRegExp.test(state.deviceId)) {
-    Local.set(state.cacheKey, state.deviceId);
+const makeIdentity = (deviceID) => {
+  deviceID ?? (deviceID = state.deviceId);
+  if (deviceID && uuidRegExp.test(deviceID)) {
+    Local.set(state.cacheKey, deviceID);
+    state.deviceId = deviceID;
     return state.deviceId;
   }
-  let deviceID = Local.get(state.cacheKey);
+  deviceID = Local.get(state.cacheKey);
   if (deviceID && uuidRegExp.test(deviceID)) {
     state.deviceId = deviceID;
     return deviceID;

@@ -1,6 +1,6 @@
 {
 	"name": "@fast-china/utils",
-	"version": "1.0.10",
+	"version": "1.0.11",
 	"description": "Fast 工具库.",
 	"type": "module",
 	"keywords": [
@@ -27,9 +27,9 @@
 		"update:version": "tsx scripts/update-version.ts",
 		"build": "tsx scripts/build.ts && vue-tsc && vite build --config vite.umd-iife.config.ts && vite build --config vite.es-lib.config.ts && tsx scripts/move-file.ts",
 		"publish": "cd @fast-china/utils && npm publish",
-		"lint:eslint": "eslint --max-warnings 0 \"src/**/*.{vue,js,ts,tsx}\" --fix",
-		"lint:prettier": "prettier --write \"src/**/*.{vue,js,ts,jsx,tsx,md,json,css,scss,less,html}\"",
-		"lint": "pnpm lint:eslint && pnpm lint:prettier"
+		"lint:eslint": "eslint --fix",
+		"lint:prettier": "prettier --write '{src,types}/**/*.{vue,js,ts,tsx,json,css,less,scss,html,md}'",
+		"lint": "npm run lint:eslint && npm run lint:prettier"
 	},
 	"dependencies": {
 		"@types/crypto-js": "^4.2.0",

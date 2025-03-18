@@ -19,7 +19,7 @@ export const CACHE_PREFIX = computed(() => state.prefix);
  */
 export const CACHE_EXPIRE_SUFFIX = computed(() => state.expireSuffix);
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
 export const useStorage = () => {
 	return {
 		/**

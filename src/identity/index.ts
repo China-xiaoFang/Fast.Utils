@@ -11,15 +11,19 @@ const uuidRegExp = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 
 /**
  * 生成设备Id
+ * @param deviceID 覆盖的设备Id
+ * @returns
  */
-const makeIdentity = (): string => {
+const makeIdentity = (deviceID?: string): string => {
+	deviceID ??= state.deviceId;
 	// 判断是否存在
-	if (state.deviceId && uuidRegExp.test(state.deviceId)) {
-		Local.set(state.cacheKey, state.deviceId);
+	if (deviceID && uuidRegExp.test(deviceID)) {
+		Local.set(state.cacheKey, deviceID);
+		state.deviceId = deviceID;
 		return state.deviceId;
 	}
 	// 生成浏览器唯一 UUID
-	let deviceID = Local.get(state.cacheKey);
+	deviceID = Local.get(state.cacheKey);
 	if (deviceID && uuidRegExp.test(deviceID)) {
 		state.deviceId = deviceID;
 		return deviceID;
