@@ -15,21 +15,22 @@ const useStorage = () => {
      * 设置缓存前缀 Key
      * @param key
      */
-    prefix(key) {
+    setPrefix(key) {
       state.prefix = key;
     },
     /**
      * 缓存过期值后缀 Key
      * @param key
      */
-    expireSuffix(key) {
+    setExpireSuffix(key) {
       state.expireSuffix = key;
     },
     /**
      * 设置缓存是否加密
+     * @description 请在初始化的时候确认，后续不可再修改，否则所有数据都将失效
      * @param crypto
      */
-    crypto(crypto) {
+    setCrypto(crypto) {
       state.crypto = crypto;
     }
   };

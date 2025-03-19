@@ -11,17 +11,18 @@ export declare const useStorage: () => {
      * 设置缓存前缀 Key
      * @param key
      */
-    prefix(key: string): void;
+    setPrefix(key: string): void;
     /**
      * 缓存过期值后缀 Key
      * @param key
      */
-    expireSuffix(key: string): void;
+    setExpireSuffix(key: string): void;
     /**
      * 设置缓存是否加密
+     * @description 请在初始化的时候确认，后续不可再修改，否则所有数据都将失效
      * @param crypto
      */
-    crypto(crypto: boolean): void;
+    setCrypto(crypto: boolean): void;
 };
 /**
  * window.localStorage
