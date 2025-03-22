@@ -1,4 +1,4 @@
-import { isNumber, isString } from "lodash-unified";
+import { merge, isNumber, isString } from "lodash-unified";
 let language;
 const languageMap = {
   zh: "zh-CN",
@@ -98,24 +98,6 @@ const stringUtil = {
     return uuid;
   },
   /**
-   * 使用程序运行的语言将Number转为特定格式的字符串
-   */
-  toLocaleString(value, options) {
-    if (value) {
-      if (isNumber(value)) {
-        if (typeof uni !== "undefined") {
-          if (!language) {
-            language = uni.getAppBaseInfo().language;
-          }
-          return value.toLocaleString(languageMap[language] || "zh-CN", options);
-        } else {
-          return value.toLocaleString(navigator.language || "zh-CN", options);
-        }
-      }
-    }
-    return value;
-  },
-  /**
    * 复制
    */
   async copy(value) {
@@ -148,6 +130,168 @@ const stringUtil = {
         textareaEl.remove();
       }
     }
+  },
+  /**
+   * 使用程序运行的语言将Number转为特定格式的字符串
+   */
+  toLocaleString(value, options) {
+    if (value) {
+      if (isNumber(value)) {
+        if (typeof uni !== "undefined") {
+          if (!language) {
+            language = uni.getAppBaseInfo().language;
+          }
+          return value.toLocaleString(languageMap[language] || "zh-CN", options);
+        } else {
+          return value.toLocaleString(navigator.language || "zh-CN", options);
+        }
+      }
+    }
+    return value;
+  },
+  /**
+   * 使用程序运行的语言将Number转为特定格式的字符串
+   * @description 默认保留2位小数，补齐2位，不显示千分位
+   */
+  toLocaleString_i2x2(value, options) {
+    options = merge(options || {}, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+      useGrouping: false
+    });
+    return this.toLocaleString(value, options);
+  },
+  /**
+   * 使用程序运行的语言将Number转为特定格式的字符串
+   * @description 默认保留2位小数，补齐2位，显示千分位
+   */
+  toLocaleString_i2x2g(value, options) {
+    options = merge(options || {}, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+      useGrouping: true
+    });
+    return this.toLocaleString(value, options);
+  },
+  /**
+   * 使用程序运行的语言将Number转为特定格式的字符串
+   * @description 默认保留4位小数，补齐2位，不显示千分位
+   */
+  toLocaleString_i2x4(value, options) {
+    options = merge(options || {}, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 4,
+      useGrouping: false
+    });
+    return this.toLocaleString(value, options);
+  },
+  /**
+   * 使用程序运行的语言将Number转为特定格式的字符串
+   * @description 默认保留4位小数，补齐2位，显示千分位
+   */
+  toLocaleString_i2x4g(value, options) {
+    options = merge(options || {}, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 4,
+      useGrouping: true
+    });
+    return this.toLocaleString(value, options);
+  },
+  /**
+   * 使用程序运行的语言将Number转为特定格式的字符串
+   * @description 默认保留6位小数，补齐2位，不显示千分位
+   */
+  toLocaleString_i2x6(value, options) {
+    options = merge(options || {}, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 6,
+      useGrouping: false
+    });
+    return this.toLocaleString(value, options);
+  },
+  /**
+   * 使用程序运行的语言将Number转为特定格式的字符串
+   * @description 默认保留6位小数，补齐2位，显示千分位
+   */
+  toLocaleString_i2x6g(value, options) {
+    options = merge(options || {}, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 6,
+      useGrouping: true
+    });
+    return this.toLocaleString(value, options);
+  },
+  /**
+   * 使用程序运行的语言将Number转为特定格式的字符串
+   * @description 默认保留4位小数，补齐4位，不显示千分位
+   */
+  toLocaleString_i4x4(value, options) {
+    options = merge(options || {}, {
+      minimumFractionDigits: 4,
+      maximumFractionDigits: 4,
+      useGrouping: false
+    });
+    return this.toLocaleString(value, options);
+  },
+  /**
+   * 使用程序运行的语言将Number转为特定格式的字符串
+   * @description 默认保留4位小数，补齐4位，显示千分位
+   */
+  toLocaleString_i4x4g(value, options) {
+    options = merge(options || {}, {
+      minimumFractionDigits: 4,
+      maximumFractionDigits: 4,
+      useGrouping: true
+    });
+    return this.toLocaleString(value, options);
+  },
+  /**
+   * 使用程序运行的语言将Number转为特定格式的字符串
+   * @description 默认保留6位小数，补齐4位，不显示千分位
+   */
+  toLocaleString_i4x6(value, options) {
+    options = merge(options || {}, {
+      minimumFractionDigits: 4,
+      maximumFractionDigits: 6,
+      useGrouping: false
+    });
+    return this.toLocaleString(value, options);
+  },
+  /**
+   * 使用程序运行的语言将Number转为特定格式的字符串
+   * @description 默认保留6位小数，补齐4位，显示千分位
+   */
+  toLocaleString_i4x6g(value, options) {
+    options = merge(options || {}, {
+      minimumFractionDigits: 4,
+      maximumFractionDigits: 6,
+      useGrouping: true
+    });
+    return this.toLocaleString(value, options);
+  },
+  /**
+   * 使用程序运行的语言将Number转为特定格式的字符串
+   * @description 默认保留6位小数，补齐6位，不显示千分位
+   */
+  toLocaleString_i6x6(value, options) {
+    options = merge(options || {}, {
+      minimumFractionDigits: 6,
+      maximumFractionDigits: 6,
+      useGrouping: false
+    });
+    return this.toLocaleString(value, options);
+  },
+  /**
+   * 使用程序运行的语言将Number转为特定格式的字符串
+   * @description 默认保留6位小数，补齐6位，显示千分位
+   */
+  toLocaleString_i6x6g(value, options) {
+    options = merge(options || {}, {
+      minimumFractionDigits: 6,
+      maximumFractionDigits: 6,
+      useGrouping: true
+    });
+    return this.toLocaleString(value, options);
   }
 };
 export {
