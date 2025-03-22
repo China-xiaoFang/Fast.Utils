@@ -40,6 +40,10 @@ export declare const stringUtil: {
      */
     generateUUID(): string;
     /**
+     * 使用程序运行的语言将Number转为特定格式的字符串
+     */
+    toLocaleString(value: string | number, options?: Intl.NumberFormatOptions): string;
+    /**
      * 复制
      */
     copy(value: string): Promise<void>;

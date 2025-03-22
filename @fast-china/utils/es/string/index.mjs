@@ -1,4 +1,11 @@
-import { isString } from "lodash-unified";
+import { isNumber, isString } from "lodash-unified";
+let language;
+const languageMap = {
+  zh: "zh-CN",
+  en: "en-US",
+  zh_CN: "zh-CN",
+  zh_TW: "zh-TW"
+};
 const stringUtil = {
   /**
    * 获取Url参数
@@ -89,6 +96,24 @@ const stringUtil = {
       uuid += (i === 12 ? 4 : i === 16 ? random & 3 | 8 : random).toString(16);
     }
     return uuid;
+  },
+  /**
+   * 使用程序运行的语言将Number转为特定格式的字符串
+   */
+  toLocaleString(value, options) {
+    if (value) {
+      if (isNumber(value)) {
+        if (typeof uni !== "undefined") {
+          if (!language) {
+            language = uni.getAppBaseInfo().language;
+          }
+          return value.toLocaleString(languageMap[language] || "zh-CN", options);
+        } else {
+          return value.toLocaleString(navigator.language || "zh-CN", options);
+        }
+      }
+    }
+    return value;
   },
   /**
    * 复制
