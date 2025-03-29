@@ -1,6 +1,6 @@
 {
 	"name": "@fast-china/utils",
-	"version": "1.0.16",
+	"version": "1.0.17",
 	"description": "Fast 工具库.",
 	"type": "module",
 	"keywords": [
@@ -75,7 +75,7 @@
 		"access": "public"
 	},
 	"peerDependencies": {
-		"vue": "^3.5.0"
+		"vue": "^2 || ^3"
 	},
 	"dependencies": {
 		"@types/crypto-js": "^4.2.0",
@@ -89,6 +89,6 @@
 	"devDependencies": {
 		"@dcloudio/types": "latest",
 		"@types/node": "latest",
-		"vue": "^3.5.0"
+		"vue": "^2 || ^3"
 	}
 }
