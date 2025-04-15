@@ -8,9 +8,23 @@ var FastUtils = function(exports, vue) {
      * @returns
      */
     hasDuplicateProperty(arr, prop) {
-      const values2 = arr.map((obj) => obj[prop]);
-      const uniqueValues = new Set(values2);
-      return values2.length !== uniqueValues.size;
+      if (Array.isArray(prop)) {
+        const seen = /* @__PURE__ */ new Set();
+        for (const obj of arr) {
+          const key = JSON.stringify(prop.map((p) => obj[p]));
+          if (seen.has(key)) return true;
+          seen.add(key);
+        }
+        return false;
+      } else {
+        const seen = /* @__PURE__ */ new Set();
+        for (const obj of arr) {
+          const value = obj[prop];
+          if (seen.has(value)) return true;
+          seen.add(value);
+        }
+        return false;
+      }
     },
     /**
      * 是否存在非重复值
@@ -19,11 +33,17 @@ var FastUtils = function(exports, vue) {
      * @returns
      */
     hasDifferentProperty(arr, prop) {
-      const valueSet = /* @__PURE__ */ new Set();
-      for (const obj of arr) {
-        valueSet.add(obj[prop]);
-        if (valueSet.size > 1) {
-          return true;
+      if (arr.length <= 1) return false;
+      if (Array.isArray(prop)) {
+        const firstKey = JSON.stringify(prop.map((p) => arr[0][p]));
+        for (let i = 1; i < arr.length; i++) {
+          const currentKey = JSON.stringify(prop.map((p) => arr[i][p]));
+          if (currentKey !== firstKey) return true;
+        }
+      } else {
+        const firstValue = arr[0][prop];
+        for (let i = 1; i < arr.length; i++) {
+          if (arr[i][prop] !== firstValue) return true;
         }
       }
       return false;

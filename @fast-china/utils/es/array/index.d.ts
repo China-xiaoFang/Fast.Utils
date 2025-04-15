@@ -8,12 +8,12 @@ export declare const arrayUtil: {
      * @param prop 属性
      * @returns
      */
-    hasDuplicateProperty<T>(arr: T[], prop: keyof T): boolean;
+    hasDuplicateProperty<T>(arr: T[], prop: keyof T | (keyof T)[]): boolean;
     /**
      * 是否存在非重复值
      * @param arr 数组
      * @param prop 属性
      * @returns
      */
-    hasDifferentProperty<T>(arr: T[], prop: keyof T): boolean;
+    hasDifferentProperty<T>(arr: T[], prop: keyof T | (keyof T)[]): boolean;
 };
