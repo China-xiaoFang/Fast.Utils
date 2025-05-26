@@ -43,9 +43,9 @@
 	"devDependencies": {
 		"@dcloudio/types": "latest",
 		"@fast-china/eslint-config": "^1",
-		"@rollup/plugin-terser": "^0.4.4",
+		"@rollup/plugin-terser": "^0.4",
 		"@types/node": "latest",
-		"@vue/tsconfig": "^0.7.0",
+		"@vue/tsconfig": "^0.7",
 		"eslint": "^9",
 		"prettier": "^3",
 		"terser": "^5",
