@@ -24,7 +24,7 @@ const styleToString = (styles) => {
   } else {
     return Object.entries(styles).filter(([_, value]) => value !== null && value !== "").map(([key, value]) => {
       const keyName = key.replace(/([A-Z])/g, "-$1").toLowerCase();
-      return `${keyName}: ${value};`;
+      return `${keyName}:${value};`;
     }).join(" ");
   }
 };
