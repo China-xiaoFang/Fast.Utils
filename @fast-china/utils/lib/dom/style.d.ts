@@ -9,4 +9,4 @@ export declare const addUnit: (value?: string | number, defaultUnit?: string) =>
  * @param style 样式对象（CSSStyleDeclaration）
  * @returns 返回符合 HTML 内联格式的样式字符串，例如 "font-size: 14px; color: red;"
  */
-export declare const styleToString: (style: Partial<CSSStyleDeclaration>) => string;
+export declare const styleToString: (styles: Partial<CSSStyleDeclaration> | Partial<CSSStyleDeclaration>[] | string) => string;
