@@ -28,7 +28,7 @@ export const addUnit = (value?: string | number, defaultUnit = "px"): string => 
  * @param style 样式对象（CSSStyleDeclaration）
  * @returns 返回符合 HTML 内联格式的样式字符串，例如 "font-size: 14px; color: red;"
  */
-export const styleToString = (style: CSSStyleDeclaration): string => {
+export const styleToString = (style: Partial<CSSStyleDeclaration>): string => {
 	if (!style) return "";
 	return Object.entries(style)
 		.map(([key, value]) => {
