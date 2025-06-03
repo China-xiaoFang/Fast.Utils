@@ -15,7 +15,15 @@ const addUnit = (value, defaultUnit = "px") => {
   }
   consoleWarn("document", "binding value must be a string or number");
 };
+const styleToString = (style) => {
+  if (!style) return "";
+  return Object.entries(style).map(([key, value]) => {
+    const keyName = key.replace(/([A-Z])/g, "-$1").toLowerCase();
+    return `${keyName}: ${value};`;
+  }).join(" ");
+};
 export {
-  addUnit
+  addUnit,
+  styleToString
 };
 //# sourceMappingURL=style.mjs.map

@@ -13,7 +13,7 @@ import { objectUtil } from "./object/index.mjs";
 import { CACHE_EXPIRE_SUFFIX, CACHE_PREFIX, Local, Session, useStorage } from "./storage/index.mjs";
 import { stringUtil } from "./string/index.mjs";
 import "./vue/index.mjs";
-import { addUnit } from "./dom/style.mjs";
+import { addUnit, styleToString } from "./dom/style.mjs";
 import { useExpose } from "./vue/expose.mjs";
 import { execFunction } from "./vue/func.mjs";
 import { withInstall, withInstallDirective, withNoopInstall } from "./vue/install.mjs";
@@ -44,6 +44,7 @@ export {
   makeSlots,
   objectUtil,
   stringUtil,
+  styleToString,
   throwError,
   useExpose,
   useIdentity,

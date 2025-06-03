@@ -1,5 +1,6 @@
-import { addUnit } from "./style.mjs";
+import { addUnit, styleToString } from "./style.mjs";
 export {
-  addUnit
+  addUnit,
+  styleToString
 };
 //# sourceMappingURL=index.mjs.map

@@ -4,3 +4,9 @@
  * @param defaultUnit 单位
  */
 export declare const addUnit: (value?: string | number, defaultUnit?: string) => string;
+/**
+ * 将样式对象转换为内联 style 字符串（kebab-case 格式）
+ * @param style 样式对象（CSSStyleDeclaration）
+ * @returns 返回符合 HTML 内联格式的样式字符串，例如 "font-size: 14px; color: red;"
+ */
+export declare const styleToString: (style: CSSStyleDeclaration) => string;

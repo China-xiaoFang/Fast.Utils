@@ -13552,6 +13552,13 @@ var FastUtils = function(exports, vue) {
     }
     consoleWarn("document", "binding value must be a string or number");
   };
+  const styleToString = (style) => {
+    if (!style) return "";
+    return Object.entries(style).map(([key, value]) => {
+      const keyName = key.replace(/([A-Z])/g, "-$1").toLowerCase();
+      return `${keyName}: ${value};`;
+    }).join(" ");
+  };
   const envUtil = {
     /**
      * 是否为 Uni 环境
@@ -14338,6 +14345,7 @@ var FastUtils = function(exports, vue) {
   exports.makeSlots = makeSlots;
   exports.objectUtil = objectUtil;
   exports.stringUtil = stringUtil;
+  exports.styleToString = styleToString;
   exports.throwError = throwError;
   exports.useExpose = useExpose;
   exports.useIdentity = useIdentity;
