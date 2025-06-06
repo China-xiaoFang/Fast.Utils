@@ -6350,21 +6350,39 @@ var FastUtils = function(exports, vue) {
    */
   const consoleLog = (name, message, error) => {
     if (error) {
-      console.log(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+      if (typeof uni !== "undefined") {
+        console.log(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+        console.log(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+        console.log(error);
+      } else {
+        console.log(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+      }
     } else {
       console.log(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`);
     }
   };
   const consoleWarn = (name, message, error) => {
     if (error) {
-      console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+      if (typeof uni !== "undefined") {
+        console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+        console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+        console.warn(error);
+      } else {
+        console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+      }
     } else {
       console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`);
     }
   };
   const consoleDebug = (name, message, error) => {
     if (error) {
-      console.debug(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+      if (typeof uni !== "undefined") {
+        console.debug(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+        console.debug(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+        console.debug(error);
+      } else {
+        console.debug(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+      }
     } else {
       console.debug(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`);
     }
@@ -6376,7 +6394,13 @@ var FastUtils = function(exports, vue) {
     if (isString(message)) {
       console.error(new FastError(`[Fast-${name}] ${message}`));
     } else {
-      console.error(`[Fast-Error-${name}]`, message);
+      if (typeof uni !== "undefined") {
+        console.error(`[Fast-Error-${name}]`, message);
+        console.error(`[Fast-Error-${name}]`);
+        console.error(message);
+      } else {
+        console.error(`[Fast-Error-${name}]`, message);
+      }
     }
   };
   const throwError = (name, message) => {
