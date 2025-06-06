@@ -6351,9 +6351,12 @@ var FastUtils = function(exports, vue) {
   const consoleLog = (name, message, error) => {
     if (error) {
       if (typeof uni !== "undefined") {
-        console.log(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
-        console.log(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
-        console.log(error);
+        if (typeof plus !== "undefined") {
+          console.log(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+          console.log(error);
+        } else {
+          console.log(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+        }
       } else {
         console.log(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
       }
@@ -6364,9 +6367,12 @@ var FastUtils = function(exports, vue) {
   const consoleWarn = (name, message, error) => {
     if (error) {
       if (typeof uni !== "undefined") {
-        console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
-        console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
-        console.warn(error);
+        if (typeof plus !== "undefined") {
+          console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+          console.warn(error);
+        } else {
+          console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+        }
       } else {
         console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
       }
@@ -6377,9 +6383,12 @@ var FastUtils = function(exports, vue) {
   const consoleDebug = (name, message, error) => {
     if (error) {
       if (typeof uni !== "undefined") {
-        console.debug(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
-        console.debug(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
-        console.debug(error);
+        if (typeof plus !== "undefined") {
+          console.debug(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+          console.debug(error);
+        } else {
+          console.debug(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+        }
       } else {
         console.debug(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
       }
@@ -6395,9 +6404,12 @@ var FastUtils = function(exports, vue) {
       console.error(new FastError(`[Fast-${name}] ${message}`));
     } else {
       if (typeof uni !== "undefined") {
-        console.error(`[Fast-Error-${name}]`, message);
-        console.error(`[Fast-Error-${name}]`);
-        console.error(message);
+        if (typeof plus !== "undefined") {
+          console.error(`[Fast-Error-${name}]`);
+          console.error(message);
+        } else {
+          console.error(`[Fast-Error-${name}]`, message);
+        }
       } else {
         console.error(`[Fast-Error-${name}]`, message);
       }

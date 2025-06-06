@@ -8,17 +8,15 @@ import { FastError } from "../error";
 export const consoleLog = (name: string, message?: string | false, error?: any): void => {
 	if (error) {
 		if (typeof uni !== "undefined") {
-			// #ifndef APP-PLUS
-			// eslint-disable-next-line no-console
-			console.log(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
-			// #endif
-
-			// #ifdef APP-PLUS
-			// eslint-disable-next-line no-console
-			console.log(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
-			// eslint-disable-next-line no-console
-			console.log(error);
-			// #endif
+			if (typeof plus !== "undefined") {
+				// eslint-disable-next-line no-console
+				console.log(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+				// eslint-disable-next-line no-console
+				console.log(error);
+			} else {
+				// eslint-disable-next-line no-console
+				console.log(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+			}
 		} else {
 			// eslint-disable-next-line no-console
 			console.log(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
@@ -36,14 +34,12 @@ export const consoleLog = (name: string, message?: string | false, error?: any):
 export const consoleWarn = (name: string, message?: string | false, error?: any): void => {
 	if (error) {
 		if (typeof uni !== "undefined") {
-			// #ifndef APP-PLUS
-			console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
-			// #endif
-
-			// #ifdef APP-PLUS
-			console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
-			console.warn(error);
-			// #endif
+			if (typeof plus !== "undefined") {
+				console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+				console.warn(error);
+			} else {
+				console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+			}
 		} else {
 			console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
 		}
@@ -59,17 +55,15 @@ export const consoleWarn = (name: string, message?: string | false, error?: any)
 export const consoleDebug = (name: string, message?: string | false, error?: any): void => {
 	if (error) {
 		if (typeof uni !== "undefined") {
-			// #ifndef APP-PLUS
-			// eslint-disable-next-line no-console
-			console.debug(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
-			// #endif
-
-			// #ifdef APP-PLUS
-			// eslint-disable-next-line no-console
-			console.debug(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
-			// eslint-disable-next-line no-console
-			console.debug(error);
-			// #endif
+			if (typeof plus !== "undefined") {
+				// eslint-disable-next-line no-console
+				console.debug(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+				// eslint-disable-next-line no-console
+				console.debug(error);
+			} else {
+				// eslint-disable-next-line no-console
+				console.debug(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+			}
 		} else {
 			// eslint-disable-next-line no-console
 			console.debug(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
@@ -92,14 +86,12 @@ export const consoleError = (name: string, message?: any): void => {
 		console.error(new FastError(`[Fast-${name}] ${message}`));
 	} else {
 		if (typeof uni !== "undefined") {
-			// #ifndef APP-PLUS
-			console.error(`[Fast-Error-${name}]`, message);
-			// #endif
-
-			// #ifdef APP-PLUS
-			console.error(`[Fast-Error-${name}]`);
-			console.error(message);
-			// #endif
+			if (typeof plus !== "undefined") {
+				console.error(`[Fast-Error-${name}]`);
+				console.error(message);
+			} else {
+				console.error(`[Fast-Error-${name}]`, message);
+			}
 		} else {
 			console.error(`[Fast-Error-${name}]`, message);
 		}
