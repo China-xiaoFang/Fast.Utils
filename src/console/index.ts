@@ -10,7 +10,7 @@ export const consoleLog = (name: string, message?: string | false, error?: any):
 		if (typeof uni !== "undefined") {
 			if (typeof plus !== "undefined") {
 				// eslint-disable-next-line no-console
-				console.log(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+				console.log(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`);
 				// eslint-disable-next-line no-console
 				console.log(error);
 			} else {
@@ -35,7 +35,7 @@ export const consoleWarn = (name: string, message?: string | false, error?: any)
 	if (error) {
 		if (typeof uni !== "undefined") {
 			if (typeof plus !== "undefined") {
-				console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+				console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`);
 				console.warn(error);
 			} else {
 				console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
@@ -57,7 +57,7 @@ export const consoleDebug = (name: string, message?: string | false, error?: any
 		if (typeof uni !== "undefined") {
 			if (typeof plus !== "undefined") {
 				// eslint-disable-next-line no-console
-				console.debug(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+				console.debug(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`);
 				// eslint-disable-next-line no-console
 				console.debug(error);
 			} else {
