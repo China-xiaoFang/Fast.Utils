@@ -21,17 +21,17 @@ const vConsole = (level, ...args) => {
       if (typeof plus !== "undefined") {
         args.forEach((item) => {
           if (isNil(item)) return;
-          console[level](isString(item) ? item : JSON.stringify(item, null, 2));
+          console[level.toLowerCase()](isString(item) ? item : JSON.stringify(item, null, 2));
         });
         return;
       }
     }
   }
-  console[level](...args);
+  console[level.toLowerCase()](...args);
 };
 const makeConsole = (level) => {
   return (name, message, error) => {
-    const prefix = `[Fast-${level.toUpperCase()}-${name}]`;
+    const prefix = `[Fast-${level}-${name}]`;
     if (error) {
       vConsole(level, `${prefix}${message ?? ""}`, error);
     } else {
@@ -39,9 +39,9 @@ const makeConsole = (level) => {
     }
   };
 };
-const consoleLog = makeConsole("log");
-const consoleWarn = makeConsole("warn");
-const consoleDebug = makeConsole("debug");
+const consoleLog = makeConsole("Log");
+const consoleWarn = makeConsole("Warn");
+const consoleDebug = makeConsole("Debug");
 const consoleError = (name, message) => {
   if (isNil(message)) {
     return;
@@ -49,7 +49,7 @@ const consoleError = (name, message) => {
   if (isString(message)) {
     console.error(new FastError(`[Fast-${name}] ${message}`));
   } else {
-    vConsole("error", `[Fast-Error-${name}]`, message);
+    vConsole("Error", `[Fast-Error-${name}]`, message);
   }
 };
 const throwError = (name, message) => {

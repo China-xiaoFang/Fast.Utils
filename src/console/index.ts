@@ -19,7 +19,7 @@ export const useConsole = () => {
 	};
 };
 
-type LogLevel = "log" | "warn" | "debug" | "error";
+type LogLevel = "Log" | "Warn" | "Debug" | "Error";
 
 const vConsole = (level: LogLevel, ...args: any[]): void => {
 	if (state.uniAppPlusSplit) {
@@ -29,19 +29,19 @@ const vConsole = (level: LogLevel, ...args: any[]): void => {
 				args.forEach((item) => {
 					if (isNil(item)) return;
 					// eslint-disable-next-line no-console
-					console[level](isString(item) ? item : JSON.stringify(item, null, 2));
+					console[level.toLowerCase()](isString(item) ? item : JSON.stringify(item, null, 2));
 				});
 				return;
 			}
 		}
 	}
 	// eslint-disable-next-line no-console
-	console[level](...args);
+	console[level.toLowerCase()](...args);
 };
 
 const makeConsole = (level: LogLevel) => {
 	return (name: string, message?: string | false, error?: any): void => {
-		const prefix = `[Fast-${level.toUpperCase()}-${name}]`;
+		const prefix = `[Fast-${level}-${name}]`;
 		if (error) {
 			vConsole(level, `${prefix}${message ?? ""}`, error);
 		} else {
@@ -54,19 +54,19 @@ const makeConsole = (level: LogLevel) => {
  * 打印 Log 日志
  * @param name 来源名称
  */
-export const consoleLog = makeConsole("log");
+export const consoleLog = makeConsole("Log");
 
 /**
  * 打印 Warn 日志
  * @param name 来源名称
  */
-export const consoleWarn = makeConsole("warn");
+export const consoleWarn = makeConsole("Warn");
 
 /**
  * 打印 Debug 日志
  * @param name 来源名称
  */
-export const consoleDebug = makeConsole("debug");
+export const consoleDebug = makeConsole("Debug");
 
 /**
  * 打印 Error 日志
@@ -79,7 +79,7 @@ export const consoleError = (name: string, message?: any): void => {
 	if (isString(message)) {
 		console.error(new FastError(`[Fast-${name}] ${message}`));
 	} else {
-		vConsole("error", `[Fast-Error-${name}]`, message);
+		vConsole("Error", `[Fast-Error-${name}]`, message);
 	}
 };
 
