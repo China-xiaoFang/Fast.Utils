@@ -6380,9 +6380,9 @@ var FastUtils = function(exports, vue) {
     return (name, message, error) => {
       const prefix = `[Fast-${level}-${name}]`;
       if (error) {
-        vConsole(level, `${prefix}${message ?? ""}`, error);
+        vConsole(level, `${prefix}${message ? ` ${message}` : ""}`, error);
       } else {
-        vConsole(level, `${prefix}${message ?? ""}`);
+        vConsole(level, `${prefix}${message ? ` ${message}` : ""}`);
       }
     };
   };

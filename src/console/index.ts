@@ -43,9 +43,9 @@ const makeConsole = (level: LogLevel) => {
 	return (name: string, message?: string | false, error?: any): void => {
 		const prefix = `[Fast-${level}-${name}]`;
 		if (error) {
-			vConsole(level, `${prefix}${message ?? ""}`, error);
+			vConsole(level, `${prefix}${message ? ` ${message}` : ""}`, error);
 		} else {
-			vConsole(level, `${prefix}${message ?? ""}`);
+			vConsole(level, `${prefix}${message ? ` ${message}` : ""}`);
 		}
 	};
 };
