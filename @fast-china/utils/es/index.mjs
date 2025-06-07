@@ -2,7 +2,7 @@ import { arrayUtil } from "./array/index.mjs";
 import { base64Util } from "./base64/index.mjs";
 import { clickUtil } from "./click/index.mjs";
 import { colorUtil } from "./color/index.mjs";
-import { consoleDebug, consoleError, consoleLog, consoleWarn, throwError } from "./console/index.mjs";
+import { consoleDebug, consoleError, consoleLog, consoleWarn, throwError, useConsole } from "./console/index.mjs";
 import { cryptoUtil } from "./crypto/index.mjs";
 import { dateUtil } from "./date/index.mjs";
 import "./dom/index.mjs";
@@ -46,6 +46,7 @@ export {
   stringUtil,
   styleToString,
   throwError,
+  useConsole,
   useExpose,
   useIdentity,
   useProps,

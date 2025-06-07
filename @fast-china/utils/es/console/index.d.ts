@@ -1,3 +1,9 @@
+export declare const useConsole: () => {
+    /**
+     * 设置 Uni-App 在 APP-PLUS 下是否拆分输出
+     */
+    setUniAppPlusSplit(value: boolean): void;
+};
 /**
  * 打印 Log 日志
  * @param name 来源名称

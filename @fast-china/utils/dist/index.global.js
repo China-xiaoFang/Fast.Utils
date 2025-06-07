@@ -6348,54 +6348,47 @@ var FastUtils = function(exports, vue) {
    * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
    * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
    */
-  const consoleLog = (name, message, error) => {
-    if (error) {
+  const state$2 = vue.reactive({
+    /** @description Uni-App 在 APP-PLUS 下是否拆分输出 @default false */
+    uniAppPlusSplit: false
+  });
+  const useConsole = () => {
+    return {
+      /**
+       * 设置 Uni-App 在 APP-PLUS 下是否拆分输出
+       */
+      setUniAppPlusSplit(value) {
+        state$2.uniAppPlusSplit = value;
+      }
+    };
+  };
+  const vConsole = (level, ...args) => {
+    if (state$2.uniAppPlusSplit) {
       if (typeof uni !== "undefined") {
         if (typeof plus !== "undefined") {
-          console.log(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`);
-          console.log(isString(error) ? error : JSON.stringify(error, null, 2));
-        } else {
-          console.log(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+          args.forEach((item) => {
+            if (isNil(item)) return;
+            console[level](isString(item) ? item : JSON.stringify(item, null, 2));
+          });
+          return;
         }
-      } else {
-        console.log(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
       }
-    } else {
-      console.log(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`);
     }
+    console[level](...args);
   };
-  const consoleWarn = (name, message, error) => {
-    if (error) {
-      if (typeof uni !== "undefined") {
-        if (typeof plus !== "undefined") {
-          console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`);
-          console.warn(isString(error) ? error : JSON.stringify(error, null, 2));
-        } else {
-          console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
-        }
+  const makeConsole = (level) => {
+    return (name, message, error) => {
+      const prefix = `[Fast-${level.toUpperCase()}-${name}]`;
+      if (error) {
+        vConsole(level, `${prefix}${message ?? ""}`, error);
       } else {
-        console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
+        vConsole(level, `${prefix}${message ?? ""}`);
       }
-    } else {
-      console.warn(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`);
-    }
+    };
   };
-  const consoleDebug = (name, message, error) => {
-    if (error) {
-      if (typeof uni !== "undefined") {
-        if (typeof plus !== "undefined") {
-          console.debug(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`);
-          console.debug(isString(error) ? error : JSON.stringify(error, null, 2));
-        } else {
-          console.debug(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
-        }
-      } else {
-        console.debug(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`, error);
-      }
-    } else {
-      console.debug(`[Fast-Log-${name}]${message ? ` ${message}` : ""}`);
-    }
-  };
+  const consoleLog = makeConsole("log");
+  const consoleWarn = makeConsole("warn");
+  const consoleDebug = makeConsole("debug");
   const consoleError = (name, message) => {
     if (isNil(message)) {
       return;
@@ -6403,16 +6396,7 @@ var FastUtils = function(exports, vue) {
     if (isString(message)) {
       console.error(new FastError(`[Fast-${name}] ${message}`));
     } else {
-      if (typeof uni !== "undefined") {
-        if (typeof plus !== "undefined") {
-          console.error(`[Fast-Error-${name}]`);
-          console.error(JSON.stringify(message, null, 2));
-        } else {
-          console.error(`[Fast-Error-${name}]`, message);
-        }
-      } else {
-        console.error(`[Fast-Error-${name}]`, message);
-      }
+      vConsole("error", `[Fast-Error-${name}]`, message);
     }
   };
   const throwError = (name, message) => {
@@ -14389,6 +14373,7 @@ var FastUtils = function(exports, vue) {
   exports.stringUtil = stringUtil;
   exports.styleToString = styleToString;
   exports.throwError = throwError;
+  exports.useConsole = useConsole;
   exports.useExpose = useExpose;
   exports.useIdentity = useIdentity;
   exports.useProps = useProps;
