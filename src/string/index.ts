@@ -13,6 +13,22 @@ const languageMap = {
  */
 export const stringUtil = {
 	/**
+	 * 深度解码
+	 */
+	deepDecodeURIComponent(str: string, maxDepth = 10): string {
+		if (!str) return str;
+		let decoded = str;
+		for (let i = 0; i < maxDepth; i++) {
+			const next = decodeURIComponent(decoded);
+			if (next === decoded) {
+				// 已经无法继续解码，提前退出
+				break;
+			}
+			decoded = next;
+		}
+		return decoded;
+	},
+	/**
 	 * 获取Url参数
 	 */
 	getUrlParams(url: string): Record<string, any> {

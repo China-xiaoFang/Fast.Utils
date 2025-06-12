@@ -3,6 +3,10 @@
  */
 export declare const stringUtil: {
     /**
+     * 深度解码
+     */
+    deepDecodeURIComponent(str: string, maxDepth?: number): string;
+    /**
      * 获取Url参数
      */
     getUrlParams(url: string): Record<string, any>;

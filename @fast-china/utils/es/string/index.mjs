@@ -8,6 +8,21 @@ const languageMap = {
 };
 const stringUtil = {
   /**
+   * 深度解码
+   */
+  deepDecodeURIComponent(str, maxDepth = 10) {
+    if (!str) return str;
+    let decoded = str;
+    for (let i = 0; i < maxDepth; i++) {
+      const next = decodeURIComponent(decoded);
+      if (next === decoded) {
+        break;
+      }
+      decoded = next;
+    }
+    return decoded;
+  },
+  /**
    * 获取Url参数
    */
   getUrlParams(url) {
