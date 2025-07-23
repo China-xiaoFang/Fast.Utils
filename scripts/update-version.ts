@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { peerDependencies, removedDevDependencies } from "../vite.build.config";
+import { peerDependencies } from "../vite.build.config";
 import { __dirname, npmPackagePath } from "./file";
 
 const packagePath = path.resolve(__dirname, "../package.json");
@@ -89,7 +89,7 @@ const newPackageJson = {
 	publishConfig: packageJson.publishConfig,
 	peerDependencies: {},
 	dependencies: packageJson.dependencies,
-	devDependencies: {},
+	devDependencies: packageJson.devDependencies,
 };
 
 Object.keys(packageJson.devDependencies ?? {}).forEach((needKey) => {
@@ -97,15 +97,6 @@ Object.keys(packageJson.devDependencies ?? {}).forEach((needKey) => {
 		newPackageJson.peerDependencies[needKey] = packageJson.devDependencies[needKey];
 	}
 });
-
-newPackageJson.devDependencies = Object.keys(packageJson.devDependencies ?? {}).reduce((acc, key) => {
-	if (!key.startsWith("@gejia-element-plus/")) {
-		if (!removedDevDependencies.includes(key)) {
-			acc[key] = packageJson.devDependencies[key];
-		}
-	}
-	return acc;
-}, {});
 
 if (Object.keys(newPackageJson.peerDependencies).length === 0) {
 	delete (newPackageJson as any).peerDependencies;

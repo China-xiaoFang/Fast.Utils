@@ -1,6 +1,6 @@
 {
 	"name": "@fast-china/utils",
-	"version": "1.0.31",
+	"version": "1.0.32",
 	"description": "Fast 工具库.",
 	"type": "module",
 	"keywords": [
@@ -79,16 +79,26 @@
 	},
 	"dependencies": {
 		"@types/crypto-js": "^4.2",
-		"@types/lodash": "latest",
-		"@types/lodash-es": "latest",
+		"@types/lodash": "^4.17",
+		"@types/lodash-es": "^4.17",
 		"crypto-js": "^4.2",
 		"lodash": "^4.17",
 		"lodash-es": "^4.17",
 		"lodash-unified": "^1"
 	},
 	"devDependencies": {
-		"@dcloudio/types": "latest",
-		"@types/node": "latest",
-		"vue": "^2 || ^3"
+		"@dcloudio/types": "^3",
+		"@fast-china/eslint-config": "^1",
+		"@rollup/plugin-terser": "^0.4",
+		"@types/node": "^24",
+		"@vue/tsconfig": "^0.7",
+		"eslint": "^9",
+		"prettier": "^3",
+		"terser": "^5",
+		"typescript": "^5",
+		"vite": "^6",
+		"vite-plugin-dts": "^4",
+		"vue": "^2 || ^3",
+		"vue-tsc": "^2"
 	}
 }

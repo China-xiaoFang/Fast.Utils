@@ -3,5 +3,5 @@ import { defineConfig } from "eslint/config";
 
 export default defineConfig(...fastChinaFlat, {
 	name: "@fast-china/utils/global",
-	ignores: ["@fast-china/utils"],
+	ignores: ["@fast-china/utils/*/"],
 });
