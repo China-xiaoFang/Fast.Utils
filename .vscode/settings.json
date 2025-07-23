@@ -43,6 +43,6 @@
 	"explorer.fileNesting.patterns": {
 		".prettierrc.cjs": ".prettierignore, .eslintignore, .eslintrc.cjs, eslint.config.mjs",
 		"package.json": "pnpm-lock.yaml, pnpm-workspace.yaml",
-		"vite.build.config.*": "vite.*"
+		"vite.config.*": "vite.*"
 	}
 }
