@@ -2,7 +2,6 @@ import path from "path";
 import { __dirname, deleteFile, npmPackagePath } from "./file";
 
 const deleteFiles = [
-	"../tsconfig.tsbuildinfo",
 	path.join(npmPackagePath, "Fast.png"),
 	path.join(npmPackagePath, "LICENSE"),
 	path.join(npmPackagePath, "README.md"),
