@@ -10,7 +10,7 @@
   <a href="https://www.npmjs.com/package/@fast-china/utils">
     <img src="https://img.shields.io/npm/v/@fast-china/utils?color=orange&label=" alt="version" />
   </a>
-  <a href="https://gitee.com/China-xiaoFang/fast.utils/blob/master/LICENSE">
+  <a href="https://gitee.com/FastDotnet/Fast.Utils/blob/master/LICENSE">
     <img src="https://img.shields.io/npm/l/@fast-china/utils" alt="license" />
   </a>
 </p>
@@ -34,11 +34,11 @@ pnpm install @fast-china/utils
 
 ## 更新日志
 
-更新日志 [点击查看](https://gitee.com/China-xiaoFang/fast.utils/commits/master)
+更新日志 [点击查看](https://gitee.com/FastDotnet/Fast.Utils/commits/master)
 
 ## 协议
 
-[Fast.Utils](https://gitee.com/China-xiaoFang/fast.utils) 遵循 [Apache-2.0](https://gitee.com/China-xiaoFang/fast.utils/blob/master/LICENSE) 开源协议，欢迎大家提交 `PR` 或 `Issue`。
+[Fast.Utils](https://gitee.com/FastDotnet/Fast.Utils) 遵循 [Apache-2.0](https://gitee.com/FastDotnet/Fast.Utils/blob/master/LICENSE) 开源协议，欢迎大家提交 `PR` 或 `Issue`。
 
 ```
 Apache开源许可证

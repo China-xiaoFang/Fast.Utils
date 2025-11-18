@@ -1,15 +1,2 @@
-import { computed } from "vue";
-import { omit, pick } from "lodash-unified";
-const definePropType = (val) => val;
-const useProps = (props, rawProps, ignoreRawProps) => {
-  if (!props) return computed(() => ({}));
-  return computed(() => {
-    const omittedRawProps = rawProps ? omit(rawProps, ignoreRawProps ?? []) : {};
-    return pick(props, Object.keys(omittedRawProps));
-  });
-};
-export {
-  definePropType,
-  useProps
-};
+import{computed as o}from"vue";import{omit as r,pick as t}from"lodash-unified";const e=o=>o,i=(e,i,m)=>o(e?()=>{const o=i?r(i,m??[]):{};return t(e,Object.keys(o))}:()=>({}));export{e as definePropType,i as useProps};
 //# sourceMappingURL=props.mjs.map

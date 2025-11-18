@@ -1,26 +1,2 @@
-import { consoleError } from "../console/index.mjs";
-const execFunction = async (fn, ...args) => {
-  if (!fn) return Promise.resolve(void 0);
-  if (fn.constructor.name === "AsyncFunction") {
-    try {
-      return await fn(...args);
-    } catch (error) {
-      consoleError("execFunction", error);
-      return Promise.reject(error);
-    }
-  } else {
-    return new Promise((resolve, reject) => {
-      try {
-        const res = fn(...args);
-        return resolve(res);
-      } catch (error) {
-        consoleError("execFunction", error);
-        return reject(error);
-      }
-    });
-  }
-};
-export {
-  execFunction
-};
+import{consoleError as r}from"../console/index.mjs";const e=async(e,...n)=>{if(!e)return Promise.resolve(void 0);if("AsyncFunction"!==e.constructor.name)return new Promise((t,c)=>{try{return t(e(...n))}catch(o){return r("execFunction",o),c(o)}});try{return await e(...n)}catch(t){return r("execFunction",t),Promise.reject(t)}};export{e as execFunction};
 //# sourceMappingURL=func.mjs.map

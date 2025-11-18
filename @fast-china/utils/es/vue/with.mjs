@@ -1,7 +1,2 @@
-const withDefineType = (data = void 0) => {
-  return data;
-};
-export {
-  withDefineType
-};
+const o=(o=void 0)=>o;export{o as withDefineType};
 //# sourceMappingURL=with.mjs.map

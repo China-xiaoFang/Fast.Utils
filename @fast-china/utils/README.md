@@ -1,4 +1,4 @@
-[中](https://gitee.com/China-xiaoFang/fast.utils) | **En**
+[中](https://gitee.com/FastDotnet/Fast.Utils) | **En**
 
 <h1 align="center">Fast.Utils</h1>
 
@@ -10,7 +10,7 @@
   <a href="https://www.npmjs.com/package/@fast-china/utils">
     <img src="https://img.shields.io/npm/v/@fast-china/utils?color=orange&label=" alt="version" />
   </a>
-  <a href="https://gitee.com/China-xiaoFang/fast.utils/blob/master/LICENSE">
+  <a href="https://gitee.com/FastDotnet/Fast.Utils/blob/master/LICENSE">
     <img src="https://img.shields.io/npm/l/@fast-china/utils" alt="license" />
   </a>
 </p>
@@ -34,11 +34,11 @@ pnpm install @fast-china/utils
 
 ## Update log
 
-Update log [Click to view](https://gitee.com/China-xiaoFang/fast.utils/commits/master)
+Update log [Click to view](https://gitee.com/FastDotnet/Fast.Utils/commits/master)
 
 ## Protocol
 
-[Fast.Utils](https://gitee.com/China-xiaoFang/fast.utils) complies with the [Apache-2.0](https://gitee.com/China-xiaoFang/fast.utils/blob/master/LICENSE) open source agreement. Welcome to submit `PR` or `Issue`.
+[Fast.Utils](https://gitee.com/FastDotnet/Fast.Utils) complies with the [Apache-2.0](https://gitee.com/FastDotnet/Fast.Utils/blob/master/LICENSE) open source agreement. Welcome to submit `PR` or `Issue`.
 
 ```
 Apache Open Source License

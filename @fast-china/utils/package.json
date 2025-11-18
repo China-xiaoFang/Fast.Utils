@@ -1,6 +1,6 @@
 {
 	"name": "@fast-china/utils",
-	"version": "1.0.32",
+	"version": "1.0.33",
 	"description": "Fast 工具库.",
 	"type": "module",
 	"keywords": [
@@ -12,11 +12,11 @@
 	"license": "Apache-2.0",
 	"homepage": "https://fastdotnet.com",
 	"bugs": {
-		"url": "https://gitee.com/China-xiaoFang/fast.utils/issues"
+		"url": "https://gitee.com/FastDotnet/Fast.Utils/issues"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://gitee.com/China-xiaoFang/fast.utils"
+		"url": "https://gitee.com/FastDotnet/Fast.Utils"
 	},
 	"author": "小方",
 	"files": [
@@ -91,14 +91,14 @@
 		"@fast-china/eslint-config": "^1",
 		"@rollup/plugin-terser": "^0.4",
 		"@types/node": "^24",
-		"@vue/tsconfig": "^0.7",
+		"@vue/tsconfig": "^0.8",
 		"eslint": "^9",
 		"prettier": "^3",
 		"terser": "^5",
 		"typescript": "^5",
-		"vite": "^6",
+		"vite": "^7",
 		"vite-plugin-dts": "^4",
 		"vue": "^2 || ^3",
-		"vue-tsc": "^2"
+		"vue-tsc": "^3"
 	}
 }

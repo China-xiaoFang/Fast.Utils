@@ -1,4 +1,4 @@
-var FastUtils = function(exports, vue) {
+var FastUtils = (function(exports, vue) {
   "use strict";
   const arrayUtil = {
     /**
@@ -507,10 +507,10 @@ var FastUtils = function(exports, vue) {
     return tag == funcTag$2 || tag == genTag$1 || tag == asyncTag || tag == proxyTag;
   }
   var coreJsData = root["__core-js_shared__"];
-  var maskSrcKey = function() {
+  var maskSrcKey = (function() {
     var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || "");
     return uid ? "Symbol(src)_1." + uid : "";
-  }();
+  })();
   function isMasked(func2) {
     return !!maskSrcKey && maskSrcKey in func2;
   }
@@ -558,7 +558,7 @@ var FastUtils = function(exports, vue) {
     return func2;
   };
   var objectCreate = Object.create;
-  var baseCreate = /* @__PURE__ */ function() {
+  var baseCreate = /* @__PURE__ */ (function() {
     function object2() {
     }
     return function(proto) {
@@ -573,7 +573,7 @@ var FastUtils = function(exports, vue) {
       object2.prototype = void 0;
       return result2;
     };
-  }();
+  })();
   function createCtor(Ctor) {
     return function() {
       var args = arguments;
@@ -787,14 +787,14 @@ var FastUtils = function(exports, vue) {
       return value;
     };
   }
-  var defineProperty = function() {
+  var defineProperty = (function() {
     try {
       var func2 = getNative(Object, "defineProperty");
       func2({}, "", {});
       return func2;
     } catch (e) {
     }
-  }();
+  })();
   var baseSetToString = !defineProperty ? identity : function(func2, string2) {
     return defineProperty(func2, "toString", {
       "configurable": true,
@@ -1235,9 +1235,9 @@ var FastUtils = function(exports, vue) {
   var objectProto$l = Object.prototype;
   var hasOwnProperty$j = objectProto$l.hasOwnProperty;
   var propertyIsEnumerable$1 = objectProto$l.propertyIsEnumerable;
-  var isArguments = baseIsArguments(/* @__PURE__ */ function() {
+  var isArguments = baseIsArguments(/* @__PURE__ */ (function() {
     return arguments;
-  }()) ? baseIsArguments : function(value) {
+  })()) ? baseIsArguments : function(value) {
     return isObjectLike(value) && hasOwnProperty$j.call(value, "callee") && !propertyIsEnumerable$1.call(value, "callee");
   };
   function stubFalse() {
@@ -1266,7 +1266,7 @@ var FastUtils = function(exports, vue) {
   var freeModule$1 = freeExports$1 && typeof module == "object" && module && !module.nodeType && module;
   var moduleExports$1 = freeModule$1 && freeModule$1.exports === freeExports$1;
   var freeProcess = moduleExports$1 && freeGlobal.process;
-  var nodeUtil = function() {
+  var nodeUtil = (function() {
     try {
       var types = freeModule$1 && freeModule$1.require && freeModule$1.require("util").types;
       if (types) {
@@ -1275,7 +1275,7 @@ var FastUtils = function(exports, vue) {
       return freeProcess && freeProcess.binding && freeProcess.binding("util");
     } catch (e) {
     }
-  }();
+  })();
   var nodeIsTypedArray = nodeUtil && nodeUtil.isTypedArray;
   var isTypedArray = nodeIsTypedArray ? baseUnary(nodeIsTypedArray) : baseIsTypedArray;
   var objectProto$k = Object.prototype;
@@ -5837,15 +5837,6 @@ var FastUtils = function(exports, vue) {
       }
     return result2;
   }
-  /**
-   * @license
-   * Lodash (Custom Build) <https://lodash.com/>
-   * Build: `lodash modularize exports="es" -o ./`
-   * Copyright OpenJS Foundation and other contributors <https://openjsf.org/>
-   * Released under MIT license <https://lodash.com/license>
-   * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
-   * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
-   */
   var VERSION = "4.17.21";
   var WRAP_BIND_KEY_FLAG = 2;
   var LAZY_FILTER_FLAG = 1, LAZY_WHILE_FLAG = 3;
@@ -5854,7 +5845,7 @@ var FastUtils = function(exports, vue) {
   var hasOwnProperty = objectProto.hasOwnProperty;
   var symIterator = Symbol$1 ? Symbol$1.iterator : void 0;
   var nativeMax = Math.max, nativeMin = Math.min;
-  var mixin = /* @__PURE__ */ function(func2) {
+  var mixin = /* @__PURE__ */ (function(func2) {
     return function(object2, source, options) {
       if (options == null) {
         var isObj = isObject(source), props = isObj && keys(source), methodNames = props && props.length && baseFunctions(source, props);
@@ -5866,7 +5857,7 @@ var FastUtils = function(exports, vue) {
       }
       return func2(object2, source, options);
     };
-  }(mixin$1);
+  })(mixin$1);
   lodash.after = func.after;
   lodash.ary = func.ary;
   lodash.assign = object.assign;
@@ -6171,7 +6162,7 @@ var FastUtils = function(exports, vue) {
   lodash.each = collection.forEach;
   lodash.eachRight = collection.forEachRight;
   lodash.first = array.head;
-  mixin(lodash, function() {
+  mixin(lodash, (function() {
     var source = {};
     baseForOwn(lodash, function(func2, methodName) {
       if (!hasOwnProperty.call(lodash.prototype, methodName)) {
@@ -6179,7 +6170,7 @@ var FastUtils = function(exports, vue) {
       }
     });
     return source;
-  }(), { "chain": false });
+  })(), { "chain": false });
   lodash.VERSION = VERSION;
   (lodash.templateSettings = string.templateSettings).imports._ = lodash;
   arrayEach(["bind", "bindKey", "curry", "curryRight", "partial", "partialRight"], function(methodName) {
@@ -6339,15 +6330,6 @@ var FastUtils = function(exports, vue) {
   if (symIterator) {
     lodash.prototype[symIterator] = seq.toIterator;
   }
-  /**
-   * @license
-   * Lodash (Custom Build) <https://lodash.com/>
-   * Build: `lodash modularize exports="es" -o ./`
-   * Copyright OpenJS Foundation and other contributors <https://openjsf.org/>
-   * Released under MIT license <https://lodash.com/license>
-   * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
-   * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
-   */
   const state$2 = vue.reactive({
     /** @description Uni-App 在 APP-PLUS 下是否拆分输出 @default false */
     uniAppPlusSplit: false
@@ -6417,7 +6399,12 @@ var FastUtils = function(exports, vue) {
     var f = n.default;
     if (typeof f == "function") {
       var a = function a2() {
-        if (this instanceof a2) {
+        var isInstance = false;
+        try {
+          isInstance = this instanceof a2;
+        } catch {
+        }
+        if (isInstance) {
           return Reflect.construct(f, arguments, this.constructor);
         }
         return f.apply(this, arguments);
@@ -6452,18 +6439,18 @@ var FastUtils = function(exports, vue) {
   function requireCore() {
     if (hasRequiredCore) return core$1.exports;
     hasRequiredCore = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory) {
         if (true) {
-          module2.exports = exports2 = factory();
+          module2.exports = exports$1 = factory();
         } else if (false) {
           (void 0)([], factory);
         } else {
           root2.CryptoJS = factory();
         }
       })(core, function() {
-        var CryptoJS = CryptoJS || function(Math2, undefined$1) {
+        var CryptoJS = CryptoJS || (function(Math2, undefined$1) {
           var crypto;
           if (typeof window !== "undefined" && window.crypto) {
             crypto = window.crypto;
@@ -6503,7 +6490,7 @@ var FastUtils = function(exports, vue) {
             }
             throw new Error("Native crypto module could not be used to get secure random number.");
           };
-          var create2 = Object.create || /* @__PURE__ */ function() {
+          var create2 = Object.create || /* @__PURE__ */ (function() {
             function F() {
             }
             return function(obj) {
@@ -6513,10 +6500,10 @@ var FastUtils = function(exports, vue) {
               F.prototype = null;
               return subtype;
             };
-          }();
+          })();
           var C = {};
           var C_lib = C.lib = {};
-          var Base = C_lib.Base = /* @__PURE__ */ function() {
+          var Base = C_lib.Base = /* @__PURE__ */ (function() {
             return {
               /**
                * Creates a new object that inherits from this object.
@@ -6615,7 +6602,7 @@ var FastUtils = function(exports, vue) {
                 return this.init.prototype.extend(this);
               }
             };
-          }();
+          })();
           var WordArray = C_lib.WordArray = Base.extend({
             /**
              * Initializes a newly created word array.
@@ -7053,7 +7040,7 @@ var FastUtils = function(exports, vue) {
           });
           var C_algo = C.algo = {};
           return C;
-        }(Math);
+        })(Math);
         return CryptoJS;
       });
     })(core$1, core$1.exports);
@@ -7065,11 +7052,11 @@ var FastUtils = function(exports, vue) {
   function requireX64Core() {
     if (hasRequiredX64Core) return x64Core$1.exports;
     hasRequiredX64Core = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore());
+          module2.exports = exports$1 = factory(requireCore());
         } else if (false) {
           (void 0)(["./core"], factory);
         } else {
@@ -7327,11 +7314,11 @@ var FastUtils = function(exports, vue) {
   function requireLibTypedarrays() {
     if (hasRequiredLibTypedarrays) return libTypedarrays$1.exports;
     hasRequiredLibTypedarrays = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore());
+          module2.exports = exports$1 = factory(requireCore());
         } else if (false) {
           (void 0)(["./core"], factory);
         } else {
@@ -7377,11 +7364,11 @@ var FastUtils = function(exports, vue) {
   function requireEncUtf16() {
     if (hasRequiredEncUtf16) return encUtf16$1.exports;
     hasRequiredEncUtf16 = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore());
+          module2.exports = exports$1 = factory(requireCore());
         } else if (false) {
           (void 0)(["./core"], factory);
         } else {
@@ -7500,11 +7487,11 @@ var FastUtils = function(exports, vue) {
   function requireEncBase64() {
     if (hasRequiredEncBase64) return encBase64$1.exports;
     hasRequiredEncBase64 = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore());
+          module2.exports = exports$1 = factory(requireCore());
         } else if (false) {
           (void 0)(["./core"], factory);
         } else {
@@ -7613,11 +7600,11 @@ var FastUtils = function(exports, vue) {
   function requireEncBase64url() {
     if (hasRequiredEncBase64url) return encBase64url$1.exports;
     hasRequiredEncBase64url = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore());
+          module2.exports = exports$1 = factory(requireCore());
         } else if (false) {
           (void 0)(["./core"], factory);
         } else {
@@ -7737,11 +7724,11 @@ var FastUtils = function(exports, vue) {
   function requireMd5() {
     if (hasRequiredMd5) return md5$1.exports;
     hasRequiredMd5 = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore());
+          module2.exports = exports$1 = factory(requireCore());
         } else if (false) {
           (void 0)(["./core"], factory);
         } else {
@@ -7921,11 +7908,11 @@ var FastUtils = function(exports, vue) {
   function requireSha1() {
     if (hasRequiredSha1) return sha1$1.exports;
     hasRequiredSha1 = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore());
+          module2.exports = exports$1 = factory(requireCore());
         } else if (false) {
           (void 0)(["./core"], factory);
         } else {
@@ -8017,11 +8004,11 @@ var FastUtils = function(exports, vue) {
   function requireSha256() {
     if (hasRequiredSha256) return sha256$1.exports;
     hasRequiredSha256 = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore());
+          module2.exports = exports$1 = factory(requireCore());
         } else if (false) {
           (void 0)(["./core"], factory);
         } else {
@@ -8143,11 +8130,11 @@ var FastUtils = function(exports, vue) {
   function requireSha224() {
     if (hasRequiredSha224) return sha224$1.exports;
     hasRequiredSha224 = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireSha256());
+          module2.exports = exports$1 = factory(requireCore(), requireSha256());
         } else if (false) {
           (void 0)(["./core", "./sha256"], factory);
         } else {
@@ -8193,11 +8180,11 @@ var FastUtils = function(exports, vue) {
   function requireSha512() {
     if (hasRequiredSha512) return sha512$1.exports;
     hasRequiredSha512 = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireX64Core());
+          module2.exports = exports$1 = factory(requireCore(), requireX64Core());
         } else if (false) {
           (void 0)(["./core", "./x64-core"], factory);
         } else {
@@ -8480,11 +8467,11 @@ var FastUtils = function(exports, vue) {
   function requireSha384() {
     if (hasRequiredSha384) return sha384$1.exports;
     hasRequiredSha384 = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireX64Core(), requireSha512());
+          module2.exports = exports$1 = factory(requireCore(), requireX64Core(), requireSha512());
         } else if (false) {
           (void 0)(["./core", "./x64-core", "./sha512"], factory);
         } else {
@@ -8531,11 +8518,11 @@ var FastUtils = function(exports, vue) {
   function requireSha3() {
     if (hasRequiredSha3) return sha3$1.exports;
     hasRequiredSha3 = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireX64Core());
+          module2.exports = exports$1 = factory(requireCore(), requireX64Core());
         } else if (false) {
           (void 0)(["./core", "./x64-core"], factory);
         } else {
@@ -8738,27 +8725,17 @@ var FastUtils = function(exports, vue) {
   function requireRipemd160() {
     if (hasRequiredRipemd160) return ripemd160$1.exports;
     hasRequiredRipemd160 = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore());
+          module2.exports = exports$1 = factory(requireCore());
         } else if (false) {
           (void 0)(["./core"], factory);
         } else {
           factory(root2.CryptoJS);
         }
       })(ripemd160, function(CryptoJS) {
-        /** @preserve
-        				(c) 2012 by Cédric Mesnil. All rights reserved.
-        
-        				Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-        
-        				    - Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-        				    - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-        
-        				THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-        				*/
         (function(Math2) {
           var C = CryptoJS;
           var C_lib = C.lib;
@@ -9224,11 +9201,11 @@ var FastUtils = function(exports, vue) {
   function requireHmac() {
     if (hasRequiredHmac) return hmac$1.exports;
     hasRequiredHmac = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore());
+          module2.exports = exports$1 = factory(requireCore());
         } else if (false) {
           (void 0)(["./core"], factory);
         } else {
@@ -9336,11 +9313,11 @@ var FastUtils = function(exports, vue) {
   function requirePbkdf2() {
     if (hasRequiredPbkdf2) return pbkdf2$1.exports;
     hasRequiredPbkdf2 = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireSha256(), requireHmac());
+          module2.exports = exports$1 = factory(requireCore(), requireSha256(), requireHmac());
         } else if (false) {
           (void 0)(["./core", "./sha256", "./hmac"], factory);
         } else {
@@ -9439,11 +9416,11 @@ var FastUtils = function(exports, vue) {
   function requireEvpkdf() {
     if (hasRequiredEvpkdf) return evpkdf$1.exports;
     hasRequiredEvpkdf = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireSha1(), requireHmac());
+          module2.exports = exports$1 = factory(requireCore(), requireSha1(), requireHmac());
         } else if (false) {
           (void 0)(["./core", "./sha1", "./hmac"], factory);
         } else {
@@ -9535,18 +9512,18 @@ var FastUtils = function(exports, vue) {
   function requireCipherCore() {
     if (hasRequiredCipherCore) return cipherCore$1.exports;
     hasRequiredCipherCore = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireEvpkdf());
+          module2.exports = exports$1 = factory(requireCore(), requireEvpkdf());
         } else if (false) {
           (void 0)(["./core", "./evpkdf"], factory);
         } else {
           factory(root2.CryptoJS);
         }
       })(cipherCore, function(CryptoJS) {
-        CryptoJS.lib.Cipher || function(undefined$1) {
+        CryptoJS.lib.Cipher || (function(undefined$1) {
           var C = CryptoJS;
           var C_lib = C.lib;
           var Base = C_lib.Base;
@@ -9680,7 +9657,7 @@ var FastUtils = function(exports, vue) {
              *
              *     var AES = CryptoJS.lib.Cipher._createHelper(CryptoJS.algo.AES);
              */
-            _createHelper: /* @__PURE__ */ function() {
+            _createHelper: /* @__PURE__ */ (function() {
               function selectCipherStrategy(key) {
                 if (typeof key == "string") {
                   return PasswordBasedCipher;
@@ -9698,7 +9675,7 @@ var FastUtils = function(exports, vue) {
                   }
                 };
               };
-            }()
+            })()
           });
           var StreamCipher = C_lib.StreamCipher = Cipher.extend({
             _doFinalize: function() {
@@ -9754,7 +9731,7 @@ var FastUtils = function(exports, vue) {
               this._iv = iv;
             }
           });
-          var CBC = C_mode.CBC = function() {
+          var CBC = C_mode.CBC = (function() {
             var CBC2 = BlockCipherMode.extend();
             CBC2.Encryptor = CBC2.extend({
               /**
@@ -9809,7 +9786,7 @@ var FastUtils = function(exports, vue) {
               }
             }
             return CBC2;
-          }();
+          })();
           var C_pad = C.pad = {};
           var Pkcs7 = C_pad.Pkcs7 = {
             /**
@@ -10173,7 +10150,7 @@ var FastUtils = function(exports, vue) {
               return plaintext;
             }
           });
-        }();
+        })();
       });
     })(cipherCore$1, cipherCore$1.exports);
     return cipherCore$1.exports;
@@ -10184,18 +10161,18 @@ var FastUtils = function(exports, vue) {
   function requireModeCfb() {
     if (hasRequiredModeCfb) return modeCfb$1.exports;
     hasRequiredModeCfb = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireCipherCore());
+          module2.exports = exports$1 = factory(requireCore(), requireCipherCore());
         } else if (false) {
           (void 0)(["./core", "./cipher-core"], factory);
         } else {
           factory(root2.CryptoJS);
         }
       })(modeCfb, function(CryptoJS) {
-        CryptoJS.mode.CFB = function() {
+        CryptoJS.mode.CFB = (function() {
           var CFB = CryptoJS.lib.BlockCipherMode.extend();
           CFB.Encryptor = CFB.extend({
             processBlock: function(words2, offset) {
@@ -10229,7 +10206,7 @@ var FastUtils = function(exports, vue) {
             }
           }
           return CFB;
-        }();
+        })();
         return CryptoJS.mode.CFB;
       });
     })(modeCfb$1, modeCfb$1.exports);
@@ -10241,18 +10218,18 @@ var FastUtils = function(exports, vue) {
   function requireModeCtr() {
     if (hasRequiredModeCtr) return modeCtr$1.exports;
     hasRequiredModeCtr = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireCipherCore());
+          module2.exports = exports$1 = factory(requireCore(), requireCipherCore());
         } else if (false) {
           (void 0)(["./core", "./cipher-core"], factory);
         } else {
           factory(root2.CryptoJS);
         }
       })(modeCtr, function(CryptoJS) {
-        CryptoJS.mode.CTR = function() {
+        CryptoJS.mode.CTR = (function() {
           var CTR = CryptoJS.lib.BlockCipherMode.extend();
           var Encryptor = CTR.Encryptor = CTR.extend({
             processBlock: function(words2, offset) {
@@ -10274,7 +10251,7 @@ var FastUtils = function(exports, vue) {
           });
           CTR.Decryptor = Encryptor;
           return CTR;
-        }();
+        })();
         return CryptoJS.mode.CTR;
       });
     })(modeCtr$1, modeCtr$1.exports);
@@ -10286,23 +10263,18 @@ var FastUtils = function(exports, vue) {
   function requireModeCtrGladman() {
     if (hasRequiredModeCtrGladman) return modeCtrGladman$1.exports;
     hasRequiredModeCtrGladman = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireCipherCore());
+          module2.exports = exports$1 = factory(requireCore(), requireCipherCore());
         } else if (false) {
           (void 0)(["./core", "./cipher-core"], factory);
         } else {
           factory(root2.CryptoJS);
         }
       })(modeCtrGladman, function(CryptoJS) {
-        /** @preserve
-         * Counter block mode compatible with  Dr Brian Gladman fileenc.c
-         * derived from CryptoJS.mode.CTR
-         * Jan Hruby jhruby.web@gmail.com
-         */
-        CryptoJS.mode.CTRGladman = function() {
+        CryptoJS.mode.CTRGladman = (function() {
           var CTRGladman = CryptoJS.lib.BlockCipherMode.extend();
           function incWord(word) {
             if ((word >> 24 & 255) === 255) {
@@ -10359,7 +10331,7 @@ var FastUtils = function(exports, vue) {
           });
           CTRGladman.Decryptor = Encryptor;
           return CTRGladman;
-        }();
+        })();
         return CryptoJS.mode.CTRGladman;
       });
     })(modeCtrGladman$1, modeCtrGladman$1.exports);
@@ -10371,18 +10343,18 @@ var FastUtils = function(exports, vue) {
   function requireModeOfb() {
     if (hasRequiredModeOfb) return modeOfb$1.exports;
     hasRequiredModeOfb = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireCipherCore());
+          module2.exports = exports$1 = factory(requireCore(), requireCipherCore());
         } else if (false) {
           (void 0)(["./core", "./cipher-core"], factory);
         } else {
           factory(root2.CryptoJS);
         }
       })(modeOfb, function(CryptoJS) {
-        CryptoJS.mode.OFB = function() {
+        CryptoJS.mode.OFB = (function() {
           var OFB = CryptoJS.lib.BlockCipherMode.extend();
           var Encryptor = OFB.Encryptor = OFB.extend({
             processBlock: function(words2, offset) {
@@ -10402,7 +10374,7 @@ var FastUtils = function(exports, vue) {
           });
           OFB.Decryptor = Encryptor;
           return OFB;
-        }();
+        })();
         return CryptoJS.mode.OFB;
       });
     })(modeOfb$1, modeOfb$1.exports);
@@ -10414,18 +10386,18 @@ var FastUtils = function(exports, vue) {
   function requireModeEcb() {
     if (hasRequiredModeEcb) return modeEcb$1.exports;
     hasRequiredModeEcb = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireCipherCore());
+          module2.exports = exports$1 = factory(requireCore(), requireCipherCore());
         } else if (false) {
           (void 0)(["./core", "./cipher-core"], factory);
         } else {
           factory(root2.CryptoJS);
         }
       })(modeEcb, function(CryptoJS) {
-        CryptoJS.mode.ECB = function() {
+        CryptoJS.mode.ECB = (function() {
           var ECB = CryptoJS.lib.BlockCipherMode.extend();
           ECB.Encryptor = ECB.extend({
             processBlock: function(words2, offset) {
@@ -10438,7 +10410,7 @@ var FastUtils = function(exports, vue) {
             }
           });
           return ECB;
-        }();
+        })();
         return CryptoJS.mode.ECB;
       });
     })(modeEcb$1, modeEcb$1.exports);
@@ -10450,11 +10422,11 @@ var FastUtils = function(exports, vue) {
   function requirePadAnsix923() {
     if (hasRequiredPadAnsix923) return padAnsix923$1.exports;
     hasRequiredPadAnsix923 = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireCipherCore());
+          module2.exports = exports$1 = factory(requireCore(), requireCipherCore());
         } else if (false) {
           (void 0)(["./core", "./cipher-core"], factory);
         } else {
@@ -10487,11 +10459,11 @@ var FastUtils = function(exports, vue) {
   function requirePadIso10126() {
     if (hasRequiredPadIso10126) return padIso10126$1.exports;
     hasRequiredPadIso10126 = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireCipherCore());
+          module2.exports = exports$1 = factory(requireCore(), requireCipherCore());
         } else if (false) {
           (void 0)(["./core", "./cipher-core"], factory);
         } else {
@@ -10520,11 +10492,11 @@ var FastUtils = function(exports, vue) {
   function requirePadIso97971() {
     if (hasRequiredPadIso97971) return padIso97971$1.exports;
     hasRequiredPadIso97971 = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireCipherCore());
+          module2.exports = exports$1 = factory(requireCore(), requireCipherCore());
         } else if (false) {
           (void 0)(["./core", "./cipher-core"], factory);
         } else {
@@ -10552,11 +10524,11 @@ var FastUtils = function(exports, vue) {
   function requirePadZeropadding() {
     if (hasRequiredPadZeropadding) return padZeropadding$1.exports;
     hasRequiredPadZeropadding = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireCipherCore());
+          module2.exports = exports$1 = factory(requireCore(), requireCipherCore());
         } else if (false) {
           (void 0)(["./core", "./cipher-core"], factory);
         } else {
@@ -10591,11 +10563,11 @@ var FastUtils = function(exports, vue) {
   function requirePadNopadding() {
     if (hasRequiredPadNopadding) return padNopadding$1.exports;
     hasRequiredPadNopadding = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireCipherCore());
+          module2.exports = exports$1 = factory(requireCore(), requireCipherCore());
         } else if (false) {
           (void 0)(["./core", "./cipher-core"], factory);
         } else {
@@ -10619,11 +10591,11 @@ var FastUtils = function(exports, vue) {
   function requireFormatHex() {
     if (hasRequiredFormatHex) return formatHex$1.exports;
     hasRequiredFormatHex = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireCipherCore());
+          module2.exports = exports$1 = factory(requireCore(), requireCipherCore());
         } else if (false) {
           (void 0)(["./core", "./cipher-core"], factory);
         } else {
@@ -10684,11 +10656,11 @@ var FastUtils = function(exports, vue) {
   function requireAes() {
     if (hasRequiredAes) return aes$1.exports;
     hasRequiredAes = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireEncBase64(), requireMd5(), requireEvpkdf(), requireCipherCore());
+          module2.exports = exports$1 = factory(requireCore(), requireEncBase64(), requireMd5(), requireEvpkdf(), requireCipherCore());
         } else if (false) {
           (void 0)(["./core", "./enc-base64", "./md5", "./evpkdf", "./cipher-core"], factory);
         } else {
@@ -10843,11 +10815,11 @@ var FastUtils = function(exports, vue) {
   function requireTripledes() {
     if (hasRequiredTripledes) return tripledes$1.exports;
     hasRequiredTripledes = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireEncBase64(), requireMd5(), requireEvpkdf(), requireCipherCore());
+          module2.exports = exports$1 = factory(requireCore(), requireEncBase64(), requireMd5(), requireEvpkdf(), requireCipherCore());
         } else if (false) {
           (void 0)(["./core", "./enc-base64", "./md5", "./evpkdf", "./cipher-core"], factory);
         } else {
@@ -11629,11 +11601,11 @@ var FastUtils = function(exports, vue) {
   function requireRc4() {
     if (hasRequiredRc4) return rc4$1.exports;
     hasRequiredRc4 = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireEncBase64(), requireMd5(), requireEvpkdf(), requireCipherCore());
+          module2.exports = exports$1 = factory(requireCore(), requireEncBase64(), requireMd5(), requireEvpkdf(), requireCipherCore());
         } else if (false) {
           (void 0)(["./core", "./enc-base64", "./md5", "./evpkdf", "./cipher-core"], factory);
         } else {
@@ -11717,11 +11689,11 @@ var FastUtils = function(exports, vue) {
   function requireRabbit() {
     if (hasRequiredRabbit) return rabbit$1.exports;
     hasRequiredRabbit = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireEncBase64(), requireMd5(), requireEvpkdf(), requireCipherCore());
+          module2.exports = exports$1 = factory(requireCore(), requireEncBase64(), requireMd5(), requireEvpkdf(), requireCipherCore());
         } else if (false) {
           (void 0)(["./core", "./enc-base64", "./md5", "./evpkdf", "./cipher-core"], factory);
         } else {
@@ -11851,11 +11823,11 @@ var FastUtils = function(exports, vue) {
   function requireRabbitLegacy() {
     if (hasRequiredRabbitLegacy) return rabbitLegacy$1.exports;
     hasRequiredRabbitLegacy = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireEncBase64(), requireMd5(), requireEvpkdf(), requireCipherCore());
+          module2.exports = exports$1 = factory(requireCore(), requireEncBase64(), requireMd5(), requireEvpkdf(), requireCipherCore());
         } else if (false) {
           (void 0)(["./core", "./enc-base64", "./md5", "./evpkdf", "./cipher-core"], factory);
         } else {
@@ -11982,11 +11954,11 @@ var FastUtils = function(exports, vue) {
   function requireBlowfish() {
     if (hasRequiredBlowfish) return blowfish$1.exports;
     hasRequiredBlowfish = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireEncBase64(), requireMd5(), requireEvpkdf(), requireCipherCore());
+          module2.exports = exports$1 = factory(requireCore(), requireEncBase64(), requireMd5(), requireEvpkdf(), requireCipherCore());
         } else if (false) {
           (void 0)(["./core", "./enc-base64", "./md5", "./evpkdf", "./cipher-core"], factory);
         } else {
@@ -13175,11 +13147,11 @@ var FastUtils = function(exports, vue) {
   function requireCryptoJs() {
     if (hasRequiredCryptoJs) return cryptoJs$1.exports;
     hasRequiredCryptoJs = 1;
-    (function(module2, exports2) {
+    (function(module2, exports$1) {
       ;
       (function(root2, factory, undef) {
         if (true) {
-          module2.exports = exports2 = factory(requireCore(), requireX64Core(), requireLibTypedarrays(), requireEncUtf16(), requireEncBase64(), requireEncBase64url(), requireMd5(), requireSha1(), requireSha256(), requireSha224(), requireSha512(), requireSha384(), requireSha3(), requireRipemd160(), requireHmac(), requirePbkdf2(), requireEvpkdf(), requireCipherCore(), requireModeCfb(), requireModeCtr(), requireModeCtrGladman(), requireModeOfb(), requireModeEcb(), requirePadAnsix923(), requirePadIso10126(), requirePadIso97971(), requirePadZeropadding(), requirePadNopadding(), requireFormatHex(), requireAes(), requireTripledes(), requireRc4(), requireRabbit(), requireRabbitLegacy(), requireBlowfish());
+          module2.exports = exports$1 = factory(requireCore(), requireX64Core(), requireLibTypedarrays(), requireEncUtf16(), requireEncBase64(), requireEncBase64url(), requireMd5(), requireSha1(), requireSha256(), requireSha224(), requireSha512(), requireSha384(), requireSha3(), requireRipemd160(), requireHmac(), requirePbkdf2(), requireEvpkdf(), requireCipherCore(), requireModeCfb(), requireModeCtr(), requireModeCtrGladman(), requireModeOfb(), requireModeEcb(), requirePadAnsix923(), requirePadIso10126(), requirePadIso97971(), requirePadZeropadding(), requirePadNopadding(), requireFormatHex(), requireAes(), requireTripledes(), requireRc4(), requireRabbit(), requireRabbitLegacy(), requireBlowfish());
         } else if (false) {
           (void 0)(["./core", "./x64-core", "./lib-typedarrays", "./enc-utf16", "./enc-base64", "./enc-base64url", "./md5", "./sha1", "./sha256", "./sha224", "./sha512", "./sha384", "./sha3", "./ripemd160", "./hmac", "./pbkdf2", "./evpkdf", "./cipher-core", "./mode-cfb", "./mode-ctr", "./mode-ctr-gladman", "./mode-ofb", "./mode-ecb", "./pad-ansix923", "./pad-iso10126", "./pad-iso97971", "./pad-zeropadding", "./pad-nopadding", "./format-hex", "./aes", "./tripledes", "./rc4", "./rabbit", "./rabbit-legacy", "./blowfish"], factory);
         } else {
@@ -13575,7 +13547,7 @@ var FastUtils = function(exports, vue) {
   const styleToString = (styles) => {
     if (!styles) return "";
     if (isArray(styles)) {
-      return styles.filter((item) => item && (item == null ? void 0 : item.length) > 0).map((item) => styleToString(item)).join(" ");
+      return styles.filter((item) => item && item?.length > 0).map((item) => styleToString(item)).join(" ");
     } else if (isString(styles)) {
       return styles.trimEnd().endsWith(";") ? styles.trimEnd() : `${styles.trimEnd()};`;
     } else {
@@ -13699,7 +13671,7 @@ var FastUtils = function(exports, vue) {
      */
     set(key, val, expire, encrypt) {
       try {
-        encrypt ?? (encrypt = state$1.crypto);
+        encrypt ??= state$1.crypto;
         if (expire) {
           if (isNaN(expire) || expire < 1) {
             throw new FastError("有效期应为一个有效数值");
@@ -13728,7 +13700,7 @@ var FastUtils = function(exports, vue) {
      */
     get(key, decrypt) {
       try {
-        decrypt ?? (decrypt = state$1.crypto);
+        decrypt ??= state$1.crypto;
         let valJson = storage.get(`${state$1.prefix}${key}`);
         if (valJson) {
           if (decrypt) {
@@ -13806,7 +13778,7 @@ var FastUtils = function(exports, vue) {
         return;
       }
       try {
-        encrypt ?? (encrypt = state$1.crypto);
+        encrypt ??= state$1.crypto;
         if (expire) {
           if (isNaN(expire) || expire < 1) {
             throw new FastError("有效期应为一个有效数值");
@@ -13839,7 +13811,7 @@ var FastUtils = function(exports, vue) {
         return;
       }
       try {
-        decrypt ?? (decrypt = state$1.crypto);
+        decrypt ??= state$1.crypto;
         let valJson = window.sessionStorage.getItem(`${state$1.prefix}${key}`);
         if (valJson) {
           if (decrypt) {
@@ -14045,7 +14017,7 @@ var FastUtils = function(exports, vue) {
           });
         });
       } else {
-        if ((navigator == null ? void 0 : navigator.clipboard) && window.isSecureContext) {
+        if (navigator?.clipboard && window.isSecureContext) {
           await navigator.clipboard.writeText(value);
         } else {
           const textareaEl = document.createElement("textarea");
@@ -14231,7 +14203,7 @@ var FastUtils = function(exports, vue) {
   });
   const uuidRegExp = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const makeIdentity = (deviceID) => {
-    deviceID ?? (deviceID = state.deviceId);
+    deviceID ??= state.deviceId;
     if (deviceID && uuidRegExp.test(deviceID)) {
       Local.set(state.cacheKey, deviceID);
       state.deviceId = deviceID;
@@ -14400,5 +14372,5 @@ var FastUtils = function(exports, vue) {
   exports.withNoopInstall = withNoopInstall;
   Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
   return exports;
-}({}, Vue);
+})({}, Vue);
 //# sourceMappingURL=index.global.js.map

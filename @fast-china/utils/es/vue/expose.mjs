@@ -1,8 +1,2 @@
-const useExpose = (expose, exposed) => {
-  expose(exposed);
-  return exposed;
-};
-export {
-  useExpose
-};
+const o=(o,t)=>(o(t),t);export{o as useExpose};
 //# sourceMappingURL=expose.mjs.map

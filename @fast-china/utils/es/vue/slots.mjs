@@ -1,7 +1,2 @@
-const makeSlots = () => {
-  return Object;
-};
-export {
-  makeSlots
-};
+const t=()=>Object;export{t as makeSlots};
 //# sourceMappingURL=slots.mjs.map
