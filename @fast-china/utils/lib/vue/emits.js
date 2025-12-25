@@ -1,0 +1,2 @@
+"use strict";Object.defineProperty(exports,Symbol.toStringTag,{value:"Module"});const e=require("vue"),t=require("lodash-unified");exports.useEmits=(o,r,s)=>o?e.computed(()=>{const e=o?t.omit(o,s??[]):{};return Object.keys(e).reduce((e,t)=>(e[`on${t.split("-").map((e,t)=>e.charAt(0).toUpperCase()+e.slice(1)).join("")}`]=(...e)=>r(t,...e),e),{})}):e.computed(()=>({}));
+//# sourceMappingURL=emits.js.map

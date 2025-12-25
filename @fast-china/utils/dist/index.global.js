@@ -14265,6 +14265,17 @@ var FastUtils = (function(exports, vue) {
       return "";
     }
   };
+  const useEmits = (emits, emit, ignoreRawEmits) => {
+    if (!emits) return vue.computed(() => ({}));
+    return vue.computed(() => {
+      const omittedRawEmits = emits ? omit(emits, ignoreRawEmits ?? []) : {};
+      return Object.keys(omittedRawEmits).reduce((handlers, eventName) => {
+        const handlerName = `on${eventName.split("-").map((part, index2) => index2 === 0 ? part.charAt(0).toUpperCase() + part.slice(1) : part.charAt(0).toUpperCase() + part.slice(1)).join("")}`;
+        handlers[handlerName] = (...args) => emit(eventName, ...args);
+        return handlers;
+      }, {});
+    });
+  };
   const useExpose = (expose, exposed) => {
     expose(exposed);
     return exposed;
@@ -14361,6 +14372,7 @@ var FastUtils = (function(exports, vue) {
   exports.styleToString = styleToString;
   exports.throwError = throwError;
   exports.useConsole = useConsole;
+  exports.useEmits = useEmits;
   exports.useExpose = useExpose;
   exports.useIdentity = useIdentity;
   exports.useProps = useProps;

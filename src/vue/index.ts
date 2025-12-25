@@ -1,3 +1,4 @@
+export * from "./emits";
 export * from "./expose";
 export * from "./func";
 export * from "./install";
