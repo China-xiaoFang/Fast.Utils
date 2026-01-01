@@ -13301,65 +13301,42 @@ var FastUtils = (function(exports, vue) {
       if (typeof date2 === "string") {
         timestamp = new Date(date2).getTime();
       } else if (typeof date2 === "number") {
-        timestamp = date2;
+        timestamp = date2.toString().length <= 10 ? date2 * 1e3 : date2;
       } else {
         timestamp = date2.getTime();
-      }
-      if (timestamp < 1e12) {
-        timestamp *= 1e3;
       }
       const minute = 1e3 * 60;
       const hour = minute * 60;
       const day = hour * 24;
-      const month = day * 30;
       const curTime = (/* @__PURE__ */ new Date()).getTime();
       const diffValue = curTime - timestamp;
-      const monthC = diffValue / month;
-      const weekC = diffValue / (7 * day);
-      const dayC = diffValue / day;
-      const hourC = diffValue / hour;
-      const minC = diffValue / minute;
-      if (diffValue < 0) {
-        const monthC1 = Math.abs(monthC);
-        const weekC1 = Math.abs(weekC);
-        const dayC1 = Math.abs(dayC);
-        const hourC1 = Math.abs(hourC);
-        const minC1 = Math.abs(minC);
-        if (monthC1 > 12) {
-          return `${Math.floor(monthC1 / 12)}年后`;
-        } else if (monthC1 >= 6) {
-          return "半年后";
-        } else if (monthC1 >= 1) {
-          return `${Math.floor(monthC1)}月后`;
-        } else if (weekC1 > 2) {
-          return "半月后";
-        } else if (weekC1 >= 1) {
-          return `${Math.floor(weekC1)}周后`;
-        } else if (dayC1 >= 1) {
-          return `${Math.floor(dayC1)}天后`;
-        } else if (hourC1 >= 1) {
-          return `${Math.floor(hourC1)}小时后`;
-        } else if (minC1 >= 1) {
-          return `${Math.floor(minC1)}分钟后`;
-        }
-        return "刚刚";
-      }
-      if (monthC > 12) {
-        return `${Math.floor(monthC / 12)}年前`;
-      } else if (monthC >= 6) {
-        return "半年前";
-      } else if (monthC >= 1) {
-        return `${Math.floor(monthC)}月前`;
-      } else if (weekC > 2) {
-        return "半月前";
-      } else if (weekC >= 1) {
-        return `${Math.floor(weekC)}周前`;
+      const minC = Math.abs(diffValue) / minute;
+      const hourC = Math.abs(diffValue) / hour;
+      const dayC = Math.abs(diffValue) / day;
+      const curDate = new Date(curTime);
+      const targetDate = new Date(timestamp);
+      const yearDiff = curDate.getFullYear() - targetDate.getFullYear();
+      const monthDiff = curDate.getMonth() - targetDate.getMonth();
+      const totalMonthDiff = yearDiff * 12 + monthDiff;
+      const suffix = diffValue < 0 ? "后" : "前";
+      if (Math.abs(totalMonthDiff) >= 12) {
+        const years = Math.floor(Math.abs(totalMonthDiff) / 12);
+        return `${years}年${suffix}`;
+      } else if (Math.abs(totalMonthDiff) >= 6) {
+        return `半年${suffix}`;
+      } else if (Math.abs(totalMonthDiff) >= 1) {
+        return `${Math.abs(totalMonthDiff)}月${suffix}`;
+      } else if (dayC >= 15) {
+        return `半月${suffix}`;
+      } else if (dayC >= 7) {
+        const weeks = Math.floor(dayC / 7);
+        return `${weeks}周${suffix}`;
       } else if (dayC >= 1) {
-        return `${Math.floor(dayC)}天前`;
+        return `${Math.floor(dayC)}天${suffix}`;
       } else if (hourC >= 1) {
-        return `${Math.floor(hourC)}小时前`;
+        return `${Math.floor(hourC)}小时${suffix}`;
       } else if (minC >= 1) {
-        return `${Math.floor(minC)}分钟前`;
+        return `${Math.floor(minC)}分钟${suffix}`;
       }
       return "刚刚";
     },

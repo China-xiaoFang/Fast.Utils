@@ -42,81 +42,58 @@ export const dateUtil = {
 		if (typeof date === "string") {
 			timestamp = new Date(date).getTime();
 		} else if (typeof date === "number") {
-			timestamp = date;
+			// 更安全的秒级时间戳判断：小于10位数字认为是秒级
+			timestamp = date.toString().length <= 10 ? date * 1000 : date;
 		} else {
 			timestamp = date.getTime();
-		}
-
-		// 秒级时间戳处理
-		if (timestamp < 1e12) {
-			timestamp *= 1000;
 		}
 
 		const minute = 1000 * 60;
 		const hour = minute * 60;
 		const day = hour * 24;
-		const month = day * 30;
+
 		// 获取当前时间
 		const curTime = new Date().getTime();
-		// 比较
+		// 计算差异
 		const diffValue = curTime - timestamp;
 
 		// 计算差异时间的量级
-		const monthC = diffValue / month;
-		const weekC = diffValue / (7 * day);
-		const dayC = diffValue / day;
-		const hourC = diffValue / hour;
-		const minC = diffValue / minute;
+		const minC = Math.abs(diffValue) / minute;
+		const hourC = Math.abs(diffValue) / hour;
+		const dayC = Math.abs(diffValue) / day;
 
-		// 如果本地时间反而小于变量时间
-		if (diffValue < 0) {
-			const monthC1 = Math.abs(monthC);
-			const weekC1 = Math.abs(weekC);
-			const dayC1 = Math.abs(dayC);
-			const hourC1 = Math.abs(hourC);
-			const minC1 = Math.abs(minC);
+		// 使用Date对象来准确计算月份和年份差异
+		const curDate = new Date(curTime);
+		const targetDate = new Date(timestamp);
 
-			if (monthC1 > 12) {
-				// 超过1年，直接显示 几 年前
-				return `${Math.floor(monthC1 / 12)}年后`;
-			} else if (monthC1 >= 6) {
-				return "半年后";
-			} else if (monthC1 >= 1) {
-				return `${Math.floor(monthC1)}月后`;
-			} else if (weekC1 > 2) {
-				return "半月后";
-			} else if (weekC1 >= 1) {
-				return `${Math.floor(weekC1)}周后`;
-			} else if (dayC1 >= 1) {
-				return `${Math.floor(dayC1)}天后`;
-			} else if (hourC1 >= 1) {
-				return `${Math.floor(hourC1)}小时后`;
-			} else if (minC1 >= 1) {
-				return `${Math.floor(minC1)}分钟后`;
-			}
-			return "刚刚";
-			// return "不久前";
-		}
+		const yearDiff = curDate.getFullYear() - targetDate.getFullYear();
+		const monthDiff = curDate.getMonth() - targetDate.getMonth();
+		const totalMonthDiff = yearDiff * 12 + monthDiff;
 
-		// 使用
-		if (monthC > 12) {
-			// 超过1年，直接显示 几 年前
-			return `${Math.floor(monthC / 12)}年前`;
-		} else if (monthC >= 6) {
-			return "半年前";
-		} else if (monthC >= 1) {
-			return `${Math.floor(monthC)}月前`;
-		} else if (weekC > 2) {
-			return "半月前";
-		} else if (weekC >= 1) {
-			return `${Math.floor(weekC)}周前`;
+		// 时间后缀
+		const suffix = diffValue < 0 ? "后" : "前";
+
+		// 计算显示逻辑
+		if (Math.abs(totalMonthDiff) >= 12) {
+			const years = Math.floor(Math.abs(totalMonthDiff) / 12);
+			return `${years}年${suffix}`;
+		} else if (Math.abs(totalMonthDiff) >= 6) {
+			return `半年${suffix}`;
+		} else if (Math.abs(totalMonthDiff) >= 1) {
+			return `${Math.abs(totalMonthDiff)}月${suffix}`;
+		} else if (dayC >= 15) {
+			return `半月${suffix}`;
+		} else if (dayC >= 7) {
+			const weeks = Math.floor(dayC / 7);
+			return `${weeks}周${suffix}`;
 		} else if (dayC >= 1) {
-			return `${Math.floor(dayC)}天前`;
+			return `${Math.floor(dayC)}天${suffix}`;
 		} else if (hourC >= 1) {
-			return `${Math.floor(hourC)}小时前`;
+			return `${Math.floor(hourC)}小时${suffix}`;
 		} else if (minC >= 1) {
-			return `${Math.floor(minC)}分钟前`;
+			return `${Math.floor(minC)}分钟${suffix}`;
 		}
+
 		return "刚刚";
 	},
 	/**
