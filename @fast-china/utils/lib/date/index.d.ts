@@ -9,7 +9,7 @@ export declare const dateUtil: {
     /**
      * 时间处理翻译
      */
-    dateTimeFix(date: string | Date | null | undefined): string;
+    dateTimeFix(date: number | string | Date | null | undefined): string;
     /**
      * 获取默认时间
      * @returns [00:00:00, 23:59:59]
