@@ -97,18 +97,6 @@ export const dateUtil = {
 		return "刚刚";
 	},
 	/**
-	 * 获取默认时间
-	 * @returns [00:00:00, 23:59:59]
-	 */
-	getDefaultTime(): Date[] {
-		const end = new Date();
-		const start = new Date();
-		start.setMonth(start.getMonth() - 1);
-		start.setHours(0, 0, 0);
-		end.setHours(23, 59, 59);
-		return [start, end];
-	},
-	/**
 	 * 获取简单的日期时间
 	 * @returns xxxx-xx-xx 00:00:00
 	 */
@@ -118,145 +106,295 @@ export const dateUtil = {
 		return start;
 	},
 	/**
-	 * 获取简单的日期时间范围
+	 * 获取默认时间
+	 * @param isFuture 是否为未来时间
+	 * @returns [00:00:00, 23:59:59]
 	 */
-	getSimpleShortcuts(): {
+	getDefaultTime(isFuture = false): Date[] {
+		const end = new Date();
+		const start = new Date();
+		if (isFuture) {
+			end.setMonth(end.getMonth() + 1);
+		} else {
+			start.setMonth(start.getMonth() - 1);
+		}
+		start.setHours(0, 0, 0);
+		end.setHours(23, 59, 59);
+		return [start, end];
+	},
+	/**
+	 * 获取简单的日期时间范围
+	 * @param isFuture 是否为未来时间
+	 */
+	getSimpleShortcuts(isFuture = false): {
 		text: string;
 		value: () => Date;
 	}[] {
-		return [
-			{
-				text: "今天",
-				value: (): Date => {
-					const date = new Date();
-					date.setHours(0, 0, 0);
-					return date;
+		if (isFuture) {
+			return [
+				{
+					text: "今天",
+					value: (): Date => {
+						const date = new Date();
+						date.setHours(0, 0, 0);
+						return date;
+					},
 				},
-			},
-			{
-				text: "昨天",
-				value: (): Date => {
-					const date = new Date();
-					date.setDate(date.getDate() - 1);
-					date.setHours(0, 0, 0);
-					return date;
+				{
+					text: "明天",
+					value: (): Date => {
+						const date = new Date();
+						date.setDate(date.getDate() + 1);
+						date.setHours(0, 0, 0);
+						return date;
+					},
 				},
-			},
-			{
-				text: "一周前",
-				value: (): Date => {
-					const date = new Date();
-					date.setDate(date.getDate() - 7);
-					date.setHours(0, 0, 0);
-					return date;
+				{
+					text: "一周后",
+					value: (): Date => {
+						const date = new Date();
+						date.setDate(date.getDate() + 7);
+						date.setHours(0, 0, 0);
+						return date;
+					},
 				},
-			},
-			{
-				text: "一月前",
-				value: (): Date => {
-					const date = new Date();
-					date.setMonth(date.getMonth() - 1);
-					date.setHours(0, 0, 0);
-					return date;
+				{
+					text: "一月后",
+					value: (): Date => {
+						const date = new Date();
+						date.setMonth(date.getMonth() + 1);
+						date.setHours(0, 0, 0);
+						return date;
+					},
 				},
-			},
-			{
-				text: "一年前",
-				value: (): Date => {
-					const date = new Date();
-					date.setFullYear(date.getFullYear() - 1);
-					date.setHours(0, 0, 0);
-					return date;
+				{
+					text: "一年后",
+					value: (): Date => {
+						const date = new Date();
+						date.setFullYear(date.getFullYear() + 1);
+						date.setHours(0, 0, 0);
+						return date;
+					},
 				},
-			},
-		];
+			];
+		} else {
+			return [
+				{
+					text: "今天",
+					value: (): Date => {
+						const date = new Date();
+						date.setHours(0, 0, 0);
+						return date;
+					},
+				},
+				{
+					text: "昨天",
+					value: (): Date => {
+						const date = new Date();
+						date.setDate(date.getDate() - 1);
+						date.setHours(0, 0, 0);
+						return date;
+					},
+				},
+				{
+					text: "一周前",
+					value: (): Date => {
+						const date = new Date();
+						date.setDate(date.getDate() - 7);
+						date.setHours(0, 0, 0);
+						return date;
+					},
+				},
+				{
+					text: "一月前",
+					value: (): Date => {
+						const date = new Date();
+						date.setMonth(date.getMonth() - 1);
+						date.setHours(0, 0, 0);
+						return date;
+					},
+				},
+				{
+					text: "一年前",
+					value: (): Date => {
+						const date = new Date();
+						date.setFullYear(date.getFullYear() - 1);
+						date.setHours(0, 0, 0);
+						return date;
+					},
+				},
+			];
+		}
 	},
 	/**
 	 * 获取日期范围
+	 * @param isFuture 是否为未来时间
 	 */
-	getShortcuts(): {
+	getShortcuts(isFuture = false): {
 		text: string;
 		value: () => Date[];
 	}[] {
-		return [
-			{
-				text: "近1天",
-				value: (): Date[] => {
-					const end = new Date();
-					const start = new Date();
-					start.setDate(start.getDate() - 1);
-					start.setHours(0, 0, 0);
-					end.setHours(23, 59, 59);
-					return [start, end];
+		if (isFuture) {
+			return [
+				{
+					text: "后1天",
+					value: (): Date[] => {
+						const end = new Date();
+						const start = new Date();
+						end.setDate(end.getDate() + 1);
+						start.setHours(0, 0, 0);
+						end.setHours(23, 59, 59);
+						return [start, end];
+					},
 				},
-			},
-			{
-				text: "近3天",
-				value: (): Date[] => {
-					const end = new Date();
-					const start = new Date();
-					start.setDate(start.getDate() - 3);
-					start.setHours(0, 0, 0);
-					end.setHours(23, 59, 59);
-					return [start, end];
+				{
+					text: "后3天",
+					value: (): Date[] => {
+						const end = new Date();
+						const start = new Date();
+						end.setDate(end.getDate() + 3);
+						start.setHours(0, 0, 0);
+						end.setHours(23, 59, 59);
+						return [start, end];
+					},
 				},
-			},
-			{
-				text: "近1周",
-				value: (): Date[] => {
-					const end = new Date();
-					const start = new Date();
-					start.setDate(start.getDate() - 7);
-					start.setHours(0, 0, 0);
-					end.setHours(23, 59, 59);
-					return [start, end];
+				{
+					text: "后1周",
+					value: (): Date[] => {
+						const end = new Date();
+						const start = new Date();
+						end.setDate(end.getDate() + 7);
+						start.setHours(0, 0, 0);
+						end.setHours(23, 59, 59);
+						return [start, end];
+					},
 				},
-			},
-			{
-				text: "近1月",
-				value: (): Date[] => {
-					const end = new Date();
-					const start = new Date();
-					start.setMonth(start.getMonth() - 1);
-					start.setHours(0, 0, 0);
-					end.setHours(23, 59, 59);
-					return [start, end];
+				{
+					text: "后1月",
+					value: (): Date[] => {
+						const end = new Date();
+						const start = new Date();
+						end.setMonth(end.getMonth() + 1);
+						start.setHours(0, 0, 0);
+						end.setHours(23, 59, 59);
+						return [start, end];
+					},
 				},
-			},
-			{
-				text: "近3月",
-				value: (): Date[] => {
-					const end = new Date();
-					const start = new Date();
-					start.setMonth(start.getMonth() - 3);
-					start.setHours(0, 0, 0);
-					end.setHours(23, 59, 59);
-					return [start, end];
+				{
+					text: "后3月",
+					value: (): Date[] => {
+						const end = new Date();
+						const start = new Date();
+						end.setMonth(end.getMonth() + 3);
+						start.setHours(0, 0, 0);
+						end.setHours(23, 59, 59);
+						return [start, end];
+					},
 				},
-			},
-			{
-				text: "近6月",
-				value: (): Date[] => {
-					const end = new Date();
-					const start = new Date();
-					start.setMonth(start.getMonth() - 6);
-					start.setHours(0, 0, 0);
-					end.setHours(23, 59, 59);
-					return [start, end];
+				{
+					text: "后6月",
+					value: (): Date[] => {
+						const end = new Date();
+						const start = new Date();
+						end.setMonth(end.getMonth() + 6);
+						start.setHours(0, 0, 0);
+						end.setHours(23, 59, 59);
+						return [start, end];
+					},
 				},
-			},
-			{
-				text: "近1年",
-				value: (): Date[] => {
-					const end = new Date();
-					const start = new Date();
-					start.setFullYear(start.getFullYear() - 1);
-					start.setHours(0, 0, 0);
-					end.setHours(23, 59, 59);
-					return [start, end];
+				{
+					text: "后1年",
+					value: (): Date[] => {
+						const end = new Date();
+						const start = new Date();
+						end.setFullYear(end.getFullYear() + 1);
+						start.setHours(0, 0, 0);
+						end.setHours(23, 59, 59);
+						return [start, end];
+					},
 				},
-			},
-		];
+			];
+		} else {
+			return [
+				{
+					text: "近1天",
+					value: (): Date[] => {
+						const end = new Date();
+						const start = new Date();
+						start.setDate(start.getDate() - 1);
+						start.setHours(0, 0, 0);
+						end.setHours(23, 59, 59);
+						return [start, end];
+					},
+				},
+				{
+					text: "近3天",
+					value: (): Date[] => {
+						const end = new Date();
+						const start = new Date();
+						start.setDate(start.getDate() - 3);
+						start.setHours(0, 0, 0);
+						end.setHours(23, 59, 59);
+						return [start, end];
+					},
+				},
+				{
+					text: "近1周",
+					value: (): Date[] => {
+						const end = new Date();
+						const start = new Date();
+						start.setDate(start.getDate() - 7);
+						start.setHours(0, 0, 0);
+						end.setHours(23, 59, 59);
+						return [start, end];
+					},
+				},
+				{
+					text: "近1月",
+					value: (): Date[] => {
+						const end = new Date();
+						const start = new Date();
+						start.setMonth(start.getMonth() - 1);
+						start.setHours(0, 0, 0);
+						end.setHours(23, 59, 59);
+						return [start, end];
+					},
+				},
+				{
+					text: "近3月",
+					value: (): Date[] => {
+						const end = new Date();
+						const start = new Date();
+						start.setMonth(start.getMonth() - 3);
+						start.setHours(0, 0, 0);
+						end.setHours(23, 59, 59);
+						return [start, end];
+					},
+				},
+				{
+					text: "近6月",
+					value: (): Date[] => {
+						const end = new Date();
+						const start = new Date();
+						start.setMonth(start.getMonth() - 6);
+						start.setHours(0, 0, 0);
+						end.setHours(23, 59, 59);
+						return [start, end];
+					},
+				},
+				{
+					text: "近1年",
+					value: (): Date[] => {
+						const end = new Date();
+						const start = new Date();
+						start.setFullYear(start.getFullYear() - 1);
+						start.setHours(0, 0, 0);
+						end.setHours(23, 59, 59);
+						return [start, end];
+					},
+				},
+			];
+		}
 	},
 	/**
 	 * 判断传入的时间是否大于当前时间

@@ -11,26 +11,29 @@ export declare const dateUtil: {
      */
     dateTimeFix(date: number | string | Date | null | undefined): string;
     /**
-     * 获取默认时间
-     * @returns [00:00:00, 23:59:59]
-     */
-    getDefaultTime(): Date[];
-    /**
      * 获取简单的日期时间
      * @returns xxxx-xx-xx 00:00:00
      */
     getSimpleTime(): Date;
     /**
-     * 获取简单的日期时间范围
+     * 获取默认时间
+     * @param isFuture 是否为未来时间
+     * @returns [00:00:00, 23:59:59]
      */
-    getSimpleShortcuts(): {
+    getDefaultTime(isFuture?: boolean): Date[];
+    /**
+     * 获取简单的日期时间范围
+     * @param isFuture 是否为未来时间
+     */
+    getSimpleShortcuts(isFuture?: boolean): {
         text: string;
         value: () => Date;
     }[];
     /**
      * 获取日期范围
+     * @param isFuture 是否为未来时间
      */
-    getShortcuts(): {
+    getShortcuts(isFuture?: boolean): {
         text: string;
         value: () => Date[];
     }[];
