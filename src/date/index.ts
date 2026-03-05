@@ -110,7 +110,7 @@ export const dateUtil = {
 	 * @param isFuture 是否为未来时间
 	 * @returns [00:00:00, 23:59:59]
 	 */
-	getDefaultTime(isFuture = false): Date[] {
+	getDefaultTime(isFuture = false): [Date, Date] {
 		const end = new Date();
 		const start = new Date();
 		if (isFuture) {

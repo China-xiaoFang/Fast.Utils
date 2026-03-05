@@ -20,7 +20,7 @@ export declare const dateUtil: {
      * @param isFuture 是否为未来时间
      * @returns [00:00:00, 23:59:59]
      */
-    getDefaultTime(isFuture?: boolean): Date[];
+    getDefaultTime(isFuture?: boolean): [Date, Date];
     /**
      * 获取简单的日期时间范围
      * @param isFuture 是否为未来时间
