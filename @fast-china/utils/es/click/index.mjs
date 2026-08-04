@@ -1,2 +1,0 @@
-let e=null,t=!1;const c={debounce(t,c=500){e&&clearTimeout(e),e=setTimeout(()=>{t()},c)},debounceAsync:async(t,c=500)=>new Promise((o,n)=>{e&&clearTimeout(e),e=setTimeout(async()=>{try{await t(),o()}catch(e){n(e)}},c)}),throttle(e,c=500){t||(t=!0,e(),setTimeout(()=>{t=!1},c))},throttleAsync:async(e,c=500)=>new Promise((o,n)=>{t||(t=!0,e().then(()=>{o()}).catch(e=>{n(e)}).finally(()=>{setTimeout(()=>{t=!1},c)}))})};export{c as clickUtil};
-//# sourceMappingURL=index.mjs.map

@@ -1,8 +1,249 @@
-const b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-const b64re = /^(?:[A-Z\d+/]{4})*?(?:[A-Z\d+/]{2}(?:==)?|[A-Z\d+/]{3}=?)?$/i;
+import { encodeUtf8, getTextDecoder } from "../internal/text.js";
+import { secureRandomInt } from "../number/index.js";
 
-/**加密字典 */
-const base64PwdDic = [
+const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+/** 内部共享解码器支持的两种字符表规则。 */
+type Base64Variant = "standard" | "url";
+
+/**
+ * 创建统一的 Base64 输入错误。
+ *
+ * @param variant - 当前解析的标准 Base64 或 Base64URL 变体。
+ * @returns 带有具体变体名称的 `TypeError`。
+ */
+const invalidBase64 = (variant: Base64Variant): TypeError => {
+	return new TypeError(`The value is not valid ${variant === "url" ? "Base64URL" : "Base64"}.`);
+};
+
+/**
+ * 校验并规范化 Base64 文本。
+ *
+ * @remarks 标准 Base64 允许 ASCII 空白，Base64URL 不允许；两者最终都会转换为标准字符表和完整填充。
+ * @param value - 原始编码文本。
+ * @param variant - 需要应用的字符表与空白规则。
+ * @returns 使用标准字符表且长度为 4 倍数的文本。
+ * @throws `TypeError` 当字符、填充位置或编码长度非法。
+ */
+const normalizeBase64 = (value: string, variant: Base64Variant): string => {
+	const withoutWhitespace = variant === "standard" ? value.replace(/[\t\n\f\r ]+/gu, "") : value;
+	const pattern = variant === "url" ? /^[\w-]*={0,2}$/u : /^[A-Za-z\d+/]*={0,2}$/u;
+	if (!pattern.test(withoutWhitespace) || withoutWhitespace.length % 4 === 1) throw invalidBase64(variant);
+	if (withoutWhitespace.includes("=") && withoutWhitespace.length % 4 !== 0) throw invalidBase64(variant);
+
+	const standard = (variant === "url" ? withoutWhitespace.replace(/-/gu, "+").replace(/_/gu, "/") : withoutWhitespace).replace(/=+$/u, "");
+	return standard.padEnd(Math.ceil(standard.length / 4) * 4, "=");
+};
+
+/**
+ * 使用固定字符表编码任意字节。
+ *
+ * @param bytes - 不会被修改的源字节。
+ * @returns 带标准 `=` 填充的 Base64 文本。
+ */
+const encodeBytes = (bytes: Uint8Array): string => {
+	let result = "";
+	for (let index = 0; index < bytes.length; index += 3) {
+		const first = bytes[index] ?? 0;
+		const second = bytes[index + 1];
+		const third = bytes[index + 2];
+		const bitmap = (first << 16) | ((second ?? 0) << 8) | (third ?? 0);
+		result += alphabet[(bitmap >> 18) & 63] ?? "";
+		result += alphabet[(bitmap >> 12) & 63] ?? "";
+		result += second === undefined ? "=" : (alphabet[(bitmap >> 6) & 63] ?? "");
+		result += third === undefined ? "=" : (alphabet[bitmap & 63] ?? "");
+	}
+	return result;
+};
+
+/**
+ * 把 Base64 或 Base64URL 文本解码为字节。
+ *
+ * @remarks 最后一组未使用位必须为零，以拒绝同一字节序列的非规范编码。
+ * @param value - 待解码文本。
+ * @param variant - 输入使用的编码变体。
+ * @returns 新建的字节数组。
+ * @throws `TypeError` 当输入格式或尾部位非法。
+ */
+const decodeBytes = (value: string, variant: Base64Variant): Uint8Array => {
+	const normalized = normalizeBase64(value, variant);
+	if (normalized.length === 0) return new Uint8Array();
+
+	const padding = normalized.endsWith("==") ? 2 : normalized.endsWith("=") ? 1 : 0;
+	const result = new Uint8Array((normalized.length / 4) * 3 - padding);
+	let outputIndex = 0;
+
+	for (let index = 0; index < normalized.length; index += 4) {
+		const first = alphabet.indexOf(normalized[index] ?? "");
+		const second = alphabet.indexOf(normalized[index + 1] ?? "");
+		const thirdCharacter = normalized[index + 2] ?? "=";
+		const fourthCharacter = normalized[index + 3] ?? "=";
+		const third = thirdCharacter === "=" ? 0 : alphabet.indexOf(thirdCharacter);
+		const fourth = fourthCharacter === "=" ? 0 : alphabet.indexOf(fourthCharacter);
+		if (first < 0 || second < 0 || third < 0 || fourth < 0) throw invalidBase64(variant);
+
+		const isLast = index + 4 === normalized.length;
+		// 填充字符对应的未使用低位必须为零，否则不同文本可以解码为同一字节序列。
+		if (isLast && ((padding === 2 && (second & 15) !== 0) || (padding === 1 && (third & 3) !== 0))) {
+			throw invalidBase64(variant);
+		}
+
+		const bitmap = (first << 18) | (second << 12) | (third << 6) | fourth;
+		if (outputIndex < result.length) result[outputIndex++] = (bitmap >> 16) & 255;
+		if (outputIndex < result.length) result[outputIndex++] = (bitmap >> 8) & 255;
+		if (outputIndex < result.length) result[outputIndex++] = bitmap & 255;
+	}
+	return result;
+};
+
+/**
+ * 以 Fatal 模式解码 UTF-8。
+ *
+ * @param bytes - 待解码字节。
+ * @returns 解码后的 JavaScript 字符串。
+ * @throws `TypeError` 当字节不是有效 UTF-8；原始平台异常保存在 `cause` 中。
+ */
+const decodeUtf8 = (bytes: Uint8Array): string => {
+	const textDecoder = getTextDecoder();
+	try {
+		return textDecoder.decode(bytes);
+	} catch (cause) {
+		throw new TypeError("The decoded bytes are not valid UTF-8.", { cause });
+	}
+};
+
+/**
+ * 将任意字节编码为标准 Base64。
+ *
+ * @param bytes - 不会被修改的字节序列。
+ * @returns 带标准 `=` 填充的 Base64 文本。
+ */
+export function encodeBase64Bytes(bytes: Uint8Array): string {
+	return encodeBytes(bytes);
+}
+
+/**
+ * 解码标准 Base64。
+ *
+ * @remarks 允许省略填充和包含 ASCII 空白，但拒绝非规范尾部位。
+ * @param value - Base64 文本。
+ * @returns 新建的字节数组。
+ * @throws 输入非法时抛出 `TypeError`。
+ */
+export function decodeBase64Bytes(value: string): Uint8Array {
+	return decodeBytes(value, "standard");
+}
+
+/**
+ * 将 UTF-8 文本编码为标准 Base64。
+ *
+ * @param value - 任意 Unicode 字符串。
+ * @returns 带标准填充的 Base64 文本。
+ * @throws 缺少 Encoding API 时抛出 `Error`。
+ */
+export function encodeBase64(value: string): string {
+	return encodeBytes(encodeUtf8(value));
+}
+
+/**
+ * 将标准 Base64 解码为 UTF-8 文本。
+ *
+ * @param value - Base64 文本。
+ * @returns 解码后的 Unicode 字符串。
+ * @throws Base64 或 UTF-8 非法时抛出 `TypeError`；缺少 Encoding API 时抛出 `Error`。
+ */
+export function decodeBase64(value: string): string {
+	return decodeUtf8(decodeBase64Bytes(value));
+}
+
+/**
+ * 将任意字节编码为无填充 Base64URL。
+ *
+ * @param bytes - 不会被修改的字节序列。
+ * @returns 仅使用 URL 安全字母表的文本。
+ */
+export function encodeBase64UrlBytes(bytes: Uint8Array): string {
+	return encodeBytes(bytes).replace(/\+/gu, "-").replace(/\//gu, "_").replace(/=+$/u, "");
+}
+
+/**
+ * 解码 Base64URL 字节。
+ *
+ * @remarks 接受带填充和无填充形式，不接受空白或标准 Base64 的 `+`、`/`。
+ * @param value - Base64URL 文本。
+ * @returns 新建的字节数组。
+ * @throws 输入非法时抛出 `TypeError`。
+ */
+export function decodeBase64UrlBytes(value: string): Uint8Array {
+	return decodeBytes(value, "url");
+}
+
+/**
+ * 将 UTF-8 文本编码为无填充 Base64URL。
+ *
+ * @param value - 任意 Unicode 字符串。
+ * @returns 仅使用 URL 安全字母表的文本。
+ * @throws 缺少 Encoding API 时抛出 `Error`。
+ */
+export function encodeBase64Url(value: string): string {
+	return encodeBase64UrlBytes(encodeUtf8(value));
+}
+
+/**
+ * 将 Base64URL 解码为 UTF-8 文本。
+ *
+ * @param value - 带填充或无填充的 Base64URL 文本。
+ * @returns 解码后的 Unicode 字符串。
+ * @throws Base64URL 或 UTF-8 非法时抛出 `TypeError`；缺少 Encoding API 时抛出 `Error`。
+ */
+export function decodeBase64Url(value: string): string {
+	return decodeUtf8(decodeBase64UrlBytes(value));
+}
+
+/**
+ * 把 Latin-1 文本编码为标准 Base64。
+ *
+ * @param value - 每个 UTF-16 码元都必须位于 0–255 的文本。
+ * @returns 带标准填充的 Base64 文本。
+ * @throws `TypeError` 当文本包含 Latin-1 范围外的码元。
+ */
+export function encodeLatin1Base64(value: string): string {
+	const bytes = new Uint8Array(value.length);
+	for (let index = 0; index < value.length; index += 1) {
+		const code = value.charCodeAt(index);
+		if (code > 255) throw new TypeError("The string to be encoded contains characters outside of the Latin-1 range.");
+		bytes[index] = code;
+	}
+	return encodeBase64Bytes(bytes);
+}
+
+/**
+ * 把标准 Base64 解码为 Latin-1 文本。
+ *
+ * @param value - 标准 Base64 文本；允许 ASCII 空白和省略尾部填充。
+ * @returns 每个字节直接映射为同值 UTF-16 码元的文本。
+ * @throws `TypeError` 当 Base64 格式或尾部位非法。
+ */
+export function decodeLatin1Base64(value: string): string {
+	const bytes = decodeBase64Bytes(value);
+	let result = "";
+	for (const byte of bytes) result += String.fromCharCode(byte);
+	return result;
+}
+
+const randomPrefixAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+const defaultRandomPrefixLength = 6;
+
+/** SecureBase64 兼容格式中一组不可变的字符插入位置。 */
+interface Base64PasswordDictionaryEntry {
+	/** 原始载荷中的固定字符索引；超出短载荷长度时忽略当前条目。 */
+	index: number;
+	/** 从原始载荷复制字符的固定索引；数值属于持久化协议，不能重新计算。 */
+	randomIndex: number;
+}
+
+/** 固定 SecureBase64 字典；索引、顺序与映射属于持久化格式，禁止修改。 */
+const base64PasswordDictionary: readonly Readonly<Base64PasswordDictionaryEntry>[] = Object.freeze([
 	{ index: 977, randomIndex: 188 },
 	{ index: 926, randomIndex: 201 },
 	{ index: 851, randomIndex: 225 },
@@ -14,7 +255,6 @@ const base64PwdDic = [
 	{ index: 300, randomIndex: 180 },
 	{ index: 200, randomIndex: 178 },
 	{ index: 100, randomIndex: 124 },
-	// 100 以内字典
 	{ index: 98, randomIndex: 95 },
 	{ index: 92, randomIndex: 90 },
 	{ index: 91, randomIndex: 87 },
@@ -36,146 +276,99 @@ const base64PwdDic = [
 	{ index: 7, randomIndex: 4 },
 	{ index: 5, randomIndex: 3 },
 	{ index: 2, randomIndex: 1 },
-];
-
-/**随机字符串长度 */
-const randomPrefixStrLength = 6;
-
-/**随机字符串 */
-const randomStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+]);
 
 /**
- * 在Base64字符串中添加加密字典
+ * 校验 SecureBase64 兼容格式的前缀长度。
+ *
+ * @param length - 待校验的前缀字符数。
+ * @throws `RangeError` 当长度不是非负安全整数。
  */
-function insertRandomStrToBase64Str(base64Str: string): string {
-	let strResult = base64Str;
-	const items = base64PwdDic.sort((a, b) => {
-		return b.index - a.index;
-	});
-	items.forEach((item) => {
-		if (item.index < base64Str.length) {
-			const randomChar = base64Str[item.randomIndex];
-			strResult = strResult.slice(0, item.index) + randomChar + strResult.slice(item.index);
-		}
-	});
-	return strResult;
-}
+const assertPrefixLength = (length: number): void => {
+	if (!Number.isSafeInteger(length) || length < 0) throw new RangeError("prefixStrLength must be a non-negative safe integer.");
+};
 
 /**
- * 删除Base64字符串中的加密字典
+ * 生成 SecureBase64 兼容格式使用的安全随机前缀。
+ *
+ * @remarks 前缀字符使用 Web Crypto 均匀生成，用于降低相同明文产生相同载荷的概率；它本身不构成加密。
+ * @param length - 需要生成的字符数，调用前必须完成校验。
+ * @returns 由历史字母表组成的文本。
  */
-function removeBase64StrRandomStr(base64Str: string): string {
-	const items = base64PwdDic.sort((a, b) => {
-		return a.index - b.index;
-	});
-	let strResult = base64Str;
-	items.forEach((item) => {
-		if (item.index < base64Str.length) {
-			strResult = strResult.slice(0, item.index) + strResult.slice(item.index + 1);
-		}
-	});
-	return strResult;
-}
-
-/**
- * 得到随机字符串
- */
-function getRandomStr(str = randomStr, prefixStrLength = randomPrefixStrLength): string {
+const createRandomPrefix = (length: number): string => {
 	let result = "";
-	for (let i = 0; i < prefixStrLength; i++) {
-		const randomInt = Math.ceil(Math.random() * (str.length - 1));
-		const randomChar = str[randomInt];
-		result += randomChar;
+	for (let index = 0; index < length; index += 1) {
+		result += randomPrefixAlphabet[secureRandomInt(0, randomPrefixAlphabet.length)] ?? "";
 	}
 	return result;
+};
+
+/**
+ * 按固定字典向 Base64 文本插入冗余字符。
+ *
+ * @remarks 字典按高索引到低索引排列，确保插入不会改变尚未处理的位置。
+ * @param base64Value - 尚未插入兼容字典字符的 Base64 文本。
+ * @returns 与旧持久化格式兼容的 SecureBase64 载荷。
+ */
+const insertDictionaryCharacters = (base64Value: string): string => {
+	let result = base64Value;
+	for (const item of base64PasswordDictionary) {
+		if (item.index >= base64Value.length) continue;
+		// 旧字典的 index=100 项会在 101–124 字符载荷中越界；退回末字符可保持单字符插入协议，旧解码器仍能移除。
+		const character = base64Value[item.randomIndex] ?? base64Value.at(-1) ?? "";
+		result = result.slice(0, item.index) + character + result.slice(item.index);
+	}
+	return result;
+};
+
+/**
+ * 移除历史字典插入的冗余字符。
+ *
+ * @param base64Value - 已移除安全随机前缀的 SecureBase64 载荷。
+ * @returns 可交给标准 Base64 解码器的文本。
+ */
+const removeDictionaryCharacters = (base64Value: string): string => {
+	let result = base64Value;
+	for (let index = base64PasswordDictionary.length - 1; index >= 0; index -= 1) {
+		const item = base64PasswordDictionary[index];
+		if (item !== undefined && item.index < base64Value.length) result = result.slice(0, item.index) + result.slice(item.index + 1);
+	}
+	return result;
+};
+
+/**
+ * 使用固定字典和安全随机前缀编码文本。
+ *
+ * @remarks 给定相同的 6 字符前缀时，默认输出与旧有效载荷逐字符兼容。旧字典在 101–124 字符载荷中引用越界；这里复制末字符作为单字符回退，
+ * 使旧删除字典流程仍能解码。传入 `0` 会同时关闭随机前缀与字典插入。
+ * 该格式只是可逆编码，不提供加密、完整性或身份认证。
+ * @param value - 任意可由 `encodeURIComponent` 处理的 Unicode 文本。
+ * @param prefixLength - 随机字母前缀长度；默认 `6`。
+ * @returns 带随机前缀和兼容字典字符的 Base64 文本；空输入返回空字符串。
+ * @throws `RangeError` 当前缀长度不是非负安全整数；缺少 Web Crypto 或输入包含孤立代理项时保留平台错误。
+ */
+export function encodeSecureBase64(value: string, prefixLength: number = defaultRandomPrefixLength): string {
+	if (value.length === 0) return "";
+	assertPrefixLength(prefixLength);
+	const prefix = createRandomPrefix(prefixLength);
+	let encoded = encodeLatin1Base64(encodeURIComponent(value));
+	if (prefixLength !== 0) encoded = insertDictionaryCharacters(encoded);
+	return prefix + encoded;
 }
 
 /**
- * Base64工具类
+ * 解码 {@link encodeSecureBase64} 生成的 SecureBase64 兼容格式。
+ *
+ * @param value - SecureBase64 文本；必须使用与编码时相同的前缀长度。
+ * @param prefixLength - 需要移除的前缀长度；默认 `6`，传入 `0` 时不移除字典字符。
+ * @returns 解码后的 Unicode 文本；空输入返回空字符串。
+ * @throws `RangeError` 当前缀长度不是非负安全整数；载荷、Base64 或 URI 编码非法时抛出 `TypeError` 或 `URIError`。
  */
-export const base64Util = {
-	/**
-	 * 将字符串编码为Base64格式
-	 */
-	bota(string: string): string {
-		string = String(string);
-		let bitmap,
-			a,
-			b,
-			c,
-			result = "",
-			i = 0,
-			// eslint-disable-next-line prefer-const
-			rest = string.length % 3;
-
-		for (; i < string.length; ) {
-			if ((a = string.charCodeAt(i++)) > 255 || (b = string.charCodeAt(i++)) > 255 || (c = string.charCodeAt(i++)) > 255)
-				throw new TypeError(
-					"Failed to execute 'btoa' on 'Window': The string to be encoded contains characters outside of the Latin1 range."
-				);
-
-			bitmap = (a << 16) | (b << 8) | c;
-			result += b64.charAt((bitmap >> 18) & 63) + b64.charAt((bitmap >> 12) & 63) + b64.charAt((bitmap >> 6) & 63) + b64.charAt(bitmap & 63);
-		}
-
-		return rest ? result.slice(0, rest - 3) + "===".substring(rest) : result;
-	},
-	/**
-	 * 将Base64编码的字符串解码回其原始格式。
-	 */
-	atob(string: string): string {
-		string = String(string).replace(/[\t\n\f\r ]+/g, "");
-		if (!b64re.test(string)) throw new TypeError("Failed to execute 'atob' on 'Window': The string to be decoded is not correctly encoded.");
-		string += "==".slice(2 - (string.length & 3));
-		let bitmap,
-			result = "",
-			r1,
-			r2,
-			i = 0;
-		for (; i < string.length; ) {
-			bitmap =
-				(b64.indexOf(string.charAt(i++)) << 18) |
-				(b64.indexOf(string.charAt(i++)) << 12) |
-				((r1 = b64.indexOf(string.charAt(i++))) << 6) |
-				(r2 = b64.indexOf(string.charAt(i++)));
-
-			result +=
-				r1 === 64
-					? String.fromCharCode((bitmap >> 16) & 255)
-					: r2 === 64
-						? String.fromCharCode((bitmap >> 16) & 255, (bitmap >> 8) & 255)
-						: String.fromCharCode((bitmap >> 16) & 255, (bitmap >> 8) & 255, bitmap & 255);
-		}
-		return result;
-	},
-	/**
-	 * 字符串ToBase64
-	 */
-	toBase64(str: string, prefixStrLength = randomPrefixStrLength): string {
-		if (str.length === 0) {
-			return "";
-		}
-		const randomPrefixStr = getRandomStr();
-		let base64 = base64Util.bota(encodeURIComponent(str));
-		if (prefixStrLength !== 0) {
-			base64 = insertRandomStrToBase64Str(base64);
-		}
-		return randomPrefixStr + base64;
-	},
-
-	/**
-	 * Base64转字符串
-	 */
-	base64ToStr(str: string, prefixStrLength = randomPrefixStrLength): string {
-		let result = str;
-		if (str.length === 0) {
-			return "";
-		}
-		let input = str.slice(prefixStrLength);
-		if (prefixStrLength !== 0) {
-			input = removeBase64StrRandomStr(input);
-		}
-		result = base64Util.atob(input);
-		return decodeURIComponent(result);
-	},
-};
+export function decodeSecureBase64(value: string, prefixLength: number = defaultRandomPrefixLength): string {
+	if (value.length === 0) return "";
+	assertPrefixLength(prefixLength);
+	if (prefixLength > value.length) throw new TypeError("The Base64 value is shorter than its configured prefix.");
+	let encoded = value.slice(prefixLength);
+	if (prefixLength !== 0) encoded = removeDictionaryCharacters(encoded);
+	return decodeURIComponent(decodeLatin1Base64(encoded));
+}

@@ -1,33 +1,17 @@
+/** 可同步或异步返回结果的函数。 */
+export type AwaitableFunction<Arguments extends readonly unknown[], Result> = (...arguments_: Arguments) => Result | PromiseLike<Result>;
+
 /**
- * 执行方法
- * @param fn 要执行的方法
- * @param args 参数
+ * 统一执行同步或异步函数，异常保持原样向调用方传播。
+ *
+ * @param function_ - 可选的待执行函数。
+ * @param arguments_ - 原样传入函数的参数。
+ * @returns 函数结果；未传函数时返回 `undefined`。
  */
-
-import { consoleError } from "../console";
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-export const execFunction = async <T = void>(fn: Function, ...args: any[]): Promise<T> => {
-	if (!fn) return Promise.resolve(undefined);
-	// 判断是否为异步方法
-	if (fn.constructor.name === "AsyncFunction") {
-		// 异步方法
-		try {
-			return await fn(...args);
-		} catch (error) {
-			consoleError("execFunction", error as any);
-			return Promise.reject(error);
-		}
-	} else {
-		// 同步方法
-		return new Promise((resolve, reject) => {
-			try {
-				const res = fn(...args);
-				return resolve(res);
-			} catch (error) {
-				consoleError("execFunction", error as any);
-				return reject(error);
-			}
-		});
-	}
-};
+export async function callOptionalFunction<Arguments extends readonly unknown[], Result>(
+	function_: AwaitableFunction<Arguments, Result> | null | undefined,
+	...arguments_: Arguments
+): Promise<Awaited<Result> | undefined> {
+	if (function_ === null || function_ === undefined) return undefined;
+	return await function_(...arguments_);
+}

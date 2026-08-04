@@ -1,7 +1,10 @@
 /**
- * 定义类型数据
- * @description 传入什么就返回什么，用来定义reactive或其他对象的响应式数据
+ * 保留传入值并显式指定其 TypeScript 类型。
+ *
+ * @remarks 未传值时运行时结果为 `undefined`，仅适合为 reactive 对象的初始字段提供类型。
+ * @param data - 可选的原始值。
+ * @returns 传入值本身；省略时返回类型化的 `undefined`。
  */
-export const withDefineType = <T>(data: T = undefined): T => {
-	return data;
-};
+export function withDefineType<Value>(data?: Value): Value {
+	return data as Value;
+}
