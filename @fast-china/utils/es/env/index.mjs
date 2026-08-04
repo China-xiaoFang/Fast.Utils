@@ -1,2 +1,0 @@
-const i={isUni:()=>"undefined"!=typeof uni,isWeb:()=>"undefined"!=typeof window&&void 0!==window.document,isMobile(){if(!this.isWeb())return!1;const i=navigator.userAgent||"";return/Mobile|iPhone|Android.*Mobile|Windows Phone/i.test(i)},isIpad(){if(!this.isWeb())return!1;const i=navigator.userAgent||"";return/iPad|Android(?!.*Mobile)|Tablet/i.test(i)}};export{i as envUtil};
-//# sourceMappingURL=index.mjs.map

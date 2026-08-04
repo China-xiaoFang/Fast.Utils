@@ -1,2 +1,0 @@
-"use strict";Object.defineProperty(exports,Symbol.toStringTag,{value:"Module"});const t=()=>{};exports.withInstall=(t,e)=>{if(t.install=o=>{for(const s of[t,...Object.values(e??{})])o.component(s.name,s)},e)for(const[o,s]of Object.entries(e))t[o]=s;return t},exports.withInstallDirective=(t,e)=>(t.install=o=>{o.directive(e,t)},t),exports.withNoopInstall=e=>(e.install=t,e);
-//# sourceMappingURL=install.js.map

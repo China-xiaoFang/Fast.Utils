@@ -1,0 +1,19 @@
+{
+	"extends": "../tsconfig.json",
+	"compilerOptions": {
+		// 类型契约直接解析源码入口，避免测试尚未构建时误用陈旧 dist 声明。
+		"paths": {
+			"@fast-china/utils": ["../src/index.ts"]
+		},
+		// 测试由 Node.js 执行，需要显式加载 Node.js 全局类型。
+		"types": ["node"],
+		// 测试项目只检查类型，不生成声明。
+		"declaration": false,
+		"declarationMap": false,
+		"isolatedDeclarations": false,
+		// 测试实现跳过工具链的可选声明；包契约测试会用 skipLibCheck=false 检查真实消费者。
+		"skipLibCheck": true
+	},
+	// 同时检查 Runtime 测试、包契约测试和公开 API 编译契约。
+	"include": ["./**/*.ts"]
+}

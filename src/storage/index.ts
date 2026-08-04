@@ -1,337 +1,524 @@
-import { computed, reactive } from "vue";
-import { base64Util } from "../base64";
-import { consoleError } from "../console";
-import { FastError } from "../error";
+import { decodeBase64, encodeBase64 } from "../base64/index.js";
 
-const state = reactive({
-	prefix: "fast__",
-	expireSuffix: "__Expire",
-	crypto: false,
-});
+/** uni-app 同步存储信息中本库实际读取的字段。 */
+interface UniStorageInfo {
+	/** 当前平台可见的物理键快照。 */
+	keys: readonly string[];
+}
+
+/** 全局 `uni` 必须提供的同步存储 API 最小结构。 */
+interface UniStorageLike {
+	/**
+	 * 同步读取一个物理键的原始值。
+	 * @param key - 已包含全局命名空间前缀的物理键。
+	 * @returns 平台保存的值；键缺失时应返回 `undefined`、`null` 或空字符串。
+	 */
+	getStorageSync: (key: string) => unknown;
+	/**
+	 * 同步读取平台当前可见的全部物理键。
+	 * @returns 至少包含只读 `keys` 数组的快照对象。
+	 */
+	getStorageInfoSync: () => UniStorageInfo;
+	/**
+	 * 同步删除一个物理键；键不存在时应保持幂等。
+	 * @param key - 已包含全局命名空间前缀的物理键。
+	 */
+	removeStorageSync: (key: string) => void;
+	/**
+	 * 同步写入已经序列化的包络文本。
+	 * @param key - 已包含全局命名空间前缀的物理键。
+	 * @param value - JSON 包络字符串，不是未经编码的业务值。
+	 */
+	setStorageSync: (key: string, value: string) => void;
+}
+
+/** Storage 业务值编码器。 */
+export interface StorageCodec {
+	/**
+	 * 把已编码文本恢复为业务值。
+	 * @param value - 由同一 Codec 的 `encode` 生成并持久化的文本。
+	 * @returns 解码后的业务值。
+	 * @throws 当文本损坏、格式不受支持或无法反序列化时应抛出错误。
+	 */
+	decode: (value: string) => unknown;
+	/**
+	 * 把业务值编码为可持久化字符串。
+	 * @param value - 调用方传入的业务值。
+	 * @returns 可由同一 Codec 的 `decode` 无损恢复的文本。
+	 * @throws 当值不受支持或无法序列化时应抛出错误。
+	 */
+	encode: (value: unknown) => string;
+}
+
+/** 程序入口调用 {@link configureStorage} 时使用的全局配置。 */
+export interface StorageConfiguration {
+	/** 自定义值编码器；默认使用严格 JSON Codec，同一应用生命周期内必须保持同一引用。 */
+	codec?: StorageCodec;
+	/** 返回 Unix 毫秒时间戳的时钟；默认使用 `Date.now`，主要用于 TTL 测试与受控时间源。 */
+	now?: () => number;
+	/** 所有物理键使用的非空命名空间前缀；`clear` 与 `keys` 不会越过该范围。 */
+	prefix: string;
+}
+
+/** 单次 Storage 写入配置。 */
+export interface StorageWriteOptions {
+	/** 从写入时刻开始的有效毫秒数；必须是大于 0 的有限数，省略时永久有效。 */
+	ttlMs?: number;
+}
+
+/** `Local` 与 `Session` 的统一操作接口。 */
+export interface StorageArea {
+	/** 当前全局 Storage 配置的物理键前缀；读取它会要求 Storage 已经完成配置。 */
+	readonly prefix: string;
+	/**
+	 * 删除当前命名空间内的全部键，不影响同一后端中的其他应用键。
+	 * @throws `Error` 当 Storage 尚未配置或后端不可用。
+	 */
+	clear: () => void;
+	/**
+	 * 获取并解码业务值；已过期记录会在读取时删除。
+	 * @param key - 不含全局前缀的非空业务键。
+	 * @returns 解码后的值；键缺失或过期时返回 `undefined`。
+	 * @throws 当键非法、包络损坏、Codec 解码失败或后端不可用时抛出错误。
+	 */
+	get: <Value = unknown>(key: string) => Value | undefined;
+	/**
+	 * 判断一个可成功读取且未过期的业务键是否存在。
+	 * @param key - 不含全局前缀的非空业务键。
+	 * @returns 键存在且包络有效时返回 `true`。
+	 */
+	has: (key: string) => boolean;
+	/**
+	 * 返回当前命名空间内的业务键快照。
+	 * @returns 已移除全局前缀并按字典序排列的新数组；不会自动清理过期项。
+	 */
+	keys: () => string[];
+	/**
+	 * 扫描当前命名空间并删除全部过期记录。
+	 * @returns 本次实际删除的记录数量。
+	 * @throws 当发现损坏包络或后端不可用时抛出错误。
+	 */
+	pruneExpired: () => number;
+	/**
+	 * 删除单个业务键；键不存在时保持幂等。
+	 * @param key - 不含全局前缀的非空业务键。
+	 */
+	remove: (key: string) => void;
+	/**
+	 * 删除业务键以指定文本开头的全部条目，范围仍受全局命名空间限制。
+	 * @param keyPrefix - 不含全局前缀的非空业务键前缀。
+	 */
+	removeByPrefix: (keyPrefix: string) => void;
+	/**
+	 * 编码并写入业务值，可附加惰性清理的 TTL。
+	 * @param key - 不含全局前缀的非空业务键。
+	 * @param value - 必须受当前 Codec 支持的业务值。
+	 * @param options - 可选的单次写入 TTL。
+	 * @throws 当键、TTL、业务值或后端写入无效时抛出错误。
+	 */
+	set: <Value>(key: string, value: Value, options?: StorageWriteOptions) => void;
+}
+
+/** 浏览器 Storage 与 uni-app Storage 适配后的最小内部协议。 */
+interface StorageBackend {
+	/** 读取物理键原始值；缺失约定由上层统一规范为 `undefined`。 */
+	getItem: (key: string) => unknown;
+	/** 枚举后端可见的全部物理键；返回值必须是不会随枚举过程变化的快照。 */
+	keys: () => readonly string[];
+	/** 删除单个物理键；实现必须允许重复删除。 */
+	removeItem: (key: string) => void;
+	/** 写入已经序列化的包络文本；配额和平台错误保持原样传播。 */
+	setItem: (key: string, value: string) => void;
+}
+
+/** 物理存储中的版本化包络；业务值始终先经 Codec 转为文本。 */
+interface StoredEnvelope {
+	/** Codec 编码后的业务文本；只有在包络结构校验通过后才能交给 Codec。 */
+	data: string;
+	/** Unix 毫秒绝对过期时间戳；`null` 表示永久有效。 */
+	expiresAt: number | null;
+	/** 当前持久化协议版本；读取其他版本必须明确失败，不能猜测迁移。 */
+	version: 3;
+}
+
+/** 首次配置后冻结使用的解析结果和两个稳定门面。 */
+interface ActiveStorageConfiguration {
+	/** 首次配置后锁定的业务值 Codec 引用。 */
+	codec: StorageCodec;
+	/** 已绑定 Local 后端、命名空间、Codec 与时钟的实际 Area。 */
+	local: StorageArea;
+	/** 首次配置后锁定的 TTL 时钟引用。 */
+	now: () => number;
+	/** 所有 Area 共享的物理键命名空间前缀。 */
+	prefix: string;
+	/** 仅浏览器模式存在的 Session Area；uni-app 模式必须保持缺失。 */
+	session?: StorageArea;
+}
+
+/** 浏览器 Storage 在调用阶段延迟读取的平台全局对象最小视图。 */
+interface RuntimeStorageGlobals {
+	/** 可选 localStorage；缺失时 `Local` 操作明确失败。 */
+	localStorage?: Storage;
+	/** 可选 sessionStorage；缺失时 `Session` 操作明确失败。 */
+	sessionStorage?: Storage;
+	/** uni-app 运行时暴露的全局对象；只在调用 `configureStorage` 时读取和校验。 */
+	uni?: unknown;
+}
+
+const runtimeStorageGlobals = globalThis as unknown as RuntimeStorageGlobals;
 
 /**
- * 本地缓存前缀 Key
+ * 读取并校验当前运行时的全局 uni-app 同步 Storage。
+ *
+ * @returns 检测到 uni-app 时返回同步 Storage；普通浏览器环境返回 `undefined`。
+ * @throws `TypeError` 当全局 `uni` 存在但缺少本库需要的同步 Storage 方法。
  */
-export const CACHE_PREFIX = computed(() => state.prefix);
+const getGlobalUniStorage = (): UniStorageLike | undefined => {
+	const value = runtimeStorageGlobals.uni;
+	if (value === undefined) return undefined;
+	if ((typeof value !== "object" && typeof value !== "function") || value === null) {
+		throw new TypeError("The global uni object does not provide synchronous Storage APIs.");
+	}
+	const storage = value as Partial<UniStorageLike>;
+	if (
+		typeof storage.getStorageSync !== "function" ||
+		typeof storage.getStorageInfoSync !== "function" ||
+		typeof storage.removeStorageSync !== "function" ||
+		typeof storage.setStorageSync !== "function"
+	) {
+		throw new TypeError("The global uni object does not provide synchronous Storage APIs.");
+	}
+	return storage as UniStorageLike;
+};
+
+/** 默认 JSON Codec；显式拒绝会被 JSON.stringify 静默丢弃的顶层值。 */
+const jsonCodec: StorageCodec = {
+	decode: (value): unknown => JSON.parse(value) as unknown,
+	encode: (value): string => {
+		const encoded: unknown = JSON.stringify(value);
+		if (typeof encoded !== "string") throw new TypeError("The storage value is not JSON-serializable.");
+		return encoded;
+	},
+};
+
+/** Base64 混淆 Codec；只隐藏明文外观，不提供加密、完整性或认证。 */
+export const base64StorageCodec: StorageCodec = {
+	decode: (value): unknown => JSON.parse(decodeBase64(value)) as unknown,
+	encode: (value): string => {
+		const encoded: unknown = JSON.stringify(value);
+		if (typeof encoded !== "string") throw new TypeError("The storage value is not JSON-serializable.");
+		return encodeBase64(encoded);
+	},
+};
+
+/** 页面级唯一配置；只允许幂等重复配置，避免模块加载顺序改变行为。 */
+let activeConfiguration: ActiveStorageConfiguration | undefined;
 
 /**
- * 本地缓存过期值后缀 Key
+ * 判断未知值是否为非数组对象记录。
+ *
+ * @param value - JSON.parse 返回的未知值。
+ * @returns 值为非空、非数组对象时返回 `true`。
  */
-export const CACHE_EXPIRE_SUFFIX = computed(() => state.expireSuffix);
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
-export const useStorage = () => {
+/**
+ * 校验 Storage 业务键。
+ *
+ * @param key - 不含全局 Prefix 的业务键或业务键前缀。
+ * @throws `TypeError` 当值不是非空字符串。
+ */
+const assertKey = (key: string): void => {
+	if (typeof key !== "string" || key.length === 0) throw new TypeError("Storage keys must be non-empty strings.");
+};
+
+/**
+ * 创建浏览器 Storage 后端。
+ *
+ * @remarks 平台对象在调用阶段读取，因此导入模块不会访问浏览器全局对象。
+ * @param kind - 选择 `localStorage` 或 `sessionStorage`。
+ * @returns 统一的内部同步后端。
+ * @throws `Error` 当所选 Storage 在当前环境不可用。
+ */
+const createWebStorageBackend = (kind: "local" | "session"): StorageBackend => {
+	const storage = kind === "local" ? runtimeStorageGlobals.localStorage : runtimeStorageGlobals.sessionStorage;
+	if (storage === undefined) throw new Error(`${kind}Storage is unavailable in the current runtime.`);
 	return {
-		/**
-		 * 设置缓存前缀 Key
-		 * @param key
-		 */
-		setPrefix(key: string): void {
-			state.prefix = key;
+		getItem: (key): string | null => storage.getItem(key),
+		keys: (): string[] => {
+			const keys: string[] = [];
+			for (let index = 0; index < storage.length; index += 1) {
+				const key = storage.key(index);
+				if (key !== null) keys.push(key);
+			}
+			return keys;
 		},
-		/**
-		 * 缓存过期值后缀 Key
-		 * @param key
-		 */
-		setExpireSuffix(key: string): void {
-			state.expireSuffix = key;
+		removeItem: (key): void => {
+			storage.removeItem(key);
 		},
-		/**
-		 * 设置缓存是否加密
-		 * @description 请在初始化的时候确认，后续不可再修改，否则所有数据都将失效
-		 * @param crypto
-		 */
-		setCrypto(crypto: boolean): void {
-			state.crypto = crypto;
+		setItem: (key, value): void => {
+			storage.setItem(key, value);
 		},
 	};
 };
 
-const storage = {
-	set(key: string, val: any): void {
-		if (typeof uni !== "undefined") {
-			uni.setStorageSync(key, val);
-		} else {
-			window.localStorage.setItem(key, val);
-		}
+/**
+ * 把 uni-app 同步 Storage 适配为内部后端。
+ *
+ * @remarks uni-app 以空字符串同时表示“键缺失”和“真实空值”，因此空字符串需要结合键清单消除歧义。
+ * @param storage - 已从全局 `uni` 读取并校验的同步 API。
+ * @returns 统一的内部同步后端。
+ */
+const createUniStorageBackend = (storage: UniStorageLike): StorageBackend => ({
+	getItem: (key): unknown => {
+		const value = storage.getStorageSync(key);
+		if (value !== "") return value;
+		return storage.getStorageInfoSync().keys.includes(key) ? value : undefined;
 	},
-	get(key: string): string | any | null {
-		if (typeof uni !== "undefined") {
-			return uni.getStorageSync(key);
-		} else {
-			return window.localStorage.getItem(key);
-		}
+	keys: (): readonly string[] => [...storage.getStorageInfoSync().keys],
+	removeItem: (key): void => {
+		storage.removeStorageSync(key);
 	},
-	remove(key: string): void {
-		if (typeof uni !== "undefined") {
-			uni.removeStorageSync(key);
-		} else {
-			window.localStorage.removeItem(key);
-		}
+	setItem: (key, value): void => {
+		storage.setStorageSync(key, value);
 	},
-	clear(): void {
-		if (typeof uni !== "undefined") {
-			uni.clearStorageSync();
-		} else {
-			window.localStorage.clear();
+});
+
+/**
+ * 解析并校验版本化 Storage 包络。
+ *
+ * @param rawValue - 后端返回的原始值。
+ * @param key - 用于错误定位的完整物理键。
+ * @returns 当前 v3 包络。
+ * @throws `TypeError` 当原始值不是字符串、JSON 损坏、版本不支持或字段类型非法。
+ */
+const parseStoredEnvelope = (rawValue: unknown, key: string): StoredEnvelope => {
+	if (typeof rawValue !== "string") throw new TypeError(`Storage entry "${key}" is not a string.`);
+	try {
+		const parsed = JSON.parse(rawValue) as unknown;
+		if (
+			!isRecord(parsed) ||
+			parsed["version"] !== 3 ||
+			typeof parsed["data"] !== "string" ||
+			!(parsed["expiresAt"] === null || (typeof parsed["expiresAt"] === "number" && Number.isFinite(parsed["expiresAt"])))
+		) {
+			throw new TypeError("Unsupported storage envelope.");
 		}
-	},
-	keys(): string[] | Storage {
-		if (typeof uni !== "undefined") {
-			return uni.getStorageInfoSync().keys;
-		} else {
-			return window.localStorage;
-		}
-	},
+		return { data: parsed["data"], expiresAt: parsed["expiresAt"], version: 3 };
+	} catch (cause) {
+		throw new TypeError(`Storage entry "${key}" is corrupted or unsupported.`, { cause });
+	}
 };
 
 /**
- * window.localStorage
- * - 如果是 UniApp 环境则使用的是 uni.xxxStorage
+ * 创建绑定命名空间、Codec 与时钟的 Storage Area。
+ *
+ * @param backendFactory - 每次操作时解析平台后端的工厂，保证导入安全并反映平台可用性。
+ * @param prefix - 已校验的全局物理键前缀。
+ * @param codec - 业务值与包络文本之间的 Codec。
+ * @param now - TTL 计算使用的可注入时钟。
+ * @returns 完整的命名空间 Storage 操作集合。
  */
-export const Local = {
+const createStorageArea = (backendFactory: () => StorageBackend, prefix: string, codec: StorageCodec, now: () => number): StorageArea => {
 	/**
-	 * 设置
-	 * @param key 缓存的Key
-	 * @param val 缓存值
-	 * @param expire 过期时间，单位分钟
-	 * @param encrypt 是否对缓存的数据加密
+	 * 拼接物理键。
+	 *
+	 * @param key - 已校验业务键。
+	 * @returns 带当前命名空间前缀的物理键。
 	 */
-	set(key: string, val: any, expire?: number, encrypt?: boolean): void {
-		try {
-			encrypt ??= state.crypto;
-			// 判断是否存在缓存过期时间
-			if (expire) {
-				if (isNaN(expire) || expire < 1) {
-					throw new FastError("有效期应为一个有效数值");
-				}
-				// 设置过期时间的缓存
-				const expireData = {
-					time: Date.now(),
-					expire,
-				};
-				const expireJson = JSON.stringify(expireData);
-				storage.set(`${state.prefix}${key}${state.expireSuffix}`, expireJson);
-			}
-			let valJson = JSON.stringify(val);
-			if (encrypt) {
-				valJson = base64Util.toBase64(valJson);
-			}
-			storage.set(`${state.prefix}${key}`, valJson);
-		} catch (error) {
-			consoleError("Local", error);
+	const toStorageKey = (key: string): string => `${prefix}${key}`;
+	/**
+	 * 枚举当前命名空间中的业务键。
+	 *
+	 * @param backend - 本次操作使用的后端。
+	 * @returns 已移除物理前缀、去重并排序的业务键。
+	 * @throws `TypeError` 当后端返回非字符串键。
+	 */
+	const listBusinessKeys = (backend: StorageBackend): string[] => {
+		const keys = backend.keys();
+		if (!Array.isArray(keys) || !keys.every((key) => typeof key === "string")) {
+			throw new TypeError("Storage backend keys must be strings.");
 		}
-	},
+		return [...new Set(keys.filter((key) => key.startsWith(prefix)).map((key) => key.slice(prefix.length)))].sort();
+	};
 	/**
-	 * 获取
-	 * @param key 缓存的Key
-	 * @param decrypt 是否对缓存的数据解密
-	 * @returns {T} 传入的对象类型，默认为 string
+	 * 读取并处理单个包络。
+	 *
+	 * @param backend - 本次操作使用的后端。
+	 * @param key - 业务键。
+	 * @returns 未过期包络；键缺失或已经过期时返回 `undefined`。
+	 * @throws `TypeError` 当键或包络非法。
+	 * @throws `RangeError` 当注入时钟返回非有限时间戳。
 	 */
-	get<T = string>(key: string, decrypt?: boolean): T {
-		try {
-			decrypt ??= state.crypto;
-			// 获取缓存 JSON 字符串
-			let valJson = storage.get(`${state.prefix}${key}`);
+	const readStoredEnvelope = (backend: StorageBackend, key: string): StoredEnvelope | undefined => {
+		assertKey(key);
+		const storageKey = toStorageKey(key);
+		const rawValue = backend.getItem(storageKey);
+		if (rawValue === null || rawValue === undefined) return undefined;
+		const envelope = parseStoredEnvelope(rawValue, storageKey);
+		if (envelope.expiresAt === null) return envelope;
+		const timestamp = now();
+		if (!Number.isFinite(timestamp)) throw new RangeError("Storage clock must return a finite timestamp.");
+		if (timestamp < envelope.expiresAt) return envelope;
+		// 过期项在读取时立即删除，后续 has/keys/pruneExpired 观察到一致状态。
+		backend.removeItem(storageKey);
+		return undefined;
+	};
 
-			if (valJson) {
-				// 判断是否解密
-				if (decrypt) {
-					valJson = base64Util.base64ToStr(valJson);
-				}
-				// 尝试获取缓存过期时间的 JSON 字符串
-				const expireJson = storage.get(`${state.prefix}${key}${state.expireSuffix}`);
-				// 判断是否存在过期时间
-				if (expireJson) {
-					const expireData = JSON.parse(expireJson);
-					if (Date.now() > expireData.time + expireData.expire * 60 * 1000) {
-						// 过期了，删除对应的缓存数据
-						storage.remove(`${state.prefix}${key}`);
-						storage.remove(`${state.prefix}${key}${state.expireSuffix}`);
-						return null;
-					}
-				}
-				try {
-					return JSON.parse(valJson) as T;
-				} catch {
-					return valJson as T;
-				}
+	return {
+		prefix,
+		clear(): void {
+			const backend = backendFactory();
+			for (const key of listBusinessKeys(backend)) backend.removeItem(toStorageKey(key));
+		},
+		get<Value>(key: string): Value | undefined {
+			const envelope = readStoredEnvelope(backendFactory(), key);
+			if (envelope === undefined) return undefined;
+			try {
+				return codec.decode(envelope.data) as Value;
+			} catch (cause) {
+				throw new TypeError(`Storage entry "${toStorageKey(key)}" could not be decoded.`, { cause });
 			}
-			return null;
-		} catch (error) {
-			consoleError("Local", error);
-		}
-	},
-	/**
-	 * 移除
-	 * @param key 缓存的Key
-	 */
-	remove(key: string): void {
-		try {
-			storage.remove(`${state.prefix}${key}`);
-			storage.remove(`${state.prefix}${key}${state.expireSuffix}`);
-		} catch (error) {
-			consoleError("Local", error);
-		}
-	},
-	/**
-	 * 根据前缀移除
-	 * @param key 缓存的Key
-	 */
-	removeByPrefix(key: string): void {
-		try {
-			for (const itemKey in storage.keys) {
-				if (itemKey.indexOf(`${state.prefix}${key}`) !== -1) {
-					storage.remove(itemKey);
-				}
+		},
+		has: (key): boolean => readStoredEnvelope(backendFactory(), key) !== undefined,
+		keys: (): string[] => listBusinessKeys(backendFactory()),
+		pruneExpired(): number {
+			const backend = backendFactory();
+			let removed = 0;
+			for (const key of listBusinessKeys(backend)) {
+				// read 同时处理删除；先读取一次用于区分“原本缺失”和“本轮因过期删除”。
+				const before = backend.getItem(toStorageKey(key));
+				if (before !== null && before !== undefined && readStoredEnvelope(backend, key) === undefined) removed += 1;
 			}
-		} catch (error) {
-			consoleError("Local", error);
-		}
-	},
-	/**
-	 * 移除全部
-	 */
-	clear(): void {
-		try {
-			storage.clear();
-		} catch (error) {
-			consoleError("Local", error);
-		}
-	},
+			return removed;
+		},
+		remove(key: string): void {
+			assertKey(key);
+			backendFactory().removeItem(toStorageKey(key));
+		},
+		removeByPrefix(keyPrefix: string): void {
+			assertKey(keyPrefix);
+			const backend = backendFactory();
+			for (const key of listBusinessKeys(backend)) if (key.startsWith(keyPrefix)) backend.removeItem(toStorageKey(key));
+		},
+		set<Value>(key: string, value: Value, options: StorageWriteOptions = {}): void {
+			assertKey(key);
+			if (value === undefined) throw new TypeError("Top-level undefined cannot be stored; remove the key instead.");
+			let expiresAt: number | null = null;
+			if (options.ttlMs !== undefined) {
+				if (!Number.isFinite(options.ttlMs) || options.ttlMs <= 0) throw new RangeError("ttlMs must be a positive finite number.");
+				const timestamp = now();
+				if (!Number.isFinite(timestamp) || !Number.isFinite(timestamp + options.ttlMs)) {
+					throw new RangeError("Storage expiry exceeds the supported timestamp range.");
+				}
+				expiresAt = timestamp + options.ttlMs;
+			}
+			let data: string;
+			try {
+				data = codec.encode(value);
+				if (typeof data !== "string") throw new TypeError("Storage codecs must return strings.");
+			} catch (cause) {
+				throw new TypeError("The storage value could not be encoded.", { cause });
+			}
+			backendFactory().setItem(toStorageKey(key), JSON.stringify({ data, expiresAt, version: 3 } satisfies StoredEnvelope));
+		},
+	};
 };
 
 /**
- * window.sessionStorage
- * - UniApp 环境下不可用
+ * 获取已激活的全局 Storage 配置。
+ *
+ * @returns 首次 `configureStorage` 创建的内部配置。
+ * @throws `Error` 当应用入口尚未配置 Storage。
  */
-export const Session = {
-	/**
-	 * 设置会话缓存
-	 * @param key 缓存的Key
-	 * @param val 缓存值
-	 * @param expire 过期时间，单位分钟
-	 * @param encrypt 是否对缓存的数据加密
-	 */
-	set(key: string, val: any, expire?: number, encrypt?: boolean): void {
-		if (typeof uni !== "undefined") {
-			consoleError("Session", "UniApp 环境下 [Session] 不可用。");
-			return;
-		}
-		try {
-			encrypt ??= state.crypto;
-			// 判断是否存在缓存过期时间
-			if (expire) {
-				if (isNaN(expire) || expire < 1) {
-					throw new FastError("有效期应为一个有效数值");
-				}
-				// 设置过期时间的缓存
-				const expireData = {
-					time: Date.now(),
-					expire,
-				};
-				const expireJson = JSON.stringify(expireData);
-				window.sessionStorage.setItem(`${state.prefix}${key}${state.expireSuffix}`, expireJson);
-			}
-			let valJson = JSON.stringify(val);
-			if (encrypt) {
-				valJson = base64Util.toBase64(valJson);
-			}
-			window.sessionStorage.setItem(`${state.prefix}${key}`, valJson);
-		} catch (error) {
-			consoleError("Session", error);
-		}
-	},
-	/**
-	 * 获取会话缓存
-	 * @param key 缓存的Key
-	 * @param decrypt 是否对缓存的数据解密
-	 * @returns {T} 传入的对象类型，默认为 string
-	 */
-	get<T = string>(key: string, decrypt?: boolean): T {
-		if (typeof uni !== "undefined") {
-			consoleError("Session", "UniApp 环境下 [Session] 不可用。");
-			return;
-		}
-		try {
-			decrypt ??= state.crypto;
-			// 获取缓存 JSON 字符串
-			let valJson = window.sessionStorage.getItem(`${state.prefix}${key}`);
-			if (valJson) {
-				// 判断是否解密
-				if (decrypt) {
-					valJson = base64Util.base64ToStr(valJson);
-				}
-				// 尝试获取缓存过期时间的 JSON 字符串
-				const expireJson = window.sessionStorage.getItem(`${state.prefix}${key}${state.expireSuffix}`);
-				// 判断是否存在过期时间
-				if (expireJson) {
-					const expireData = JSON.parse(expireJson);
-					if (Date.now() > expireData.time + expireData.expire * 60 * 1000) {
-						// 过期了，删除对应的缓存数据
-						window.sessionStorage.removeItem(`${state.prefix}${key}`);
-						window.sessionStorage.removeItem(`${state.prefix}${key}${state.expireSuffix}`);
-						return null;
-					}
-				}
-				try {
-					return JSON.parse(valJson) as T;
-				} catch {
-					return valJson as T;
-				}
-			}
-			return null;
-		} catch (error) {
-			consoleError("Session", error);
-		}
-	},
-	/**
-	 * 移除会话缓存
-	 * @param key 缓存的Key
-	 */
-	remove(key: string): void {
-		if (typeof uni !== "undefined") {
-			consoleError("Session", "UniApp 环境下 [Session] 不可用。");
-			return;
-		}
-		try {
-			window.sessionStorage.removeItem(`${state.prefix}${key}`);
-			window.sessionStorage.removeItem(`${state.prefix}${key}${state.expireSuffix}`);
-		} catch (error) {
-			consoleError("Session", error);
-		}
-	},
-	/**
-	 * 根据前缀移除会话缓存
-	 * @param key 缓存的Key
-	 */
-	removeByPrefix(key: string): void {
-		if (typeof uni !== "undefined") {
-			consoleError("Session", "UniApp 环境下 [Session] 不可用。");
-			return;
-		}
-		try {
-			for (const itemKey in window.sessionStorage) {
-				if (itemKey.indexOf(`${state.prefix}${key}`) !== -1) {
-					window.sessionStorage.removeItem(itemKey);
-				}
-			}
-		} catch (error) {
-			consoleError("Session", error);
-		}
-	},
-	/**
-	 * 移除全部会话缓存
-	 */
-	clear(): void {
-		if (typeof uni !== "undefined") {
-			consoleError("Session", "UniApp 环境下 [Session] 不可用。");
-			return;
-		}
-		try {
-			window.sessionStorage.clear();
-		} catch (error) {
-			consoleError("Session", error);
-		}
-	},
+const requireStorageConfiguration = (): ActiveStorageConfiguration => {
+	if (activeConfiguration === undefined) {
+		throw new Error("Storage is not configured. Call configureStorage() once from the application entry.");
+	}
+	return activeConfiguration;
 };
+
+/**
+ * 创建稳定的公开 Storage 门面。
+ *
+ * @param select - 从激活配置选择 Local 或 Session 的函数。
+ * @param name - 用于不可用错误的公开门面名称。
+ * @returns 可在配置前导入、但只在调用时解析实际 Area 的稳定对象。
+ */
+const createStorageAreaProxy = (select: (configuration: ActiveStorageConfiguration) => StorageArea | undefined, name: string): StorageArea => {
+	/**
+	 * 解析当前实际 Area。
+	 *
+	 * @returns 配置中的 Local 或 Session Area。
+	 * @throws `Error` 当尚未配置，或 uni-app 模式请求 Session。
+	 */
+	const getArea = (): StorageArea => {
+		const area = select(requireStorageConfiguration());
+		if (area === undefined) throw new Error(`${name} is unavailable in uni-app.`);
+		return area;
+	};
+	return {
+		get prefix(): string {
+			return getArea().prefix;
+		},
+		clear: (): void => {
+			getArea().clear();
+		},
+		get: <Value>(key: string): Value | undefined => getArea().get<Value>(key),
+		has: (key): boolean => getArea().has(key),
+		keys: (): string[] => getArea().keys(),
+		pruneExpired: (): number => getArea().pruneExpired(),
+		remove: (key): void => {
+			getArea().remove(key);
+		},
+		removeByPrefix: (keyPrefix): void => {
+			getArea().removeByPrefix(keyPrefix);
+		},
+		set: <Value>(key: string, value: Value, options?: StorageWriteOptions): void => {
+			getArea().set(key, value, options);
+		},
+	};
+};
+
+/** 浏览器 localStorage 或自动检测的 uni-app Storage 全局业务入口。 */
+export const Local: StorageArea = createStorageAreaProxy((configuration) => configuration.local, "Local");
+
+/** 浏览器 sessionStorage 的全局业务入口；uni-app 不提供会话存储。 */
+export const Session: StorageArea = createStorageAreaProxy((configuration) => configuration.session, "Session");
+
+/**
+ * 在应用入口一次性配置 `Local` 与 `Session`。
+ *
+ * @remarks 首次配置后只允许以完全相同的值和引用重复调用。模块导入不会访问平台对象；调用本函数时若检测到
+ * 全局 `uni`，则自动使用其同步 Storage 且只启用 `Local`，否则使用浏览器 `localStorage` 与 `sessionStorage`。
+ * @param options - 全局键前缀、Codec 与时钟。
+ * @throws 配置非法、重复配置冲突或目标平台 Storage 不可用时抛出错误。
+ */
+export function configureStorage(options: StorageConfiguration): void {
+	if (typeof options.prefix !== "string" || options.prefix.length === 0) {
+		throw new TypeError("Storage prefix must be a non-empty string.");
+	}
+	const codec = options.codec ?? jsonCodec;
+	const now = options.now ?? Date.now;
+	if (activeConfiguration !== undefined) {
+		// 相同配置允许多个入口模块幂等调用；任何引用或值变化都视为冲突。
+		if (activeConfiguration.prefix === options.prefix && activeConfiguration.codec === codec && activeConfiguration.now === now) {
+			return;
+		}
+		throw new Error("Storage has already been configured with different options.");
+	}
+	const uni = getGlobalUniStorage();
+	const localBackend =
+		uni === undefined ? (): StorageBackend => createWebStorageBackend("local") : (): StorageBackend => createUniStorageBackend(uni);
+	const local = createStorageArea(localBackend, options.prefix, codec, now);
+	const configuration: ActiveStorageConfiguration = { codec, local, now, prefix: options.prefix };
+	if (uni === undefined) {
+		configuration.session = createStorageArea(() => createWebStorageBackend("session"), options.prefix, codec, now);
+	}
+	activeConfiguration = configuration;
+}
+
+/** 返回全局 Storage 是否已经由应用入口配置。 */
+export function isStorageConfigured(): boolean {
+	return activeConfiguration !== undefined;
+}

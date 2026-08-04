@@ -1,2 +1,0 @@
-import{reactive as e}from"vue";import{Local as t}from"../storage/index.mjs";import{stringUtil as c}from"../string/index.mjs";const d=e({cacheKey:"__DEVICE_ID",deviceId:""}),i=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,a=e=>(e??=d.deviceId,e&&i.test(e)?(t.set(d.cacheKey,e),d.deviceId=e,d.deviceId):(e=t.get(d.cacheKey))&&i.test(e)?(d.deviceId=e,e):(e=c.generateUUID(),t.set(d.cacheKey,e),d.deviceId=e,e)),r=()=>({...d,makeIdentity:a});export{r as useIdentity};
-//# sourceMappingURL=index.mjs.map
