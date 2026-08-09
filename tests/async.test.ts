@@ -1,8 +1,8 @@
 import { describe, it } from "node:test";
 
-import { debounce, mapConcurrent, retry, sleep, throttle, withTimeout } from "../src/async/index.js";
+import { debounce, mapConcurrent, retry, sleep, throttle, withTimeout } from "../src/async/index";
 
-import { expect, vi } from "./test-helpers.js";
+import { expect, vi } from "./test-helpers";
 
 describe("cancellation and timeout", () => {
 	it("rejects timer values that runtimes would silently clamp", () => {

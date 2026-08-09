@@ -1,4 +1,4 @@
-import { decodeBase64, encodeBase64 } from "../base64/index.js";
+import { decodeSecureBase64, encodeSecureBase64 } from "../base64/index";
 
 /** uni-app 同步存储信息中本库实际读取的字段。 */
 interface UniStorageInfo {
@@ -54,10 +54,12 @@ export interface StorageCodec {
 export interface StorageConfiguration {
 	/** 自定义值编码器；默认使用严格 JSON Codec，同一应用生命周期内必须保持同一引用。 */
 	codec?: StorageCodec;
+	/** 启用 Base64 可逆混淆；不提供加密、完整性或认证，不能与 `codec` 同时使用。 */
+	crypto?: boolean;
 	/** 返回 Unix 毫秒时间戳的时钟；默认使用 `Date.now`，主要用于 TTL 测试与受控时间源。 */
 	now?: () => number;
-	/** 所有物理键使用的非空命名空间前缀；`clear` 与 `keys` 不会越过该范围。 */
-	prefix: string;
+	/** 所有物理键使用的非空命名空间前缀； */
+	prefix?: string;
 }
 
 /** 单次 Storage 写入配置。 */
@@ -68,11 +70,11 @@ export interface StorageWriteOptions {
 
 /** `Local` 与 `Session` 的统一操作接口。 */
 export interface StorageArea {
-	/** 当前全局 Storage 配置的物理键前缀；读取它会要求 Storage 已经完成配置。 */
+	/** 当前全局 Storage 配置的物理键前缀；首次读取会激活默认配置。 */
 	readonly prefix: string;
 	/**
 	 * 删除当前命名空间内的全部键，不影响同一后端中的其他应用键。
-	 * @throws `Error` 当 Storage 尚未配置或后端不可用。
+	 * @throws `Error` 当当前平台后端不可用。
 	 */
 	clear: () => void;
 	/**
@@ -161,7 +163,7 @@ interface RuntimeStorageGlobals {
 	localStorage?: Storage;
 	/** 可选 sessionStorage；缺失时 `Session` 操作明确失败。 */
 	sessionStorage?: Storage;
-	/** uni-app 运行时暴露的全局对象；只在调用 `configureStorage` 时读取和校验。 */
+	/** uni-app 运行时暴露的全局对象；只在显式配置或首次 Storage 操作时读取和校验。 */
 	uni?: unknown;
 }
 
@@ -203,11 +205,11 @@ const jsonCodec: StorageCodec = {
 
 /** Base64 混淆 Codec；只隐藏明文外观，不提供加密、完整性或认证。 */
 export const base64StorageCodec: StorageCodec = {
-	decode: (value): unknown => JSON.parse(decodeBase64(value)) as unknown,
+	decode: (value): unknown => JSON.parse(decodeSecureBase64(value)) as unknown,
 	encode: (value): string => {
 		const encoded: unknown = JSON.stringify(value);
 		if (typeof encoded !== "string") throw new TypeError("The storage value is not JSON-serializable.");
-		return encodeBase64(encoded);
+		return encodeSecureBase64(encoded);
 	},
 };
 
@@ -428,13 +430,11 @@ const createStorageArea = (backendFactory: () => StorageBackend, prefix: string,
 /**
  * 获取已激活的全局 Storage 配置。
  *
- * @returns 首次 `configureStorage` 创建的内部配置。
- * @throws `Error` 当应用入口尚未配置 Storage。
+ * @returns 显式配置或首次 Storage 操作创建的默认配置。
  */
 const requireStorageConfiguration = (): ActiveStorageConfiguration => {
-	if (activeConfiguration === undefined) {
-		throw new Error("Storage is not configured. Call configureStorage() once from the application entry.");
-	}
+	if (activeConfiguration === undefined) configureStorage();
+	if (activeConfiguration === undefined) throw new Error("Storage configuration could not be initialized.");
 	return activeConfiguration;
 };
 
@@ -443,14 +443,14 @@ const requireStorageConfiguration = (): ActiveStorageConfiguration => {
  *
  * @param select - 从激活配置选择 Local 或 Session 的函数。
  * @param name - 用于不可用错误的公开门面名称。
- * @returns 可在配置前导入、但只在调用时解析实际 Area 的稳定对象。
+ * @returns 可安全导入、并在首次调用时解析默认或显式配置的稳定对象。
  */
 const createStorageAreaProxy = (select: (configuration: ActiveStorageConfiguration) => StorageArea | undefined, name: string): StorageArea => {
 	/**
 	 * 解析当前实际 Area。
 	 *
 	 * @returns 配置中的 Local 或 Session Area。
-	 * @throws `Error` 当尚未配置，或 uni-app 模式请求 Session。
+	 * @throws `Error` 当 uni-app 模式请求 Session。
 	 */
 	const getArea = (): StorageArea => {
 		const area = select(requireStorageConfiguration());
@@ -487,22 +487,27 @@ export const Local: StorageArea = createStorageAreaProxy((configuration) => conf
 export const Session: StorageArea = createStorageAreaProxy((configuration) => configuration.session, "Session");
 
 /**
- * 在应用入口一次性配置 `Local` 与 `Session`。
+ * 在首次 Storage 操作前可选配置 `Local` 与 `Session`。
  *
- * @remarks 首次配置后只允许以完全相同的值和引用重复调用。模块导入不会访问平台对象；调用本函数时若检测到
+ * @remarks 不调用时在首次操作上使用 `fast__`、JSON Codec 与 `Date.now`。首次激活后只允许以完全相同的值和引用重复调用。若检测到
  * 全局 `uni`，则自动使用其同步 Storage 且只启用 `Local`，否则使用浏览器 `localStorage` 与 `sessionStorage`。
- * @param options - 全局键前缀、Codec 与时钟。
+ * `crypto: true` 仅恢复旧版 Base64 混淆行为，不能保护敏感数据。
+ * @param options - 可选的全局键前缀、Codec、旧版混淆选项与时钟。
  * @throws 配置非法、重复配置冲突或目标平台 Storage 不可用时抛出错误。
  */
-export function configureStorage(options: StorageConfiguration): void {
-	if (typeof options.prefix !== "string" || options.prefix.length === 0) {
+export function configureStorage(options: StorageConfiguration = {}): void {
+	const prefix = options.prefix ?? "fast__";
+	if (typeof prefix !== "string" || prefix.length === 0) {
 		throw new TypeError("Storage prefix must be a non-empty string.");
 	}
-	const codec = options.codec ?? jsonCodec;
+	if (options.codec !== undefined && options.crypto === true) {
+		throw new TypeError("Storage codec and crypto options cannot be used together.");
+	}
+	const codec = options.codec ?? (options.crypto === true ? base64StorageCodec : jsonCodec);
 	const now = options.now ?? Date.now;
 	if (activeConfiguration !== undefined) {
 		// 相同配置允许多个入口模块幂等调用；任何引用或值变化都视为冲突。
-		if (activeConfiguration.prefix === options.prefix && activeConfiguration.codec === codec && activeConfiguration.now === now) {
+		if (activeConfiguration.prefix === prefix && activeConfiguration.codec === codec && activeConfiguration.now === now) {
 			return;
 		}
 		throw new Error("Storage has already been configured with different options.");
@@ -510,10 +515,10 @@ export function configureStorage(options: StorageConfiguration): void {
 	const uni = getGlobalUniStorage();
 	const localBackend =
 		uni === undefined ? (): StorageBackend => createWebStorageBackend("local") : (): StorageBackend => createUniStorageBackend(uni);
-	const local = createStorageArea(localBackend, options.prefix, codec, now);
-	const configuration: ActiveStorageConfiguration = { codec, local, now, prefix: options.prefix };
+	const local = createStorageArea(localBackend, prefix, codec, now);
+	const configuration: ActiveStorageConfiguration = { codec, local, now, prefix };
 	if (uni === undefined) {
-		configuration.session = createStorageArea(() => createWebStorageBackend("session"), options.prefix, codec, now);
+		configuration.session = createStorageArea(() => createWebStorageBackend("session"), prefix, codec, now);
 	}
 	activeConfiguration = configuration;
 }

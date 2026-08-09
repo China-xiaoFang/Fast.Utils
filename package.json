@@ -1,9 +1,10 @@
 {
 	"name": "@fast-china/utils",
-	"version": "2.0.0",
-	"description": "Typed utilities for modern browsers, WebViews, Vue 2.7/3, and uni-app applications.",
+	"version": "2.0.1",
+	"description": "Typed utilities for modern browsers, WebViews, Vue 3, and uni-app applications.",
 	"type": "module",
 	"keywords": [
+		"fast",
 		"fast-china",
 		"typescript",
 		"utils"
@@ -21,13 +22,13 @@
 	"files": [
 		"CHANGELOG.md",
 		"CONTRIBUTING.md",
+		"Fast.png",
 		"LICENSE",
 		"README.md",
 		"README.zh.md",
 		"SECURITY.md",
 		"dist",
-		"docs",
-		"src"
+		"docs"
 	],
 	"main": "./dist/index.mjs",
 	"module": "./dist/index.mjs",
@@ -40,6 +41,8 @@
 		}
 	},
 	"sideEffects": false,
+	"unpkg": "./dist/index.global.min.js",
+	"jsdelivr": "./dist/index.global.min.js",
 	"publishConfig": {
 		"access": "public"
 	},
@@ -53,18 +56,13 @@
 		"format:check": "prettier --check .",
 		"test": "pnpm run build && pnpm run test:types && pnpm run test:runtime && pnpm run test:package",
 		"test:types": "tsc --noEmit --project tests/tsconfig.json",
-		"test:runtime": "node --import tsx --test tests/async.test.ts tests/core.test.ts tests/storage-crypto.test.ts tests/storage-uni.test.ts tests/vue.test.ts",
+		"test:runtime": "node --import tsx --test tests/async.test.ts tests/core.test.ts tests/storage-crypto.test.ts tests/storage-default.test.ts tests/storage-uni.test.ts tests/vue.test.ts",
 		"test:package": "node --test tests/package.test.mjs && publint --strict --pack npm",
 		"check": "pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run format:check",
 		"prepack": "pnpm run check"
 	},
 	"peerDependencies": {
-		"vue": "^2.7.0 || ^3.3.0"
-	},
-	"peerDependenciesMeta": {
-		"vue": {
-			"optional": true
-		}
+		"vue": "^3.3.0"
 	},
 	"dependencies": {
 		"crypto-js": "^4.2.0"

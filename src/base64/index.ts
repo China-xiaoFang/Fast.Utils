@@ -1,5 +1,5 @@
-import { encodeUtf8, getTextDecoder } from "../internal/text.js";
-import { secureRandomInt } from "../number/index.js";
+import { encodeUtf8, getTextDecoder } from "../internal/text";
+import { secureRandomInt } from "../number/index";
 
 const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 

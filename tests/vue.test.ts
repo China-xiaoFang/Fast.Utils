@@ -2,16 +2,16 @@ import { describe, it } from "node:test";
 
 import { createApp, createRenderer, defineComponent, h, reactive } from "vue";
 
-import { useEmits } from "../src/vue/emits.js";
-import { useExpose } from "../src/vue/expose.js";
-import { callOptionalFunction } from "../src/vue/func.js";
-import { withInstall, withInstallDirective, withNoopInstall } from "../src/vue/install.js";
-import { definePropType, useProps } from "../src/vue/props.js";
-import { useRender } from "../src/vue/render.js";
-import { makeSlots } from "../src/vue/slots.js";
-import { withDefineType } from "../src/vue/with.js";
+import { useEmits } from "../src/vue/emits";
+import { useExpose } from "../src/vue/expose";
+import { callOptionalFunction } from "../src/vue/func";
+import { withInstall, withInstallDirective, withNoopInstall } from "../src/vue/install";
+import { definePropType, useProps } from "../src/vue/props";
+import { useRender } from "../src/vue/render";
+import { makeSlots } from "../src/vue/slots";
+import { withDefineType } from "../src/vue/with";
 
-import { expect, vi } from "./test-helpers.js";
+import { expect, vi } from "./test-helpers";
 
 describe("Vue event and props helpers", () => {
 	it("maps event tuple types to real Vue handler names", () => {
@@ -94,34 +94,6 @@ describe("Vue event and props helpers", () => {
 });
 
 describe("Vue install helpers", () => {
-	it("supports the Vue 2.7 constructor registration shape", () => {
-		const components = new Map<string, unknown>();
-		const directives = new Map<string, unknown>();
-		const Vue = Object.assign(
-			function VueConstructor(): undefined {
-				return undefined;
-			},
-			{
-				component(name: string, component?: unknown): unknown {
-					if (component === undefined) return components.get(name);
-					components.set(name, component);
-					return component;
-				},
-				directive(name: string, directive?: unknown): unknown {
-					if (directive === undefined) return directives.get(name);
-					directives.set(name, directive);
-					return directive;
-				},
-			}
-		);
-		const component = withInstall({ name: "FastVue2", render: (): null => null });
-		const directive = withInstallDirective({ inserted: vi.fn() }, "focus");
-		component.install(Vue);
-		directive.install(Vue);
-		expect(components.get("FastVue2")).toBe(component);
-		expect(directives.get("focus")).toBe(directive);
-	});
-
 	it("registers main and extra named components", () => {
 		const main = { name: "FastMain", render: (): null => null };
 		const extra = { name: "FastExtra", render: (): null => null };

@@ -5,10 +5,10 @@
 - Node.js：`^22.18.0 || ^24.18.0`。
 - pnpm：`^11.0.0`，不固定补丁版本。
 - TypeScript 6、tsdown、ESLint 10 Flat Config、Prettier 3。
-- 发布格式：纯 ESM、ES2022、`.mjs`、`.d.mts` 和 Source Map。
+- 发布格式：包管理器使用 ESM、`.mjs` 与 `.d.mts`，CDN 使用压缩 IIFE；两类 JavaScript 产物均提供 Source Map。
 - 根目录是唯一 npm 发布单元，根 `dist/` 是唯一产物目录。
 
-应用环境包括现代浏览器、WebView、Vue 2.7/3 和 uni-app。
+应用环境包括现代浏览器、WebView、Vue 3 和 uni-app。
 
 ## 安装与命令
 
@@ -20,7 +20,7 @@ pnpm install --frozen-lockfile
 | 命令                | 用途                                                                   |
 | ------------------- | ---------------------------------------------------------------------- |
 | `pnpm dev`          | 使用 tsdown 监听源码并增量构建                                         |
-| `pnpm build`        | 使用 tsdown 构建统一公开入口与内部模块                                 |
+| `pnpm build`        | 使用 tsdown 构建 ESM 模块与压缩 IIFE                                   |
 | `pnpm typecheck`    | 检查源码与构建配置类型                                                 |
 | `pnpm lint`         | 运行零警告 ESLint                                                      |
 | `pnpm format:check` | 检查 Prettier                                                          |
@@ -44,7 +44,7 @@ pnpm install --frozen-lockfile
 ## 依赖与锁文件
 
 - Runtime Dependency 必须证明无法由平台能力或小型实现替代。
-- Vue 保持 Optional Peer Dependency，不得打包进发布产物。
+- Vue 3.3+ 是必须安装的 Peer Dependency；ESM 与 IIFE 均保持外部引用，不打包进发布产物。
 - 依赖升级后使用当前 pnpm 11 更新 Lockfile，并通过 Frozen Lockfile 安装验证。
 - 不混用 npm、Yarn 或不同 pnpm 主版本改写 Lockfile。
 

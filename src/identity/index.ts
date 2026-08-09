@@ -1,5 +1,5 @@
-import { Local } from "../storage/index.js";
-import { generateUuidV4, isUuidV4 } from "../string/index.js";
+import { Local } from "../storage/index";
+import { generateUuidV4, isUuidV4 } from "../string/index";
 
 const defaultInstallationIdentityStorageKey = "identity:installation-id";
 
@@ -30,7 +30,7 @@ export interface InstallationIdentity {
 	/**
 	 * 删除当前 `cacheKey` 对应的持久化标识，并把 `deviceId` 重置为空字符串。
 	 *
-	 * @throws `Error` 当 Storage 尚未配置或当前平台存储不可用。
+	 * @throws `Error` 当当前平台存储不可用。
 	 */
 	clear: () => void;
 	/**
@@ -39,7 +39,7 @@ export interface InstallationIdentity {
 	 * @param installationId - 可选 UUID v4；传入时覆盖内存值和当前持久化值。
 	 * @returns 已校验并同时写入 `deviceId` 与 `Local` 的 UUID v4。
 	 * @throws `TypeError` 当显式参数、内存值或持久化值不是 UUID v4。
-	 * @throws `Error` 当 Storage 尚未配置，或生成新值时平台缺少 Web Crypto。
+	 * @throws `Error` 当当前平台存储不可用，或生成新值时平台缺少 Web Crypto。
 	 */
 	getOrCreate: (installationId?: string) => string;
 	/**
@@ -48,7 +48,7 @@ export interface InstallationIdentity {
 	 * @remarks 该方法不修改 `deviceId`，只负责读取；过期记录由 Storage 视为缺失。
 	 * @returns 已持久化的 UUID v4；键缺失或过期时返回 `undefined`。
 	 * @throws `TypeError` 当持久化值不是字符串或不是 UUID v4。
-	 * @throws `Error` 当 Storage 尚未配置或当前平台存储不可用。
+	 * @throws `Error` 当当前平台存储不可用。
 	 */
 	read: () => string | undefined;
 }
@@ -100,7 +100,7 @@ export function configureInstallationIdentity(options: InstallationIdentityConfi
 /**
  * 全局安装标识状态。
  *
- * @remarks 使用前必须在应用入口调用 `configureStorage()`。默认随机源只使用 Web Crypto，
+ * @remarks Storage 未显式配置时会使用其默认值。默认随机源只使用 Web Crypto，
  * 能力缺失时明确抛错，不回退到 `Math.random()`。该值不是硬件标识、认证凭证或安全边界。
  */
 export const installationIdentity: InstallationIdentity = {
@@ -137,7 +137,7 @@ export const installationIdentity: InstallationIdentity = {
  * @param installationId - 可选的显式安装标识；传入时会校验并覆盖当前持久化值。
  * @returns 显式值、内存值、持久化值或新生成值中的最终安装标识。
  * @throws `TypeError` 当显式值或持久化值不是 UUID v4。
- * @throws `Error` 当 Storage 尚未配置或平台缺少 Web Crypto。
+ * @throws `Error` 当当前平台存储不可用或缺少 Web Crypto。
  */
 export function getOrCreateInstallationId(installationId?: string): string {
 	return installationIdentity.getOrCreate(installationId);

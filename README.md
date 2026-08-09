@@ -8,14 +8,14 @@
 
 # @fast-china/utils
 
-Browser-first TypeScript utilities for modern browsers, WebViews, Vue 2.7/3, and uni-app.
+Browser-first TypeScript utilities for modern browsers, WebViews, Vue 3, and uni-app.
 
-[![npm version](https://img.shields.io/npm/v/@fast-china/utils?color=orange)](https://www.npmjs.com/package/@fast-china/utils) [![node](https://img.shields.io/badge/node-%5E22.18%20%7C%7C%20%5E24.18-brightgreen)](https://nodejs.org/) [![vue](https://img.shields.io/badge/vue-%5E2.7%20%7C%7C%20%5E3.3-42b883)](https://vuejs.org/) [![license](https://img.shields.io/npm/l/@fast-china/utils)](./LICENSE)
+[![npm version](https://img.shields.io/npm/v/@fast-china/utils?color=orange)](https://www.npmjs.com/package/@fast-china/utils) [![node](https://img.shields.io/badge/node-%5E22.18%20%7C%7C%20%5E24.18-brightgreen)](https://nodejs.org/) [![vue](https://img.shields.io/badge/vue-%5E3.3-42b883)](https://vuejs.org/) [![license](https://img.shields.io/npm/l/@fast-china/utils)](./LICENSE)
 
 ## Highlights
 
 - Typed, side-effect-free utilities with one named-export entry for effective Tree Shaking.
-- Browser, WebView, Vue 2.7/3, and uni-app contracts without import-time platform access.
+- Browser, WebView, Vue 3, and uni-app contracts without import-time platform access.
 - Explicit security boundaries for storage, identity, encoding, random generation, and cryptography.
 - TypeScript 6 strict checks, ESLint, runtime tests, consumer type tests, package validation, and Publint.
 
@@ -25,27 +25,13 @@ Browser-first TypeScript utilities for modern browsers, WebViews, Vue 2.7/3, and
 pnpm add @fast-china/utils
 ```
 
-Install the optional Vue peer only when using Vue helpers:
+### CDN
 
-```bash
-pnpm add vue
-```
-
-Supported peer range: Vue `^2.7.0 || ^3.3.0`. Vue 2.6 and Vue 3.0-3.2 are outside the declared range.
+The `unpkg` and `jsdelivr` fields select the minified `dist/index.global.min.js` browser file, which exposes the `FastUtils` global.
 
 ## Storage
 
-Configure storage exactly once from the browser application entry:
-
-```ts
-import { configureStorage } from "@fast-china/utils";
-
-configureStorage({
-	prefix: "my-app:",
-});
-```
-
-Every other module imports the stable package exports directly:
+`Local` and `Session` work without configuration. The default prefix is `fast__`, values use JSON, and entries do not expire unless a TTL is supplied:
 
 ```ts
 import { Local, Session } from "@fast-china/utils";
@@ -56,19 +42,18 @@ const user = Local.get<{ id: number }>("user");
 Session.set("redirect", "/home");
 ```
 
-The configuration is immutable after the first call. Repeating the same configuration is idempotent; a conflicting configuration throws.
-
-In uni-app, the same configuration automatically uses the global `uni` synchronous Storage API:
+Call `configureStorage` before the first Storage operation only when overriding defaults. The legacy-compatible `crypto` option applies reversible Base64 obfuscation; it is not encryption and must not protect secrets:
 
 ```ts
 import { configureStorage } from "@fast-china/utils";
 
 configureStorage({
 	prefix: "my-app:",
+	crypto: true,
 });
 ```
 
-uni-app uses `Local`; `Session` throws because uni-app has no sessionStorage equivalent. `clear()` removes only keys inside the configured prefix. The optional `base64StorageCodec` is reversible obfuscation, not encryption.
+The active configuration is immutable. Repeating the same configuration is idempotent; a conflicting configuration throws. A custom `codec` may be supplied instead of `crypto`. In uni-app, `Local` automatically uses the global synchronous Storage API; `Session` throws because uni-app has no sessionStorage equivalent. `clear()` removes only keys inside the active prefix.
 
 ## Base64
 
@@ -96,25 +81,38 @@ const installationId = getOrCreateInstallationId();
 
 Call `configureInstallationIdentity` in the application entry before first use. The default business key is `identity:installation-id`; repeated identical configuration is idempotent and conflicting configuration throws. Installation Identity uses the configured `Local` storage and Web Crypto UUID v4 generation. It never falls back to `Math.random()`.
 
-## Vue 2.7 and Vue 3
+## Crypto
+
+The TypeScript Crypto API mirrors the public methods and algorithm casing of .NET `CryptoUtil`. AES-GCM payloads, password-based AES payloads, PBKDF2 password hashes, and PEM keys interoperate across both implementations.
+
+```ts
+import { AESDecryptWithPassword, AESEncryptWithPassword } from "@fast-china/utils";
+
+const payload = await AESEncryptWithPassword("protected content", "correct horse battery staple");
+const plaintext = await AESDecryptWithPassword(payload, "correct horse battery staple");
+```
+
+Store passwords with `HashPasswordPBKDF2SHA256` and `VerifyPasswordPBKDF2SHA256`. MD5, SHA-1, AES-CBC, and AES-ECB do not provide password-storage or authenticated-encryption guarantees. See the [API reference](./docs/API.md#crypto) for the complete method list and security boundaries.
+
+## Vue 3
 
 ```ts
 import { useEmits, useProps, withInstall } from "@fast-china/utils";
 ```
 
-The package provides structural plugin registration compatible with Vue 2.7 `Vue.use()` and Vue 3 `app.use()`, Composition API helpers, typed props/emits/slots, and TSX rendering. Vue remains external to the bundle and is declared as an optional peer dependency. `makeSlots` uses Vue 3's official `SlotsType` and is intended for Vue 3 components.
+The package provides Vue 3 `app.use()` registration, Composition API helpers, typed props/emits/slots, and TSX rendering. Vue remains external to the build and is required as a peer dependency.
 
 ## Modules
 
 `@fast-china/utils` is the only public entry and exposes every API as a named export. Source modules remain separate in `dist/` so modern bundlers can remove unused exports; those internal files are not public package subpaths.
 
-Historical aggregate objects are not public. Their behavior is available through named functions, improving auto-imports and Tree Shaking.
+Historical aggregate objects are not public. Supported behavior is exposed through named functions, improving auto-imports and Tree Shaking; this major version does not preserve every former convenience method.
 
 ## Runtime contract
 
-- Pure ESM; no CommonJS, UMD, or IIFE.
+- The package-manager entry is pure ESM; the CDN entry is a separately minified IIFE.
 - ES2022 modern browsers and WebViews.
-- Vue 2.7 or Vue 3 through an optional peer.
+- Vue 3.3 or newer through a required peer dependency.
 - uni-app through automatic global `uni` detection when Storage is configured.
 - No import-time access to `window`, Storage, or `uni`; unsupported calls fail explicitly.
 - Web Crypto, URL, Intl, TextEncoder, and related platform capabilities are not polyfilled.

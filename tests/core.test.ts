@@ -81,10 +81,10 @@ import {
 	truncateGraphemes,
 	unique,
 	uniqueBy,
-} from "../src/index.js";
-import { createLogger } from "../src/logger/index.js";
+} from "../src/index";
+import { createLogger } from "../src/logger/index";
 
-import { expect, vi } from "./test-helpers.js";
+import { expect, vi } from "./test-helpers";
 
 const legacyBase64Dictionary = [
 	{ index: 977, randomIndex: 188 },

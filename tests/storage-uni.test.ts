@@ -1,8 +1,8 @@
 import { describe, it } from "node:test";
 
-import { Local, Session, configureStorage } from "../src/storage/index.js";
+import { Local, Session, configureStorage } from "../src/storage/index";
 
-import { expect, vi } from "./test-helpers.js";
+import { expect, vi } from "./test-helpers";
 
 const values = new Map<string, unknown>();
 const uni = {

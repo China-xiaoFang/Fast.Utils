@@ -3,4 +3,4 @@
  *
  * @packageDocumentation
  */
-export * from "./style.js";
+export * from "./style";

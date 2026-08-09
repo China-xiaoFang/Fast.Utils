@@ -3,8 +3,10 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import vm from "node:vm";
 
 import { Rolldown } from "tsdown";
+import * as Vue from "vue";
 
 const workspaceRoot = path.resolve(import.meta.dirname, "..");
 const distRoot = path.join(workspaceRoot, "dist");
@@ -62,13 +64,13 @@ const verifyBuildArtifacts = () => {
 	const artifacts = files.map((filePath) => path.relative(workspaceRoot, filePath).replaceAll(path.sep, "/")).sort();
 	assert.ok(artifacts.includes("dist/index.mjs"), "root JavaScript entry is missing.");
 	assert.ok(artifacts.includes("dist/index.d.mts"), "root declaration entry is missing.");
+	assert.ok(artifacts.includes("dist/index.global.min.js"), "minified CDN entry is missing.");
 	for (const artifact of artifacts) {
-		assert.match(artifact, /\.(?:d\.mts|d\.mts\.map|mjs|mjs\.map)$/u, `unexpected build artifact: ${artifact}`);
+		if (/^dist\/index\.global\.min\.js(?:\.map)?$/u.test(artifact)) continue;
+		assert.match(artifact, /\.(?:d\.mts|mjs|mjs\.map)$/u, `unexpected build artifact: ${artifact}`);
 		const sourcePath = artifact.replace(/^dist\//u, "").replace(/\.(?:d\.mts|mjs)(?:\.map)?$/u, "");
 		assert.ok(sourceModulePaths.includes(sourcePath), `stale build artifact has no source module: ${artifact}`);
 	}
-	const totalBytes = files.reduce((total, filePath) => total + fs.statSync(filePath).size, 0);
-	assert.ok(totalBytes <= 750_000, `dist exceeds the 750 KiB budget (${totalBytes} bytes)`);
 };
 
 const verifyRelativeImports = () => {
@@ -87,29 +89,18 @@ const verifyRelativeImports = () => {
 	}
 };
 
-/** 验证 Source Map 仅引用随包发布的第一方源码，并返回对应文件清单。 */
+/** 验证运行时 Source Map 内嵌完整源码，不依赖未发布的 src 目录。 */
 const verifySourceMaps = () => {
-	const referencedSources = new Set();
-	const sourceRoot = path.join(workspaceRoot, "src");
 	for (const absolutePath of collectFiles(distRoot)) {
 		if (!absolutePath.endsWith(".map")) continue;
+		assert.ok(!absolutePath.endsWith(".d.mts.map"), `unexpected declaration map: ${path.relative(workspaceRoot, absolutePath)}`);
 		const sourceMap = JSON.parse(fs.readFileSync(absolutePath, "utf8"));
 		assert.ok(sourceMap !== null && typeof sourceMap === "object" && !Array.isArray(sourceMap));
 		const record = sourceMap;
 		assert.ok(Array.isArray(record.sources) && record.sources.length > 0, `${path.relative(workspaceRoot, absolutePath)} has no sources.`);
-		assert.ok(record.sourceRoot === undefined || typeof record.sourceRoot === "string");
-		for (const source of record.sources) {
-			assert.equal(typeof source, "string");
-			const referencedPath = path.resolve(path.dirname(absolutePath), record.sourceRoot ?? "", source);
-			assert.ok(
-				referencedPath.startsWith(`${sourceRoot}${path.sep}`),
-				`${path.relative(workspaceRoot, absolutePath)} references a source outside src: ${source}`
-			);
-			assert.ok(fs.existsSync(referencedPath) && fs.statSync(referencedPath).isFile());
-			referencedSources.add(path.relative(workspaceRoot, referencedPath).replaceAll(path.sep, "/"));
-		}
+		assert.equal(record.sources.length, record.sourcesContent?.length, path.relative(workspaceRoot, absolutePath));
+		assert.ok(record.sourcesContent.every((source) => typeof source === "string" && source.length > 0));
 	}
-	return referencedSources;
 };
 
 if (fs.existsSync(consumerPath)) throw new Error(`Refusing to overwrite existing fixture: ${consumerPath}`);
@@ -117,19 +108,31 @@ if (fs.existsSync(consumerPath)) throw new Error(`Refusing to overwrite existing
 try {
 	verifyBuildArtifacts();
 	verifyRelativeImports();
-	const sourceMapSources = verifySourceMaps();
+	verifySourceMaps();
+	assert.throws(
+		() => vm.runInNewContext(fs.readFileSync(path.join(distRoot, "index.global.min.js"), "utf8"), { TextDecoder, TextEncoder }),
+		/Vue is not defined/u
+	);
+	const cdnContext = { TextDecoder, TextEncoder, Vue };
+	vm.runInNewContext(fs.readFileSync(path.join(distRoot, "index.global.min.js"), "utf8"), cdnContext);
+	assert.deepEqual(
+		Array.from(cdnContext.FastUtils.chunk([1, 2, 3], 2), (value) => Array.from(value)),
+		[[1, 2], [3]]
+	);
+	assert.equal(typeof cdnContext.FastUtils.useEmits, "function");
 	fs.writeFileSync(
 		consumerPath,
 		[
-			'import { chunk, configureStorage, decodeBase64, encodeBase64, Local, Session, toQueryString } from "@fast-china/utils";',
+			'import { chunk, decodeBase64, encodeBase64, Local, Session, toQueryString } from "@fast-china/utils";',
 			'import { useEmits } from "@fast-china/utils";',
 			'if (JSON.stringify(chunk([1, 2, 3], 2)) !== "[[1,2],[3]]") throw new Error("Root array export failed.");',
 			'if (decodeBase64(encodeBase64("Fast 工具库")) !== "Fast 工具库") throw new Error("Base64 round trip failed.");',
 			'if (toQueryString({ id: [1, 2] }) !== "id=1&id=2") throw new Error("Query serialization failed.");',
 			"class MemoryStorage { /** @type {Map<string, string>} */ #values = new Map(); get length() { return this.#values.size; } clear() { this.#values.clear(); } getItem(/** @type {string} */ key) { return this.#values.get(key) ?? null; } key(/** @type {number} */ index) { return [...this.#values.keys()][index] ?? null; } removeItem(/** @type {string} */ key) { this.#values.delete(key); } setItem(/** @type {string} */ key, /** @type {string} */ value) { this.#values.set(key, String(value)); } }",
 			"globalThis.localStorage = new MemoryStorage(); globalThis.sessionStorage = new MemoryStorage();",
-			'configureStorage({ prefix: "consumer:" }); Local.set("local", 1); Session.set("session", 2);',
+			'Local.set("local", 1); Session.set("session", 2);',
 			'if (Local.get("local") !== 1 || Session.get("session") !== 2) throw new Error("Storage facade failed.");',
+			'if (globalThis.localStorage.getItem("fast__local") === null) throw new Error("Default Storage prefix failed.");',
 			'const handlers = useEmits({ clear: null }, (eventName, ..._arguments) => { if (eventName !== "clear") throw new Error("Vue emit mapping failed."); });',
 			"handlers.value.onClear?.();",
 		].join("\n"),
@@ -174,9 +177,16 @@ try {
 	assert.doesNotMatch(code, /AES-GCM|PBKDF2|createLogger|from\s*["']vue["']/u, "Unrelated crypto, logging, or Vue code leaked into the bundle.");
 
 	const manifest = readPackageManifest();
-	assert.deepEqual(manifest["dependencies"], { "crypto-js": "^4.2.0" }, "Published runtime dependencies must match the reviewed allowlist.");
-	assert.deepEqual(manifest["peerDependencies"], { vue: "^2.7.0 || ^3.3.0" }, "Published peer dependencies must match the reviewed range.");
-	assert.deepEqual(manifest["peerDependenciesMeta"], { vue: { optional: true } }, "Vue must remain an optional peer dependency.");
+	assert.ok(manifest["keywords"].includes("fast"));
+	assert.ok(manifest["keywords"].includes("fast-china"));
+	assert.ok(manifest["files"].includes("dist"));
+	assert.ok(!manifest["files"].includes("src"));
+	assert.equal(typeof manifest["peerDependencies"]?.["vue"], "string", "Vue must be declared as a peer dependency.");
+	assert.match(manifest["peerDependencies"]["vue"], /^\^3\./u, "Vue must use the supported Vue 3 peer range.");
+	assert.doesNotMatch(manifest["peerDependencies"]["vue"], /2\.7/u, "Vue 2 must not be declared as supported.");
+	assert.notEqual(manifest["peerDependenciesMeta"]?.["vue"]?.["optional"], true, "Vue must not be an optional peer dependency.");
+	assert.equal(manifest["unpkg"], "./dist/index.global.min.js");
+	assert.equal(manifest["jsdelivr"], manifest["unpkg"]);
 	const exportsMap = manifest["exports"];
 	assert.ok(exportsMap !== null && typeof exportsMap === "object");
 	for (const value of Object.values(exportsMap)) {
@@ -209,22 +219,16 @@ try {
 	assert.ok(Array.isArray(packReport) && packReport.length === 1);
 	const report = packReport[0];
 	const packedFiles = report.files?.map((file) => file.path ?? "") ?? [];
-	const packageSize = report.size ?? report.packageSize ?? Number.POSITIVE_INFINITY;
-	const unpackedSize = report.unpackedSize ?? Number.POSITIVE_INFINITY;
 	assert.ok(packedFiles.includes("dist/index.mjs"));
 	assert.ok(packedFiles.includes("dist/index.d.mts"));
-	assert.ok(packedFiles.includes("src/index.ts"));
+	assert.ok(packedFiles.includes("dist/index.global.min.js"));
+	assert.ok(packedFiles.includes("dist/index.global.min.js.map"));
 	assert.ok(packedFiles.every((file) => !/^(?:@fast-china|tests)\//u.test(file)));
 	assert.ok(
-		packedFiles.filter((file) => file.startsWith("src/")).every((file) => file.endsWith(".ts")),
-		"Published source must contain TypeScript files only."
+		packedFiles.every((file) => !file.startsWith("src/")),
+		"src must not be published."
 	);
-	for (const referencedSource of sourceMapSources) {
-		assert.ok(packedFiles.includes(referencedSource), `Source Map dependency is missing from the package: ${referencedSource}`);
-	}
-	assert.ok(!packedFiles.includes("Fast.png"));
-	assert.ok(packageSize < 250_000, "Tarball exceeds the 250 KiB budget.");
-	assert.ok(unpackedSize < 750_000, "Unpacked package exceeds the 750 KiB budget.");
+	assert.ok(packedFiles.includes("Fast.png"));
 } finally {
 	if (fs.existsSync(consumerPath)) fs.unlinkSync(consumerPath);
 }

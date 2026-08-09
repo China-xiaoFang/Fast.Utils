@@ -1,34 +1,40 @@
 import { afterEach, describe, it } from "node:test";
 
+import { decodeSecureBase64 } from "../src/base64/index";
 import {
-	areBytesEqualWithoutEarlyExit,
-	decryptLegacyAesCbc,
-	decryptLegacyAesEcb,
-	decryptLegacyAesValue,
-	decryptRsaOaep,
-	decryptTextWithPassword,
-	deriveEcdhSecret,
-	encryptLegacyAes,
-	encryptLegacyAesCbc,
-	encryptLegacyAesEcb,
-	encryptRsaOaep,
-	encryptTextWithPassword,
-	generateEcdhKeyPair,
-	generateEcdsaKeyPair,
-	generateRandomBytes,
-	generateRsaOaepKeyPair,
-	md5Hex,
-	md5UpperHex,
-	sha1Hex,
-	sha1UpperHex,
-	sha256Hex,
-	signEcdsa,
-	verifyEcdsa,
-} from "../src/crypto/index.js";
-import { configureInstallationIdentity, getOrCreateInstallationId, installationIdentity } from "../src/identity/index.js";
-import { Local, Session, base64StorageCodec, configureStorage, isStorageConfigured } from "../src/storage/index.js";
+	AESDecrypt,
+	AESDecryptAuthenticated,
+	AESDecryptWithPassword,
+	AESEncrypt,
+	AESEncryptAuthenticated,
+	AESEncryptWithPassword,
+	DeriveECDHSecret,
+	ECDSASign,
+	ECDSAVerify,
+	FixedTimeEquals,
+	GenerateECDHKeyPair,
+	GenerateECDSAKeyPair,
+	GenerateRSAKeyPair,
+	GenerateRandomBytes,
+	HKDFSHA256,
+	HMACSHA256Encrypt,
+	HashPasswordPBKDF2SHA256,
+	MD5Encrypt,
+	PBKDF2SHA256,
+	RSADecryptOAEP,
+	RSAEncryptOAEP,
+	RSASignPSS,
+	RSAVerifyPSS,
+	SHA1Encrypt,
+	SHA256Encrypt,
+	SHA384Encrypt,
+	SHA512Encrypt,
+	VerifyPasswordPBKDF2SHA256,
+} from "../src/crypto/index";
+import { configureInstallationIdentity, getOrCreateInstallationId, installationIdentity } from "../src/identity/index";
+import { Local, Session, base64StorageCodec, configureStorage, isStorageConfigured } from "../src/storage/index";
 
-import { expect, vi } from "./test-helpers.js";
+import { expect, vi } from "./test-helpers";
 
 afterEach(() => {
 	vi.unstubAllGlobals();
@@ -60,7 +66,7 @@ class MemoryStorage {
 
 let storageNow = 1_000;
 const storageClock = (): number => storageNow;
-configureStorage({ now: storageClock, prefix: "test:" });
+configureStorage({ crypto: true, now: storageClock, prefix: "test:" });
 
 const useBrowserStorage = (): { local: MemoryStorage; session: MemoryStorage } => {
 	const local = new MemoryStorage();
@@ -74,16 +80,20 @@ describe("configured browser storage", () => {
 	it("configures once and exposes stable Local and Session package exports", () => {
 		const { local, session } = useBrowserStorage();
 		expect(isStorageConfigured()).toBe(true);
-		configureStorage({ now: storageClock, prefix: "test:" });
+		configureStorage({ crypto: true, now: storageClock, prefix: "test:" });
 		expect(() => {
 			configureStorage({ now: storageClock, prefix: "other:" });
 		}).toThrow(Error);
+		expect(() => {
+			configureStorage({ codec: base64StorageCodec, crypto: true });
+		}).toThrow(TypeError);
 
 		Local.set("user", { id: 1 });
 		Session.set("route", "/home");
 		expect(Local.get("user")).toEqual({ id: 1 });
 		expect(Session.get("route")).toBe("/home");
 		expect(local.getItem("test:user")).toContain('"version":3');
+		expect(local.getItem("test:user")).not.toContain("id");
 		expect(session.getItem("test:route")).toContain('"version":3');
 	});
 
@@ -113,6 +123,7 @@ describe("configured browser storage", () => {
 			Local.removeByPrefix("");
 		}).toThrow(TypeError);
 		const encoded = base64StorageCodec.encode({ value: "Fast" });
+		expect(decodeSecureBase64(encoded)).toBe('{"value":"Fast"}');
 		expect(base64StorageCodec.decode(encoded)).toEqual({ value: "Fast" });
 	});
 });
@@ -146,75 +157,152 @@ describe("installation identity", () => {
 });
 
 describe("Web Crypto utilities", () => {
-	it("supports legacy hashes and explicit AES-CBC/AES-ECB compatibility", () => {
-		expect(md5Hex("abc")).toBe("900150983cd24fb0d6963f7d28e17f72");
-		expect(sha1Hex("abc")).toBe("a9993e364706816aba3e25717850c26c9cd0d89d");
-		expect(md5UpperHex("abc")).toBe("900150983CD24FB0D6963F7D28E17F72");
-		expect(sha1UpperHex("abc")).toBe("A9993E364706816ABA3E25717850C26C9CD0D89D");
+	it("matches the Fast.NET CryptoUtil runtime surface", async () => {
+		const cryptoApi = await import("../src/crypto/index");
+		expect(Object.keys(cryptoApi).sort()).toEqual(
+			[
+				"AESDecrypt",
+				"AESDecryptAuthenticated",
+				"AESDecryptWithPassword",
+				"AESEncrypt",
+				"AESEncryptAuthenticated",
+				"AESEncryptWithPassword",
+				"DeriveECDHKeySHA256",
+				"DeriveECDHSecret",
+				"ECDSASign",
+				"ECDSAVerify",
+				"FixedTimeEquals",
+				"GenerateECDHKeyPair",
+				"GenerateECDSAKeyPair",
+				"GenerateRSAKeyPair",
+				"GenerateRandomBytes",
+				"HKDFSHA256",
+				"HMACSHA256Encrypt",
+				"HMACSHA384Encrypt",
+				"HMACSHA512Encrypt",
+				"HashPasswordPBKDF2SHA256",
+				"MD5Encrypt",
+				"PBKDF2SHA256",
+				"RSADecryptOAEP",
+				"RSAEncryptOAEP",
+				"RSASignPSS",
+				"RSAVerifyPSS",
+				"SHA1Encrypt",
+				"SHA256Bytes",
+				"SHA256Encrypt",
+				"SHA384Bytes",
+				"SHA384Encrypt",
+				"SHA512Bytes",
+				"SHA512Encrypt",
+				"VerifyPasswordPBKDF2SHA256",
+			].sort()
+		);
+	});
+
+	it("supports hashes and AES-CBC/AES-ECB with the .NET-aligned API", () => {
+		expect(MD5Encrypt("abc")).toBe("900150983cd24fb0d6963f7d28e17f72");
+		expect(SHA1Encrypt("abc")).toBe("A9993E364706816ABA3E25717850C26C9CD0D89D");
 
 		const key = "fast-secret";
 		const vector = "fast-vector";
-		const cbc = encryptLegacyAesCbc("中文 AES-CBC", key, vector);
-		const ecb = encryptLegacyAesEcb("中文 AES-ECB", key);
-		expect(decryptLegacyAesCbc(cbc, key, vector)).toBe("中文 AES-CBC");
-		expect(decryptLegacyAesEcb(ecb, key)).toBe("中文 AES-ECB");
-		const compatible = encryptLegacyAes(JSON.stringify({ mode: "CBC" }), key, vector);
-		expect(decryptLegacyAesValue<{ mode: string }>(compatible, key, vector)).toEqual({ mode: "CBC" });
+		const cbc = AESEncrypt("中文 AES-CBC", key, vector);
+		const ecb = AESEncrypt("中文 AES-ECB", key, vector, "ECB");
+		expect(AESDecrypt(cbc ?? "", key, vector)).toBe("中文 AES-CBC");
+		expect(AESDecrypt(ecb ?? "", key, vector, "ECB")).toBe("中文 AES-ECB");
+
+		const unpadded = AESEncrypt("1234567890abcdef", key, vector, "CBC", "None");
+		expect(AESDecrypt(unpadded ?? "", key, vector, "CBC", "None")).toBe("1234567890abcdef");
+		expect(() => AESEncrypt("short block", key, vector, "CBC", "None")).toThrow(RangeError);
+
+		for (const padding of ["ANSIX923", "ISO10126"] as const) {
+			const ciphertext = AESEncrypt(`AES ${padding}`, key, vector, "CBC", padding);
+			expect(AESDecrypt(ciphertext ?? "", key, vector, "CBC", padding)).toBe(`AES ${padding}`);
+		}
+
+		const zeroPadded = AESEncrypt("zeros", key, vector, "CBC", "Zeros");
+		expect(AESDecrypt(zeroPadded ?? "", key, vector, "CBC", "Zeros")).toBe(`zeros${"\0".repeat(11)}`);
 	});
 
 	it("computes SHA-256 and generates random bytes", async () => {
-		expect(await sha256Hex("abc")).toBe("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
-		expect(generateRandomBytes(32)).toHaveLength(32);
-		expect(areBytesEqualWithoutEarlyExit(Uint8Array.of(1, 2), Uint8Array.of(1, 2))).toBe(true);
-		expect(areBytesEqualWithoutEarlyExit(Uint8Array.of(1, 2), Uint8Array.of(1, 3))).toBe(false);
+		expect(await SHA256Encrypt("abc")).toBe("BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD");
+		expect(await SHA384Encrypt("abc")).toBe("CB00753F45A35E8BB5A03D699AC65007272C32AB0EDED1631A8B605A43FF5BED8086072BA1E7CC2358BAECA134C825A7");
+		expect(await SHA512Encrypt("abc")).toBe(
+			"DDAF35A193617ABACC417349AE20413112E6FA4E89A97EA20A9EEEE64B55D39A2192992A274FC1A836BA3C23A3FEEBBD454D4423643CE80E2A9AC94FA54CA49F"
+		);
+		expect(GenerateRandomBytes(32)).toHaveLength(32);
+		expect(FixedTimeEquals(Uint8Array.of(1, 2), Uint8Array.of(1, 2))).toBe(true);
+		expect(FixedTimeEquals(Uint8Array.of(1, 2), Uint8Array.of(1, 3))).toBe(false);
 	});
 
 	it("keeps random generation available when only SubtleCrypto is missing", async () => {
 		vi.stubGlobal("crypto", {
 			getRandomValues: <Value extends ArrayBufferView>(value: Value): Value => value,
 		});
-		expect(generateRandomBytes(2)).toEqual(Uint8Array.of(0, 0));
-		await expect(sha256Hex("value")).rejects.toThrow("SubtleCrypto is unavailable");
+		expect(GenerateRandomBytes(2)).toEqual(Uint8Array.of(0, 0));
+		await expect(SHA256Encrypt("value")).rejects.toThrow("SubtleCrypto is unavailable");
 	});
 
-	it("authenticates encrypted text and emits only the v2 payload", async () => {
-		const payload = await encryptTextWithPassword('{"looks":"json"}', "correct horse battery staple", { iterations: 100_000 });
+	it("authenticates AES-GCM text with direct keys and passwords", async () => {
+		const authenticated = await AESEncryptAuthenticated("authenticated text", "application key");
+		expect(await AESDecryptAuthenticated(authenticated, "application key")).toBe("authenticated text");
+
+		const payload = await AESEncryptWithPassword('{"looks":"json"}', "correct horse battery staple", 100_000);
 		expect(payload.startsWith("FAST-AES-256-GCM-V2:")).toBe(true);
-		expect(await decryptTextWithPassword(payload, "correct horse battery staple")).toBe('{"looks":"json"}');
-		await expect(decryptTextWithPassword(payload, "wrong password")).rejects.toThrow("authenticated or decrypted");
+		expect(await AESDecryptWithPassword(payload, "correct horse battery staple")).toBe('{"looks":"json"}');
+		await expect(AESDecryptWithPassword(payload, "wrong password")).rejects.toThrow("authenticated or decrypted");
 	});
 
 	it("rejects unsupported and tampered payloads", async () => {
-		await expect(decryptTextWithPassword("unsupported", "password")).rejects.toThrow(TypeError);
-		await expect(decryptTextWithPassword("FAST-AES-256-GCM-V2:1:AA:AA:AA", "password")).rejects.toThrow(TypeError);
-		const payload = await encryptTextWithPassword("secret", "correct horse battery staple", { iterations: 100_000 });
+		await expect(AESDecryptWithPassword("unsupported", "password")).rejects.toThrow(TypeError);
+		await expect(AESDecryptWithPassword("FAST-AES-256-GCM-V2:1:AA:AA:AA", "password")).rejects.toThrow(TypeError);
+		const payload = await AESEncryptWithPassword("secret", "correct horse battery staple", 100_000);
 		const mutationIndex = payload.length - 2;
 		const replacement = payload[mutationIndex] === "A" ? "B" : "A";
 		const tampered = `${payload.slice(0, mutationIndex)}${replacement}${payload.slice(mutationIndex + 1)}`;
-		await expect(decryptTextWithPassword(tampered, "correct horse battery staple")).rejects.toThrow("authenticated or decrypted");
+		await expect(AESDecryptWithPassword(tampered, "correct horse battery staple")).rejects.toThrow("authenticated or decrypted");
 	});
 
 	it("rejects plaintext that could violate the bounded payload contract", async () => {
 		const oversized = "a".repeat(8 * 1024 * 1024 + 1);
-		await expect(encryptTextWithPassword(oversized, "password", { iterations: 100_000 })).rejects.toThrow(RangeError);
+		await expect(AESEncryptWithPassword(oversized, "password", 100_000)).rejects.toThrow(RangeError);
 	});
 
-	it("round-trips RSA-OAEP text with PEM keys", async () => {
-		const keyPair = await generateRsaOaepKeyPair();
-		const ciphertext = await encryptRsaOaep("Fast RSA", keyPair.publicKey);
-		expect(await decryptRsaOaep(ciphertext, keyPair.privateKey)).toBe("Fast RSA");
+	it("derives keys and verifies password hashes", async () => {
+		expect(await HMACSHA256Encrypt("abc", "key")).toBe("9c196e32dc0175f86f4b1cb89289d6619de6bee699e4c378e68309ed97a1a6ab");
+		expect(await PBKDF2SHA256("password", new TextEncoder().encode("12345678"), 100_000, 24)).toHaveLength(24);
+		expect(
+			await HKDFSHA256(
+				new TextEncoder().encode("input key material"),
+				new TextEncoder().encode("12345678"),
+				new TextEncoder().encode("fast-utils"),
+				24
+			)
+		).toHaveLength(24);
+
+		const passwordHash = await HashPasswordPBKDF2SHA256("correct horse battery staple", 100_000);
+		expect(await VerifyPasswordPBKDF2SHA256("correct horse battery staple", passwordHash)).toBe(true);
+		expect(await VerifyPasswordPBKDF2SHA256("wrong password", passwordHash)).toBe(false);
+	});
+
+	it("round-trips RSA-OAEP text and verifies RSA-PSS signatures with one key pair", async () => {
+		const keyPair = await GenerateRSAKeyPair();
+		const ciphertext = await RSAEncryptOAEP("Fast RSA", keyPair.publicKey);
+		expect(await RSADecryptOAEP(ciphertext, keyPair.privateKey)).toBe("Fast RSA");
+		const signature = await RSASignPSS("Fast RSA", keyPair.privateKey);
+		expect(await RSAVerifyPSS("Fast RSA", signature, keyPair.publicKey)).toBe(true);
+		expect(await RSAVerifyPSS("tampered", signature, keyPair.publicKey)).toBe(false);
 	});
 
 	it("signs with ECDSA and derives matching ECDH secrets", async () => {
-		const signingKeys = await generateEcdsaKeyPair();
-		const signature = await signEcdsa("Fast ECC", signingKeys.privateKey);
-		expect(await verifyEcdsa("Fast ECC", signature, signingKeys.publicKey)).toBe(true);
-		expect(await verifyEcdsa("tampered", signature, signingKeys.publicKey)).toBe(false);
+		const signingKeys = await GenerateECDSAKeyPair();
+		const signature = await ECDSASign("Fast ECC", signingKeys.privateKey);
+		expect(await ECDSAVerify("Fast ECC", signature, signingKeys.publicKey)).toBe(true);
+		expect(await ECDSAVerify("tampered", signature, signingKeys.publicKey)).toBe(false);
 
-		const alice = await generateEcdhKeyPair();
-		const bob = await generateEcdhKeyPair();
-		const aliceSecret = await deriveEcdhSecret(alice.privateKey, bob.publicKey);
-		const bobSecret = await deriveEcdhSecret(bob.privateKey, alice.publicKey);
+		const alice = await GenerateECDHKeyPair();
+		const bob = await GenerateECDHKeyPair();
+		const aliceSecret = await DeriveECDHSecret(alice.privateKey, bob.publicKey);
+		const bobSecret = await DeriveECDHSecret(bob.privateKey, alice.publicKey);
 		expect(aliceSecret).toEqual(bobSecret);
 	});
 });

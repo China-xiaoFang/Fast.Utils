@@ -2,11 +2,11 @@
 
 ## Runtime and package contract
 
-- Runtime platforms: ES2022 modern browsers, WebViews, Vue 2.7/3 applications, and uni-app.
-- Package format: pure ESM with one public named-export entry; CommonJS, UMD, and IIFE are not shipped.
-- Framework boundary: Vue remains external to the package build and is an optional peer in `^2.7.0 || ^3.3.0`.
-- uni-app boundary: `configureStorage({ prefix })` detects global `uni` at call time and uses its synchronous Storage API.
-- Browser storage: applications call `configureStorage()` once, then import `Local` and `Session` directly from the package.
+- Runtime platforms: ES2022 modern browsers, WebViews, Vue 3 applications, and uni-app.
+- Package format: one public named-export ESM entry for package managers and one separately minified IIFE entry for CDN use; CommonJS and UMD are not shipped.
+- Framework boundary: Vue remains external to the package-manager build and is a required peer in `^3.3.0`.
+- uni-app boundary: the first Storage operation, or an earlier `configureStorage({ prefix })` call, detects global `uni` and uses its synchronous Storage API.
+- Browser storage: applications import `Local` and `Session` directly; `configureStorage()` is needed only to override defaults before the first operation.
 - Stateful browser defaults: Storage and Identity configuration are page-global by design. Conflicting reconfiguration throws.
 - Security: secure random APIs require Web Crypto and never fall back to `Math.random()`.
 - Publishing: the repository root is the only package, `dist/` is the only build output, and `package.json#exports` is the complete public path whitelist.
@@ -23,11 +23,11 @@ Importing a module does not itself read `window`, browser Storage, or `uni`, so 
 
 ## 运行时与包契约
 
-- 运行平台：ES2022 现代浏览器、WebView、Vue 2.7/3 应用和 uni-app。
-- 包格式：仅纯 ESM 和单一公开具名导出入口，不发布 CommonJS、UMD 或 IIFE。
-- Vue 边界：Vue 不会打进本包产物，是 `^2.7.0 || ^3.3.0` 的可选 Peer。
-- uni-app：`configureStorage({ prefix })` 在调用阶段自动检测全局 `uni` 并使用其同步 Storage API。
-- Storage：程序入口配置一次，其他文件直接从包导入 `Local` 和 `Session`。
+- 运行平台：ES2022 现代浏览器、WebView、Vue 3 应用和 uni-app。
+- 包格式：包管理器使用单一公开具名导出 ESM 入口，CDN 使用单独压缩的 IIFE；不发布 CommonJS 或 UMD。
+- Vue 边界：Vue 不会打进包管理器使用的构建产物，是 `^3.3.0` 的必需 Peer。
+- uni-app：首次 Storage 操作或更早的 `configureStorage({ prefix })` 调用会检测全局 `uni`，并使用其同步 Storage API。
+- Storage：直接从包导入 `Local` 和 `Session` 即可；只有覆盖默认值时才需在首次操作前调用 `configureStorage()`。
 - 状态：Storage 与 Identity 配置按浏览器页面全局共享；冲突配置明确抛错。
 - 安全随机：要求 Web Crypto，禁止回退 `Math.random()`。
 - 发布：根目录是唯一 npm 包，`dist/` 是唯一构建输出，`exports` 是完整公共路径白名单。

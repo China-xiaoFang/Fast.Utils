@@ -2,22 +2,22 @@
 import { defineComponent, h } from "vue";
 
 import {
+	AESDecrypt,
+	AESEncrypt,
+	GenerateRSAKeyPair,
 	Local,
+	MD5Encrypt,
 	Session,
 	type StorageArea,
 	chunk,
 	configureInstallationIdentity,
 	configureStorage,
 	decodeSecureBase64,
-	decryptLegacyAesValue,
 	encodeSecureBase64,
-	encryptLegacyAes,
 	formatChineseRelativeTime,
-	generateRsaOaepKeyPair,
 	groupBy,
 	makeSlots,
 	mapConcurrent,
-	md5Hex,
 	parseQueryString,
 	pick,
 	retry,
@@ -54,12 +54,12 @@ const retryCheck: Promise<string> = retried;
 const concurrent = mapConcurrent([1, 2], 2, (value) => Promise.resolve(String(value)));
 type ConcurrentResult = Expect<Equal<typeof concurrent, Promise<string[]>>>;
 
-const md5Digest: string = md5Hex("Fast");
+const md5Digest: string = MD5Encrypt("Fast");
 const inlineStyle: string = serializeStyle({ fontSize: "14px" });
 const dateText: string = formatChineseRelativeTime(Date.now());
-const encryptedJson = encryptLegacyAes(JSON.stringify({ id: 1 }), "key", "vector");
-const decryptedJson: { id: number } | null = decryptLegacyAesValue(encryptedJson, "key", "vector");
-const rsaKeys: Promise<{ privateKey: string; publicKey: string }> = generateRsaOaepKeyPair();
+const encryptedJson = AESEncrypt(JSON.stringify({ id: 1 }), "key", "vector");
+const decryptedJson: string | null = AESDecrypt(encryptedJson ?? "", "key", "vector");
+const rsaKeys: Promise<{ privateKey: string; publicKey: string }> = GenerateRSAKeyPair();
 const secureBase64Text: string = decodeSecureBase64(encodeSecureBase64("Fast"));
 
 configureStorage({ prefix: "type-test:" });
