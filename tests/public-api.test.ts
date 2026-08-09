@@ -1,6 +1,5 @@
 // 本文件只参与 TypeScript 编译，用于验证消费者可见的公开 API 和预期类型错误。
 import { defineComponent, h } from "vue";
-
 import {
 	AESDecrypt,
 	AESEncrypt,
@@ -27,7 +26,6 @@ import {
 	useRender,
 	withDefineType,
 } from "@fast-china/utils";
-
 import type { ComputedRef } from "vue";
 
 type Equal<Left, Right> = (<Value>() => Value extends Left ? 1 : 2) extends <Value>() => Value extends Right ? 1 : 2 ? true : false;

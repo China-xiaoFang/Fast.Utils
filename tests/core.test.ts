@@ -1,5 +1,4 @@
 import { afterEach, describe, it } from "node:test";
-
 import {
 	addCssUnit,
 	addDays,
@@ -83,7 +82,6 @@ import {
 	uniqueBy,
 } from "../src/index";
 import { createLogger } from "../src/logger/index";
-
 import { expect, vi } from "./test-helpers";
 
 const legacyBase64Dictionary = [

@@ -2,6 +2,13 @@
 
 All notable changes to Fast.Utils are documented in this file.
 
+## [2.0.2] - 2026-08-09
+
+### Changed
+
+- Added prioritized import path groups for the uni-app, Vue, Element Plus, Fast Element Plus, Fast China, and Lodash ecosystems while keeping type-only imports in the dedicated type group.
+- Changed import group spacing to a compact no-blank-line style and normalized the repository imports to the new policy.
+
 ## [2.0.1] - 2026-08-09
 
 ### Added
@@ -36,5 +43,6 @@ All notable changes to Fast.Utils are documented in this file.
 
 - Added authenticated ciphertext validation, bounded crypto parameters and payloads, unbiased Web Crypto randomness, prototype-safe query/object transforms, and namespace-scoped Storage cleanup.
 
+[2.0.2]: https://github.com/China-xiaoFang/Fast.Utils/releases/tag/v2.0.2
 [2.0.1]: https://github.com/China-xiaoFang/Fast.Utils/releases/tag/v2.0.1
 [2.0.0]: https://github.com/China-xiaoFang/Fast.Utils/releases/tag/v2.0.0

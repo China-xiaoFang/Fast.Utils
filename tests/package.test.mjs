@@ -4,9 +4,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import vm from "node:vm";
-
-import { Rolldown } from "tsdown";
 import * as Vue from "vue";
+import { Rolldown } from "tsdown";
 
 const workspaceRoot = path.resolve(import.meta.dirname, "..");
 const distRoot = path.join(workspaceRoot, "dist");

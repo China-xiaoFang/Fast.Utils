@@ -1,5 +1,4 @@
 import { afterEach, describe, it } from "node:test";
-
 import { decodeSecureBase64 } from "../src/base64/index";
 import {
 	AESDecrypt,
@@ -33,7 +32,6 @@ import {
 } from "../src/crypto/index";
 import { configureInstallationIdentity, getOrCreateInstallationId, installationIdentity } from "../src/identity/index";
 import { Local, Session, base64StorageCodec, configureStorage, isStorageConfigured } from "../src/storage/index";
-
 import { expect, vi } from "./test-helpers";
 
 afterEach(() => {

@@ -1,7 +1,5 @@
 import { describe, it } from "node:test";
-
 import { debounce, mapConcurrent, retry, sleep, throttle, withTimeout } from "../src/async/index";
-
 import { expect, vi } from "./test-helpers";
 
 describe("cancellation and timeout", () => {

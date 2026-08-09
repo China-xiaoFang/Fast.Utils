@@ -1,7 +1,5 @@
 import { afterEach, describe, it } from "node:test";
-
 import { Local, Session, configureStorage, isStorageConfigured } from "../src/storage/index";
-
 import { expect, vi } from "./test-helpers";
 
 afterEach(() => {

@@ -1,5 +1,4 @@
 import { computed } from "vue";
-
 import type { ComputedRef } from "vue";
 
 /** Vue Emits 对象中允许的校验器形状。 */

@@ -1,7 +1,5 @@
 import { describe, it } from "node:test";
-
 import { createApp, createRenderer, defineComponent, h, reactive } from "vue";
-
 import { useEmits } from "../src/vue/emits";
 import { useExpose } from "../src/vue/expose";
 import { callOptionalFunction } from "../src/vue/func";
@@ -10,7 +8,6 @@ import { definePropType, useProps } from "../src/vue/props";
 import { useRender } from "../src/vue/render";
 import { makeSlots } from "../src/vue/slots";
 import { withDefineType } from "../src/vue/with";
-
 import { expect, vi } from "./test-helpers";
 
 describe("Vue event and props helpers", () => {
