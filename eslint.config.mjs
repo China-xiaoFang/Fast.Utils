@@ -257,6 +257,13 @@ export default defineConfig(
 					prefer: "type-imports",
 				},
 			],
+			// 允许透明转发外部 Promise 的未知拒绝原因；静态可知的 string、number 等仍会被报告。
+			"@typescript-eslint/prefer-promise-reject-errors": [
+				"error",
+				{
+					allowThrowingUnknown: true,
+				},
+			],
 		},
 	},
 	// 默认启用的模块导入正确性与排序规则。
@@ -567,12 +574,6 @@ export default defineConfig(
 		name: "fast-utils/markdown",
 		files: ["**/*.md"],
 		extends: [eslintMarkdown.configs.recommended],
-	},
-	// 该 API 明确允许保持任意 Promise 拒绝原因，不能强制包裹为 Error。
-	{
-		name: "fast-utils/async-rejection-identity",
-		files: ["src/async/index.ts"],
-		rules: { "@typescript-eslint/prefer-promise-reject-errors": "off" },
 	},
 	// node:test 的注册函数由测试运行器接管 Promise，声明为已知安全调用。
 	{
