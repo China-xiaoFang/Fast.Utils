@@ -81,7 +81,7 @@ TypeScript Crypto 公共 API 与 .NET `CryptoUtil` 的公开方法及算法名�
 | RSA                      | `GenerateRSAKeyPair`、`RSAEncryptOAEP`、`RSADecryptOAEP`、`RSASignPSS`、`RSAVerifyPSS`                                               |
 | 椭圆曲线                 | `GenerateECDSAKeyPair`、`ECDSASign`、`ECDSAVerify`、`GenerateECDHKeyPair`、`DeriveECDHSecret`、`DeriveECDHKeySHA256`                 |
 
-`AESEncryptAuthenticated` 的 Base64 v1 载荷、`AESEncryptWithPassword` 的 `FAST-AES-256-GCM-V2` 载荷、PBKDF2 密码哈希以及 PKCS#8/SPKI PEM 密钥均可与 .NET 双向使用。MD5 与 HMAC 输出小写十六进制；SHA-1/256/384/512 输出大写十六进制，与 .NET 保持一致。
+`AESEncryptAuthenticated` 的 Base64 v1 载荷、`AESEncryptWithPassword` 的 `FAST-AES-256-GCM-V1` 载荷、PBKDF2 密码哈希以及 PKCS#8/SPKI PEM 密钥均可与 .NET 双向使用。MD5 与 HMAC 输出小写十六进制；SHA-1/256/384/512 输出大写十六进制，与 .NET 保持一致。
 
 密码存储使用 `HashPasswordPBKDF2SHA256` 和 `VerifyPasswordPBKDF2SHA256`；该哈希不可解密。需要同时保证机密性和完整性的文本使用 AES-GCM 入口。HMAC 用于共享密钥认证，SHA-2 用于摘要，HKDF/PBKDF2 用于密钥派生。MD5、SHA-1、AES-CBC 和 AES-ECB 不提供现代密码存储或认证加密保证。
 

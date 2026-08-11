@@ -32,7 +32,7 @@ const maximumPlaintextBytes = 8 * 1024 * 1024;
 const maximumPayloadLength = 16 * 1024 * 1024;
 
 /** 密码加密载荷的协议与算法版本前缀。 */
-const encryptedPayloadPrefix = "FAST-AES-256-GCM-V2";
+const encryptedPayloadPrefix = "FAST-AES-256-GCM-V1";
 
 /** PBKDF2 密码哈希的协议与算法版本前缀。 */
 const passwordHashPrefix = "FAST-PBKDF2-SHA256-V1";
@@ -676,7 +676,7 @@ export async function AESDecryptAuthenticated(payload: string, key: string): Pro
  * 使用 PBKDF2-HMAC-SHA-256 派生密钥，再以 AES-256-GCM 认证加密 UTF-8 文本。
  *
  * @remarks 每次调用生成独立 16 字节盐与 12 字节 IV。输出是与 .NET `AESEncryptWithPassword`
- * 一致的 v2 自描述载荷，不应由业务代码手动拆分或修改。密码加密不替代密钥管理。
+ * 一致的 v1 自描述载荷，不应由业务代码手动拆分或修改。密码加密不替代密钥管理。
  * @param plaintext - 原始文本，不进行 JSON 推断；UTF-8 编码后最大 8 MiB。
  * @param password - 1 至 1024 UTF-8 字节的秘密口令。
  * @param iterations - PBKDF2 工作因子，默认 600,000。
@@ -720,9 +720,9 @@ export async function AESEncryptWithPassword(plaintext: string, password: string
 }
 
 /**
- * 解密 {@link AESEncryptWithPassword} 生成的 v2 认证载荷。
+ * 解密 {@link AESEncryptWithPassword} 生成的 v1 认证载荷。
  *
- * @param payload - 未修改的 v2 载荷，最大约 16 MiB 文本。
+ * @param payload - 未修改的 v1 载荷，最大约 16 MiB 文本。
  * @param password - 加密时使用的口令。
  * @returns 原始 UTF-8 文本。
  * @throws 格式或字段非法时抛出 `TypeError`，载荷过大时抛出 `RangeError`，认证或密码

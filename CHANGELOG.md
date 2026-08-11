@@ -2,6 +2,12 @@
 
 All notable changes to Fast.Utils are documented in this file.
 
+## [2.0.3] - 2026-08-11
+
+### Changed
+
+- Established `FAST-AES-256-GCM-V1` as the initial cross-language password-based AES payload.
+
 ## [2.0.2] - 2026-08-09
 
 ### Changed
@@ -43,6 +49,7 @@ All notable changes to Fast.Utils are documented in this file.
 
 - Added authenticated ciphertext validation, bounded crypto parameters and payloads, unbiased Web Crypto randomness, prototype-safe query/object transforms, and namespace-scoped Storage cleanup.
 
+[2.0.3]: https://github.com/China-xiaoFang/Fast.Utils/releases/tag/v2.0.3
 [2.0.2]: https://github.com/China-xiaoFang/Fast.Utils/releases/tag/v2.0.2
 [2.0.1]: https://github.com/China-xiaoFang/Fast.Utils/releases/tag/v2.0.1
 [2.0.0]: https://github.com/China-xiaoFang/Fast.Utils/releases/tag/v2.0.0

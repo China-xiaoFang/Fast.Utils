@@ -245,14 +245,14 @@ describe("Web Crypto utilities", () => {
 		expect(await AESDecryptAuthenticated(authenticated, "application key")).toBe("authenticated text");
 
 		const payload = await AESEncryptWithPassword('{"looks":"json"}', "correct horse battery staple", 100_000);
-		expect(payload.startsWith("FAST-AES-256-GCM-V2:")).toBe(true);
+		expect(payload.startsWith("FAST-AES-256-GCM-V1:")).toBe(true);
 		expect(await AESDecryptWithPassword(payload, "correct horse battery staple")).toBe('{"looks":"json"}');
 		await expect(AESDecryptWithPassword(payload, "wrong password")).rejects.toThrow("authenticated or decrypted");
 	});
 
 	it("rejects unsupported and tampered payloads", async () => {
 		await expect(AESDecryptWithPassword("unsupported", "password")).rejects.toThrow(TypeError);
-		await expect(AESDecryptWithPassword("FAST-AES-256-GCM-V2:1:AA:AA:AA", "password")).rejects.toThrow(TypeError);
+		await expect(AESDecryptWithPassword("FAST-AES-256-GCM-V1:1:AA:AA:AA", "password")).rejects.toThrow(TypeError);
 		const payload = await AESEncryptWithPassword("secret", "correct horse battery staple", 100_000);
 		const mutationIndex = payload.length - 2;
 		const replacement = payload[mutationIndex] === "A" ? "B" : "A";

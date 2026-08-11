@@ -81,7 +81,7 @@ The TypeScript Crypto public API mirrors the public methods and algorithm casing
 | RSA                               | `GenerateRSAKeyPair`, `RSAEncryptOAEP`, `RSADecryptOAEP`, `RSASignPSS`, `RSAVerifyPSS`                                               |
 | Elliptic curves                   | `GenerateECDSAKeyPair`, `ECDSASign`, `ECDSAVerify`, `GenerateECDHKeyPair`, `DeriveECDHSecret`, `DeriveECDHKeySHA256`                 |
 
-The Base64 v1 payload produced by `AESEncryptAuthenticated`, the `FAST-AES-256-GCM-V2` password payload, PBKDF2 password hashes, and PKCS#8/SPKI PEM keys interoperate with .NET in both directions. MD5 and HMAC output lowercase hexadecimal; SHA-1/256/384/512 output uppercase hexadecimal, matching .NET.
+The Base64 v1 payload produced by `AESEncryptAuthenticated`, the `FAST-AES-256-GCM-V1` password payload, PBKDF2 password hashes, and PKCS#8/SPKI PEM keys interoperate with .NET in both directions. MD5 and HMAC output lowercase hexadecimal; SHA-1/256/384/512 output uppercase hexadecimal, matching .NET.
 
 Store passwords with `HashPasswordPBKDF2SHA256` and `VerifyPasswordPBKDF2SHA256`; the result is not decryptable. AES-GCM provides confidentiality and integrity, HMAC authenticates with a shared key, SHA-2 computes digests, and HKDF/PBKDF2 derive keys. MD5, SHA-1, AES-CBC, and AES-ECB do not provide modern password-storage or authenticated-encryption guarantees.
 
