@@ -32,6 +32,7 @@ import {
 } from "../src/crypto/index";
 import { configureInstallationIdentity, getOrCreateInstallationId, installationIdentity } from "../src/identity/index";
 import { Local, Session, base64StorageCodec, configureStorage, isStorageConfigured } from "../src/storage/index";
+import { isUuidV4 } from "../src/string/index";
 import { expect, vi } from "./test-helpers";
 
 afterEach(() => {
@@ -152,9 +153,24 @@ describe("installation identity", () => {
 			configureInstallationIdentity({ cacheKey: "another-installation-id" });
 		}).toThrow(Error);
 	});
+
+	it("creates an installation identity when Web Crypto is unavailable", () => {
+		useBrowserStorage();
+		configureInstallationIdentity({ cacheKey: "account:installation-id" });
+		installationIdentity.clear();
+		vi.stubGlobal("crypto", undefined);
+		const installationId = getOrCreateInstallationId();
+		expect(isUuidV4(installationId)).toBe(true);
+		expect(Local.get(installationIdentity.cacheKey)).toBe(installationId);
+	});
 });
 
 describe("Web Crypto utilities", () => {
+	it("falls back for random bytes when Web Crypto is unavailable", () => {
+		vi.stubGlobal("crypto", undefined);
+		expect(GenerateRandomBytes(16).length).toBe(16);
+	});
+
 	it("matches the Fast.NET CryptoUtil runtime surface", async () => {
 		const cryptoApi = await import("../src/crypto/index");
 		expect(Object.keys(cryptoApi).sort()).toEqual(

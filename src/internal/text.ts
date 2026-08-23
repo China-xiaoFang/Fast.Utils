@@ -1,13 +1,3 @@
-/** 延迟访问 Encoding API 时使用的平台全局对象最小视图。 */
-interface RuntimeEncodingGlobals {
-	/** 可选 TextDecoder 构造器；缺失时只允许不依赖文本解码的 API 继续工作。 */
-	TextDecoder?: typeof TextDecoder;
-	/** 可选 TextEncoder 构造器；缺失时只允许纯字节 API 继续工作。 */
-	TextEncoder?: typeof TextEncoder;
-}
-
-const runtimeEncodingGlobals = globalThis as unknown as RuntimeEncodingGlobals;
-
 /**
  * 延迟解析 UTF-8 TextDecoder，确保模块导入阶段不依赖 Encoding API。
  *
@@ -15,7 +5,7 @@ const runtimeEncodingGlobals = globalThis as unknown as RuntimeEncodingGlobals;
  * @throws `Error` 当当前平台没有提供 `TextDecoder`。
  */
 export const getTextDecoder = (): TextDecoder => {
-	const TextDecoderConstructor = runtimeEncodingGlobals.TextDecoder;
+	const TextDecoderConstructor = globalThis.TextDecoder;
 	if (typeof TextDecoderConstructor !== "function") {
 		throw new Error("TextDecoder is unavailable in the current runtime.");
 	}
@@ -29,7 +19,7 @@ export const getTextDecoder = (): TextDecoder => {
  * @throws `Error` 当当前平台没有提供 `TextEncoder`。
  */
 export const getTextEncoder = (): TextEncoder => {
-	const TextEncoderConstructor = runtimeEncodingGlobals.TextEncoder;
+	const TextEncoderConstructor = globalThis.TextEncoder;
 	if (typeof TextEncoderConstructor !== "function") {
 		throw new Error("TextEncoder is unavailable in the current runtime.");
 	}

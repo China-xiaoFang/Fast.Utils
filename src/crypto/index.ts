@@ -40,25 +40,6 @@ const passwordHashPrefix = "FAST-PBKDF2-SHA256-V1";
 /** 直接 AES-GCM 密钥加密载荷的协议版本。 */
 const authenticatedAesPayloadVersion = 1;
 
-/** 用于逐项验证实际依赖能力，而不是只判断 `subtle` 对象是否存在。 */
-type RuntimeSubtleCrypto = Partial<
-	Pick<SubtleCrypto, "decrypt" | "deriveBits" | "deriveKey" | "digest" | "encrypt" | "exportKey" | "generateKey" | "importKey" | "sign" | "verify">
->;
-/** Web Crypto 的运行时最小结构，避免用不安全的类型断言掩盖能力缺失。 */
-interface RuntimeCrypto extends Partial<Pick<Crypto, "getRandomValues">> {
-	/** 可选 SubtleCrypto 能力；密码原语入口会继续逐项验证所需方法。 */
-	subtle?: RuntimeSubtleCrypto;
-}
-
-/** Crypto 工具延迟读取的平台全局对象最小视图。 */
-interface RuntimeCryptoGlobals {
-	/** 可选 Web Crypto 实现；具体方法仍由每个能力入口逐项校验。 */
-	crypto?: RuntimeCrypto;
-}
-
-/** 延迟读取的 Web Crypto 全局对象视图，便于在缺少该能力的平台给出明确错误。 */
-const runtimeCryptoGlobals = globalThis as unknown as RuntimeCryptoGlobals;
-
 /** AES 分组密码模式；与 .NET `CipherMode.CBC` 和 `CipherMode.ECB` 对应。 */
 export type AesCipherMode = "CBC" | "ECB";
 
@@ -77,29 +58,14 @@ export interface PemKeyPair {
 export type EcNamedCurve = "P-256" | "P-384" | "P-521";
 
 /**
- * 获取安全随机数能力。
- *
- * @remarks 随机字节和随机字符串不依赖 SubtleCrypto，因此这里与完整密码原语检查分开。
- * @returns 当前平台的 Crypto 对象。
- * @throws `Error` 当平台缺少 `getRandomValues`。
- */
-const requireRandomCrypto = (): Crypto => {
-	const crypto = runtimeCryptoGlobals.crypto;
-	if (typeof crypto?.getRandomValues !== "function") {
-		throw new Error("Web Crypto is unavailable in the current runtime.");
-	}
-	return crypto as Crypto;
-};
-
-/**
  * 获取本模块非随机 API 所需的完整 Web Crypto 能力。
  *
  * @returns 已确认实现摘要、派生、密钥导入导出、加解密、签名和验证方法的 Crypto 对象。
  * @throws `Error` 当任一必要 SubtleCrypto 方法缺失。
  */
 const requireWebCrypto = (): Crypto => {
-	const crypto = requireRandomCrypto();
-	const subtle = (crypto as unknown as RuntimeCrypto).subtle;
+	const crypto = globalThis.crypto;
+	const subtle = crypto?.subtle;
 	if (
 		typeof subtle?.decrypt !== "function" ||
 		typeof subtle.deriveBits !== "function" ||
@@ -255,17 +221,22 @@ const computeHmacBytes = async (value: string, key: string, hash: "SHA-256" | "S
 };
 
 /**
- * 生成安全随机字节。
+ * 生成随机字节。
  *
- * @param length - 0 至 65,536 的安全整数；上限来自 Web Crypto 单次请求限制。
+ * @remarks 优先使用 Web Crypto；平台缺少安全随机能力时回退到 `Math.random()`。
+ * @param length - 0 至 65,536 的安全整数。
  * @returns 新建的 `Uint8Array`。
- * @throws 参数非法时抛出 `RangeError`；缺少 Web Crypto 时抛出 `Error`。
+ * @throws 参数非法时抛出 `RangeError`。
  */
 export function GenerateRandomBytes(length: number): Uint8Array {
 	if (!Number.isSafeInteger(length) || length < 0 || length > 65_536) {
 		throw new RangeError("length must be a safe integer from 0 through 65,536.");
 	}
-	return requireRandomCrypto().getRandomValues(new Uint8Array(length));
+	const bytes = new Uint8Array(length);
+	const crypto = globalThis.crypto;
+	if (typeof crypto?.getRandomValues === "function") return crypto.getRandomValues(bytes);
+	for (let index = 0; index < bytes.length; index += 1) bytes[index] = Math.floor(Math.random() * 0x100);
+	return bytes;
 }
 
 /**

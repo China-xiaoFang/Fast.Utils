@@ -35,11 +35,11 @@ Local.set("token", "value");
 
 `configureStorage({ prefix: "admin:", crypto: true })` restores the old global prefix and Base64-obfuscation options. `crypto: true` and `base64StorageCodec` are reversible encoding rather than encryption and must not protect secrets. A custom `codec` may be supplied instead of `crypto`.
 
-`encodeSecureBase64` and `decodeSecureBase64` preserve the legacy dictionary payload while using a Web Crypto random prefix. Given the same default six-character prefix, valid legacy payloads remain byte-for-byte compatible. The old dictionary references an unavailable character for Base64 lengths 101–124, so the current implementation inserts a one-character fallback that the legacy removal flow can decode. The old custom-length argument always generated six random characters; the current API correctly generates `prefixLength` characters. Custom lengths must match during encoding and decoding; `0` disables both the prefix and dictionary insertion. The format remains reversible encoding rather than encryption.
+`encodeSecureBase64` and `decodeSecureBase64` preserve the legacy dictionary payload. The random prefix prefers Web Crypto and falls back to `Math.random()` when unavailable; it does not provide a security property. Given the same default six-character prefix, valid legacy payloads remain byte-for-byte compatible. The old dictionary references an unavailable character for Base64 lengths 101–124, so the current implementation inserts a one-character fallback that the legacy removal flow can decode. The old custom-length argument always generated six random characters; the current API correctly generates `prefixLength` characters. Custom lengths must match during encoding and decoding; `0` disables both the prefix and dictionary insertion. The format remains reversible encoding rather than encryption.
 
 ## Identity
 
-`installationIdentity` is the global installation identifier facade. Call `configureInstallationIdentity` in the application entry before first use to override its `identity:installation-id` cache key. `getOrCreateInstallationId(installationId?)` loads, creates, or replaces its UUID v4 value in `Local` storage. Storage uses its defaults when no explicit configuration was supplied. UUID generation requires Web Crypto and never falls back to `Math.random()`.
+`installationIdentity` is the global installation identifier facade. Call `configureInstallationIdentity` in the application entry before first use to override its `identity:installation-id` cache key. `getOrCreateInstallationId(installationId?)` loads, creates, or replaces its UUID v4 value in `Local` storage. Storage uses its defaults when no explicit configuration was supplied. UUID generation prefers Web Crypto and falls back to `Math.random()` when unavailable.
 
 ```ts
 import { configureInstallationIdentity, configureStorage, getOrCreateInstallationId, installationIdentity } from "@fast-china/utils";
@@ -66,20 +66,30 @@ logger.error("network", "request failed", error);
 
 `createLogger` configures the minimum level, brand prefix, sink, and optional uni-app App-Plus split output. Scope must be a non-empty string without surrounding whitespace.
 
+## Clipboard
+
+`copy(value)` restores the V1 text-copy capability and returns `Promise<void>`. uni-app uses `setClipboardData`; browsers prefer the Clipboard API and fall back to `document.execCommand("copy")` when it is unavailable. Missing capabilities, denied permission, and copy failures throw errors.
+
+```ts
+import { copy } from "@fast-china/utils";
+
+await copy("Fast utilities");
+```
+
 ## Crypto
 
 The TypeScript Crypto public API mirrors the public methods and algorithm casing of .NET `CryptoUtil`:
 
-| Capability                        | Shared method names                                                                                                                  |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Secure random and byte comparison | `GenerateRandomBytes`, `FixedTimeEquals`                                                                                             |
-| MD5, SHA-1, and SHA-2 digests     | `MD5Encrypt`, `SHA1Encrypt`, `SHA256Encrypt`, `SHA256Bytes`, `SHA384Encrypt`, `SHA384Bytes`, `SHA512Encrypt`, `SHA512Bytes`          |
-| HMAC                              | `HMACSHA256Encrypt`, `HMACSHA384Encrypt`, `HMACSHA512Encrypt`                                                                        |
-| Password derivation and hashing   | `PBKDF2SHA256`, `HashPasswordPBKDF2SHA256`, `VerifyPasswordPBKDF2SHA256`                                                             |
-| HKDF                              | `HKDFSHA256`                                                                                                                         |
-| AES                               | `AESEncrypt`, `AESDecrypt`, `AESEncryptAuthenticated`, `AESDecryptAuthenticated`, `AESEncryptWithPassword`, `AESDecryptWithPassword` |
-| RSA                               | `GenerateRSAKeyPair`, `RSAEncryptOAEP`, `RSADecryptOAEP`, `RSASignPSS`, `RSAVerifyPSS`                                               |
-| Elliptic curves                   | `GenerateECDSAKeyPair`, `ECDSASign`, `ECDSAVerify`, `GenerateECDHKeyPair`, `DeriveECDHSecret`, `DeriveECDHKeySHA256`                 |
+| Capability                       | Shared method names                                                                                                                  |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Random bytes and byte comparison | `GenerateRandomBytes`, `FixedTimeEquals`                                                                                             |
+| MD5, SHA-1, and SHA-2 digests    | `MD5Encrypt`, `SHA1Encrypt`, `SHA256Encrypt`, `SHA256Bytes`, `SHA384Encrypt`, `SHA384Bytes`, `SHA512Encrypt`, `SHA512Bytes`          |
+| HMAC                             | `HMACSHA256Encrypt`, `HMACSHA384Encrypt`, `HMACSHA512Encrypt`                                                                        |
+| Password derivation and hashing  | `PBKDF2SHA256`, `HashPasswordPBKDF2SHA256`, `VerifyPasswordPBKDF2SHA256`                                                             |
+| HKDF                             | `HKDFSHA256`                                                                                                                         |
+| AES                              | `AESEncrypt`, `AESDecrypt`, `AESEncryptAuthenticated`, `AESDecryptAuthenticated`, `AESEncryptWithPassword`, `AESDecryptWithPassword` |
+| RSA                              | `GenerateRSAKeyPair`, `RSAEncryptOAEP`, `RSADecryptOAEP`, `RSASignPSS`, `RSAVerifyPSS`                                               |
+| Elliptic curves                  | `GenerateECDSAKeyPair`, `ECDSASign`, `ECDSAVerify`, `GenerateECDHKeyPair`, `DeriveECDHSecret`, `DeriveECDHKeySHA256`                 |
 
 The Base64 v1 payload produced by `AESEncryptAuthenticated`, the `FAST-AES-256-GCM-V1` password payload, PBKDF2 password hashes, and PKCS#8/SPKI PEM keys interoperate with .NET in both directions. MD5 and HMAC output lowercase hexadecimal; SHA-1/256/384/512 output uppercase hexadecimal, matching .NET.
 
@@ -91,14 +101,14 @@ Store passwords with `HashPasswordPBKDF2SHA256` and `VerifyPasswordPBKDF2SHA256`
 - `async`: abort-aware `sleep`, timeout, retry, bounded concurrent mapping, debounce, and throttle primitives.
 - `base64`: strict UTF-8 Base64/Base64URL byte and text functions plus the historical Latin-1 and dictionary-obfuscation functions.
 - `color`: Hex parsing/formatting/mixing, explicit black/white mixing, luminance, and contrast helpers.
-- `crypto`: secure randomness, digests, HMAC, PBKDF2, HKDF, AES, RSA-OAEP/PSS, ECDSA, and ECDH.
+- `crypto`: random bytes, digests, HMAC, PBKDF2, HKDF, AES, RSA-OAEP/PSS, ECDSA, and ECDH.
 - `date`: date validation and arithmetic, day ranges, relative formatting, and the seven historical date helpers as named functions.
 - `dom`: CSS unit and style serialization helpers.
 - `env`: capability and user-agent detection. Detection does not expand the supported runtime contract.
 - `logger`: isolated configurable loggers and the default `logger`.
-- `number`: ranges, rounding, aggregation, interpolation, byte formatting, and secure integer generation.
+- `number`: ranges, rounding, aggregation, interpolation, byte formatting, and Web Crypto-preferred `randomInt`.
 - `object`: prototype-safe selection, comparison, mapping, and query serialization. Style serialization is provided by the `dom` module.
-- `string`: query parsing, casing, grapheme-aware truncation, UUID, secure random strings, escaping, and whitespace normalization.
+- `string`: query parsing, casing, grapheme-aware truncation, clipboard copying, UUID, Web Crypto-preferred `randomString`, escaping, and whitespace normalization.
 - `vue`: Composition API, type, render, and `app.use()` registration helpers for Vue 3.
 
 ## Security and limits
@@ -110,3 +120,7 @@ Query and object helpers reject prototype-polluting keys. URL decoders are bound
 ## Errors and compatibility
 
 Programming errors, invalid inputs, unsupported platform capabilities, and malformed protected data throw native errors unless a function explicitly documents a nullable result.
+
+`randomInt`, `randomString`, `generateUuidV4`, and `GenerateRandomBytes` all prefer Web Crypto and fall back to `Math.random()` when unavailable.
+
+Fast.Utils 2.1.0 removes `secureRandomInt` and `secureRandomString`. This is a breaking change; consumers must migrate to `randomInt` and `randomString`, respectively.

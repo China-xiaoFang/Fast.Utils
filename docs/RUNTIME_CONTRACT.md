@@ -8,7 +8,7 @@
 - uni-app boundary: the first Storage operation, or an earlier `configureStorage({ prefix })` call, detects global `uni` and uses its synchronous Storage API.
 - Browser storage: applications import `Local` and `Session` directly; `configureStorage()` is needed only to override defaults before the first operation.
 - Stateful browser defaults: Storage and Identity configuration are page-global by design. Conflicting reconfiguration throws.
-- Security: secure random APIs require Web Crypto and never fall back to `Math.random()`.
+- Randomness: every random generation entry prefers Web Crypto and falls back to `Math.random()` when unavailable.
 - Publishing: the repository root is the only package, `dist/` is the only build output, and `package.json#exports` is the complete public path whitelist.
 
 Importing a module does not itself read `window`, browser Storage, or `uni`, so unsupported platform capabilities fail only when the corresponding API is called.
@@ -29,7 +29,7 @@ Importing a module does not itself read `window`, browser Storage, or `uni`, so 
 - uni-app：首次 Storage 操作或更早的 `configureStorage({ prefix })` 调用会检测全局 `uni`，并使用其同步 Storage API。
 - Storage：直接从包导入 `Local` 和 `Session` 即可；只有覆盖默认值时才需在首次操作前调用 `configureStorage()`。
 - 状态：Storage 与 Identity 配置按浏览器页面全局共享；冲突配置明确抛错。
-- 安全随机：要求 Web Crypto，禁止回退 `Math.random()`。
+- 随机数：所有随机生成入口都优先使用 Web Crypto，缺失时回退到 `Math.random()`。
 - 发布：根目录是唯一 npm 包，`dist/` 是唯一构建输出，`exports` 是完整公共路径白名单。
 
 模块导入本身不读取 `window`、浏览器 Storage 或 `uni`，不具备对应平台能力时只在调用相关 API 时明确失败。

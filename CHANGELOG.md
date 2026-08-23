@@ -2,6 +2,22 @@
 
 All notable changes to Fast.Utils are documented in this file.
 
+## [2.1.0] - 2026-08-23
+
+### Added
+
+- Restored the V1 `copy` text clipboard API for browsers and uni-app.
+
+### Changed
+
+- Added `randomInt` and `randomString` as the random APIs.
+- Standardized every random generation entry to prefer Web Crypto and fall back to `Math.random()` when unavailable.
+- Accessed standard runtime capabilities directly through `globalThis` instead of maintaining asserted global-object views.
+
+### Breaking Changes
+
+- Removed `secureRandomInt` and `secureRandomString`; use `randomInt` and `randomString` instead.
+
 ## [2.0.3] - 2026-08-11
 
 ### Changed
@@ -49,6 +65,7 @@ All notable changes to Fast.Utils are documented in this file.
 
 - Added authenticated ciphertext validation, bounded crypto parameters and payloads, unbiased Web Crypto randomness, prototype-safe query/object transforms, and namespace-scoped Storage cleanup.
 
+[2.1.0]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.0.3...v2.1.0
 [2.0.3]: https://github.com/China-xiaoFang/Fast.Utils/releases/tag/v2.0.3
 [2.0.2]: https://github.com/China-xiaoFang/Fast.Utils/releases/tag/v2.0.2
 [2.0.1]: https://github.com/China-xiaoFang/Fast.Utils/releases/tag/v2.0.1

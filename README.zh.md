@@ -16,7 +16,7 @@
 
 - 提供完整类型、无副作用实现和统一具名导出入口，便于 Tree Shaking。
 - 明确支持浏览器、WebView、Vue 3 与 uni-app，导入阶段不访问平台全局对象。
-- 为 Storage、安装标识、编码、安全随机数与密码学能力划定清晰的安全边界。
+- 为 Storage、安装标识、编码、随机数与密码学能力划定清晰的安全边界。
 - 使用 TypeScript 6 严格检查、ESLint、运行时测试、消费者类型测试、包契约与 Publint 共同验证。
 
 ## 安装
@@ -69,6 +69,16 @@ encodeBase64Url("path/参数");
 
 `encodeSecureBase64` / `decodeSecureBase64` 仅用于兼容旧字典格式。给定相同的默认 6 字符前缀时，有效旧载荷保持逐字符一致；历史字典无法自解码的 101–124 字符 Base64 区间使用旧删除流程可识别的单字符回退。它不是加密，不应用于密码、Token 或其他秘密。
 
+## 复制文本
+
+```ts
+import { copy } from "@fast-china/utils";
+
+await copy("Fast 工具库");
+```
+
+uni-app 使用 `setClipboardData`；浏览器优先使用 Clipboard API，不可用时回退到旧版浏览器复制能力。平台不支持或拒绝访问剪贴板时会抛出错误。
+
 ## 安装实例标识
 
 ```ts
@@ -79,7 +89,7 @@ configureInstallationIdentity({ cacheKey: "account:installation-id" });
 const installationId = getOrCreateInstallationId();
 ```
 
-在程序入口、首次使用安装标识前调用 `configureInstallationIdentity`。默认业务键是 `identity:installation-id`；相同配置可幂等重复调用，不同配置会抛错。安装标识使用已配置的 `Local` 和 Web Crypto UUID v4，不回退 `Math.random()`。它不是硬件 ID、认证凭证或风控信号。
+在程序入口、首次使用安装标识前调用 `configureInstallationIdentity`。默认业务键是 `identity:installation-id`；相同配置可幂等重复调用，不同配置会抛错。安装标识 UUID 优先使用 Web Crypto 生成，能力缺失时回退到 `Math.random()`。它不是硬件 ID、认证凭证或风控信号。
 
 ## Crypto
 

@@ -1,5 +1,5 @@
 import { encodeUtf8, getTextDecoder } from "../internal/text";
-import { secureRandomInt } from "../number/index";
+import { randomInt } from "../number/index";
 
 const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -289,16 +289,17 @@ const assertPrefixLength = (length: number): void => {
 };
 
 /**
- * 生成 SecureBase64 兼容格式使用的安全随机前缀。
+ * 生成 SecureBase64 兼容格式使用的随机前缀。
  *
- * @remarks 前缀字符使用 Web Crypto 均匀生成，用于降低相同明文产生相同载荷的概率；它本身不构成加密。
+ * @remarks 优先使用 Web Crypto，能力缺失时回退到 `Math.random()`。前缀只用于降低相同明文
+ * 产生相同载荷的概率，本身不构成加密，也不得承担安全用途。
  * @param length - 需要生成的字符数，调用前必须完成校验。
  * @returns 由历史字母表组成的文本。
  */
 const createRandomPrefix = (length: number): string => {
 	let result = "";
 	for (let index = 0; index < length; index += 1) {
-		result += randomPrefixAlphabet[secureRandomInt(0, randomPrefixAlphabet.length)] ?? "";
+		result += randomPrefixAlphabet[randomInt(0, randomPrefixAlphabet.length)] ?? "";
 	}
 	return result;
 };
@@ -324,7 +325,7 @@ const insertDictionaryCharacters = (base64Value: string): string => {
 /**
  * 移除历史字典插入的冗余字符。
  *
- * @param base64Value - 已移除安全随机前缀的 SecureBase64 载荷。
+ * @param base64Value - 已移除随机前缀的 SecureBase64 载荷。
  * @returns 可交给标准 Base64 解码器的文本。
  */
 const removeDictionaryCharacters = (base64Value: string): string => {
@@ -337,7 +338,7 @@ const removeDictionaryCharacters = (base64Value: string): string => {
 };
 
 /**
- * 使用固定字典和安全随机前缀编码文本。
+ * 使用固定字典和随机前缀编码文本。
  *
  * @remarks 给定相同的 6 字符前缀时，默认输出与旧有效载荷逐字符兼容。旧字典在 101–124 字符载荷中引用越界；这里复制末字符作为单字符回退，
  * 使旧删除字典流程仍能解码。传入 `0` 会同时关闭随机前缀与字典插入。
@@ -345,7 +346,7 @@ const removeDictionaryCharacters = (base64Value: string): string => {
  * @param value - 任意可由 `encodeURIComponent` 处理的 Unicode 文本。
  * @param prefixLength - 随机字母前缀长度；默认 `6`。
  * @returns 带随机前缀和兼容字典字符的 Base64 文本；空输入返回空字符串。
- * @throws `RangeError` 当前缀长度不是非负安全整数；缺少 Web Crypto 或输入包含孤立代理项时保留平台错误。
+ * @throws `RangeError` 当前缀长度不是非负安全整数；输入包含孤立代理项时保留平台错误。
  */
 export function encodeSecureBase64(value: string, prefixLength: number = defaultRandomPrefixLength): string {
 	if (value.length === 0) return "";

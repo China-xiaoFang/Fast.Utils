@@ -157,18 +157,6 @@ interface ActiveStorageConfiguration {
 	session?: StorageArea;
 }
 
-/** 浏览器 Storage 在调用阶段延迟读取的平台全局对象最小视图。 */
-interface RuntimeStorageGlobals {
-	/** 可选 localStorage；缺失时 `Local` 操作明确失败。 */
-	localStorage?: Storage;
-	/** 可选 sessionStorage；缺失时 `Session` 操作明确失败。 */
-	sessionStorage?: Storage;
-	/** uni-app 运行时暴露的全局对象；只在显式配置或首次 Storage 操作时读取和校验。 */
-	uni?: unknown;
-}
-
-const runtimeStorageGlobals = globalThis as unknown as RuntimeStorageGlobals;
-
 /**
  * 读取并校验当前运行时的全局 uni-app 同步 Storage。
  *
@@ -176,7 +164,7 @@ const runtimeStorageGlobals = globalThis as unknown as RuntimeStorageGlobals;
  * @throws `TypeError` 当全局 `uni` 存在但缺少本库需要的同步 Storage 方法。
  */
 const getGlobalUniStorage = (): UniStorageLike | undefined => {
-	const value = runtimeStorageGlobals.uni;
+	const value: unknown = Reflect.get(globalThis, "uni");
 	if (value === undefined) return undefined;
 	if ((typeof value !== "object" && typeof value !== "function") || value === null) {
 		throw new TypeError("The global uni object does not provide synchronous Storage APIs.");
@@ -243,7 +231,7 @@ const assertKey = (key: string): void => {
  * @throws `Error` 当所选 Storage 在当前环境不可用。
  */
 const createWebStorageBackend = (kind: "local" | "session"): StorageBackend => {
-	const storage = kind === "local" ? runtimeStorageGlobals.localStorage : runtimeStorageGlobals.sessionStorage;
+	const storage = kind === "local" ? globalThis.localStorage : globalThis.sessionStorage;
 	if (storage === undefined) throw new Error(`${kind}Storage is unavailable in the current runtime.`);
 	return {
 		getItem: (key): string | null => storage.getItem(key),

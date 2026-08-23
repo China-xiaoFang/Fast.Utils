@@ -161,7 +161,7 @@ try {
 	run(process.execPath, [
 		"--input-type=module",
 		"--eval",
-		'delete globalThis.crypto; delete globalThis.Intl; delete globalThis.TextEncoder; delete globalThis.TextDecoder; await import("@fast-china/utils");',
+		'delete globalThis.crypto; delete globalThis.Intl; delete globalThis.TextEncoder; delete globalThis.TextDecoder; const utils = await import("@fast-china/utils"); if ("secureRandomInt" in utils || "secureRandomString" in utils) throw new Error("Removed random APIs are still exported."); if (utils.randomInt(0, 10) < 0 || !/^[A-Z]{8}$/u.test(utils.randomString(8, "ABCDEFGHIJKLMNOPQRSTUVWXYZ")) || !utils.isUuidV4(utils.generateUuidV4()) || utils.GenerateRandomBytes(8).length !== 8) throw new Error("Math.random fallback failed.");',
 	]);
 
 	fs.writeFileSync(consumerPath, 'import { chunk } from "@fast-china/utils"; console.log(chunk([1, 2, 3], 2));\n', "utf8");

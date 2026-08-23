@@ -35,11 +35,11 @@ Local.set("token", "value");
 
 `configureStorage({ prefix: "admin:", crypto: true })` 恢复了旧版全局前缀与 Base64 混淆选项。`crypto: true` 和 `base64StorageCodec` 都只是可逆编码，不是加密，不能保护敏感数据。可以使用自定义 `codec` 替代 `crypto`。
 
-`encodeSecureBase64` 与 `decodeSecureBase64` 保留旧字典兼容载荷，并使用 Web Crypto 生成安全随机前缀。给定相同的默认 6 字符前缀时，有效旧载荷保持逐字符兼容；旧字典在 Base64 长度 101–124 时会引用越界，当前实现使用单字符回退，旧删除字典流程仍可解码。旧自定义长度参数始终生成 6 个随机字符，当前 API 已按 `prefixLength` 正确生成。自定义 `prefixLength` 必须在编码和解码时保持一致；传入 `0` 会同时关闭随机前缀与字典插入。该格式仍是可逆编码，不等同于加密。
+`encodeSecureBase64` 与 `decodeSecureBase64` 保留旧字典兼容载荷。随机前缀优先使用 Web Crypto，能力缺失时回退到 `Math.random()`；它不承担安全用途。给定相同的默认 6 字符前缀时，有效旧载荷保持逐字符兼容；旧字典在 Base64 长度 101–124 时会引用越界，当前实现使用单字符回退，旧删除字典流程仍可解码。旧自定义长度参数始终生成 6 个随机字符，当前 API 已按 `prefixLength` 正确生成。自定义 `prefixLength` 必须在编码和解码时保持一致；传入 `0` 会同时关闭随机前缀与字典插入。该格式仍是可逆编码，不等同于加密。
 
 ## Identity
 
-`installationIdentity` 是全局安装标识门面。可在程序入口、首次使用前调用 `configureInstallationIdentity` 覆盖默认缓存键 `identity:installation-id`。`getOrCreateInstallationId(installationId?)` 会通过 `Local` 读取、生成或替换 UUID v4；未显式配置 Storage 时使用其默认值。UUID 生成依赖 Web Crypto，不会回退到 `Math.random()`。
+`installationIdentity` 是全局安装标识门面。可在程序入口、首次使用前调用 `configureInstallationIdentity` 覆盖默认缓存键 `identity:installation-id`。`getOrCreateInstallationId(installationId?)` 会通过 `Local` 读取、生成或替换 UUID v4；未显式配置 Storage 时使用其默认值。UUID 优先使用 Web Crypto 生成，能力缺失时回退到 `Math.random()`。
 
 ```ts
 import { configureInstallationIdentity, configureStorage, getOrCreateInstallationId, installationIdentity } from "@fast-china/utils";
@@ -66,13 +66,23 @@ logger.error("network", "request failed", error);
 
 `createLogger` 只配置最低级别、品牌前缀、Sink 和可选的 uni-app App-Plus 拆分输出。作用域必须是无外围空白的非空字符串。
 
+## 剪贴板
+
+`copy(value)` 恢复 V1 的文本复制能力，并返回 `Promise<void>`。uni-app 使用 `setClipboardData`；浏览器优先使用 Clipboard API，不可用时回退到 `document.execCommand("copy")`。平台能力缺失、权限被拒绝或复制失败时会抛出错误。
+
+```ts
+import { copy } from "@fast-china/utils";
+
+await copy("Fast 工具库");
+```
+
 ## Crypto
 
 TypeScript Crypto 公共 API 与 .NET `CryptoUtil` 的公开方法及算法名称大小写保持一致：
 
 | 能力                     | 两端统一的方法名                                                                                                                     |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| 安全随机与字节比较       | `GenerateRandomBytes`、`FixedTimeEquals`                                                                                             |
+| 随机字节与字节比较       | `GenerateRandomBytes`、`FixedTimeEquals`                                                                                             |
 | MD5、SHA-1 与 SHA-2 摘要 | `MD5Encrypt`、`SHA1Encrypt`、`SHA256Encrypt`、`SHA256Bytes`、`SHA384Encrypt`、`SHA384Bytes`、`SHA512Encrypt`、`SHA512Bytes`          |
 | HMAC                     | `HMACSHA256Encrypt`、`HMACSHA384Encrypt`、`HMACSHA512Encrypt`                                                                        |
 | 密码派生与密码哈希       | `PBKDF2SHA256`、`HashPasswordPBKDF2SHA256`、`VerifyPasswordPBKDF2SHA256`                                                             |
@@ -91,14 +101,14 @@ TypeScript Crypto 公共 API 与 .NET `CryptoUtil` 的公开方法及算法名�
 - `async`：支持取消的 Sleep、超时、重试、受限并发映射、防抖和节流。
 - `base64`：严格 UTF-8 Base64/Base64URL 字节与文本函数，以及 Latin-1 和 SecureBase64 兼容函数。
 - `color`：颜色解析、格式化、混合、明暗、亮度和对比度。
-- `crypto`：安全随机、摘要、HMAC、PBKDF2、HKDF、AES、RSA-OAEP/PSS、ECDSA 和 ECDH。
+- `crypto`：随机字节、摘要、HMAC、PBKDF2、HKDF、AES、RSA-OAEP/PSS、ECDSA 和 ECDH。
 - `date`：日期校验、加减、日范围、相对时间，以及七个历史日期功能的具名函数。
 - `dom`：CSS 单位和 Style 序列化。
 - `env`：能力与 User-Agent 检测；检测函数不扩大运行时支持范围。
 - `logger`：隔离的可配置 Logger 和默认 `logger`。
-- `number`：范围、舍入、聚合、插值、字节格式化和安全随机整数。
+- `number`：范围、舍入、聚合、插值、字节格式化，以及优先使用 Web Crypto 的 `randomInt`。
 - `object`：防原型污染的选择、比较、映射和 Query 序列化；Style 序列化由 `dom` 模块提供。
-- `string`：Query 解析、大小写、字素截断、UUID、安全随机文本、转义和空白规范化。
+- `string`：Query 解析、大小写、字素截断、剪贴板复制、UUID、优先使用 Web Crypto 的 `randomString`、转义和空白规范化。
 - `vue`：Vue 3 的 Composition API、类型、Render 和 `app.use()` 注册 Helper。
 
 ## 安全与限制
@@ -110,3 +120,7 @@ Query 与 Object API 拒绝原型污染键，URL 解码有最大深度，Storage
 ## 错误与兼容性
 
 除明确说明返回空值的函数外，编程错误、非法输入、平台能力缺失和受保护数据损坏均抛出原生错误。
+
+`randomInt`、`randomString`、`generateUuidV4` 与 `GenerateRandomBytes` 默认都优先使用 Web Crypto，能力缺失时回退到 `Math.random()`。
+
+Fast.Utils 2.1.0 已删除 `secureRandomInt` 与 `secureRandomString`，这是破坏性修改；调用方应分别改用 `randomInt` 与 `randomString`。

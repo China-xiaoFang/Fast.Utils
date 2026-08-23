@@ -10,6 +10,7 @@ import {
 	chunk,
 	clamp,
 	contrastRatio,
+	copy,
 	createDateRangeShortcuts,
 	createDateShortcuts,
 	createOneMonthRangeFromToday,
@@ -65,11 +66,11 @@ import {
 	pascalCase,
 	pick,
 	pickHigherContrastColor,
+	randomInt,
+	randomString,
 	relativeLuminance,
 	removeNullishValues,
 	roundTo,
-	secureRandomInt,
-	secureRandomString,
 	serializeStyle,
 	shallowEqual,
 	splitWords,
@@ -235,10 +236,10 @@ describe("Base64 utilities", () => {
 		expect(decodeLatin1Base64(encodeLatin1Base64("Fast"))).toBe("Fast");
 	});
 
-	it("requires Web Crypto when SecureBase64 generates its random prefix", () => {
+	it("falls back to Math.random when SecureBase64 generates its random prefix", () => {
 		vi.stubGlobal("crypto", undefined);
-		expect(() => encodeSecureBase64("Fast")).toThrow("Web Crypto random generation is unavailable");
-		expect(decodeSecureBase64(encodeSecureBase64("Fast", 0), 0)).toBe("Fast");
+		const encoded = encodeSecureBase64("Fast");
+		expect(decodeSecureBase64(encoded)).toBe("Fast");
 	});
 });
 
@@ -261,12 +262,12 @@ describe("number utilities", () => {
 		expect(average(new Array<number>(2))).toBeUndefined();
 	});
 
-	it("formats byte units and generates bounded secure integers", () => {
+	it("formats byte units and generates bounded random integers", () => {
 		expect(formatBytes(1536)).toBe("1.5 KiB");
 		expect(formatBytes(1500, { base: 1000, decimals: 0 })).toBe("2 kB");
 		expect(() => formatBytes(1, { base: 10 as never })).toThrow(RangeError);
-		for (let index = 0; index < 32; index += 1) expect(secureRandomInt(-5, 5)).toBeGreaterThanOrEqual(-5);
-		expect(() => secureRandomInt(1, 1)).toThrow(RangeError);
+		for (let index = 0; index < 32; index += 1) expect(randomInt(-5, 5)).toBeGreaterThanOrEqual(-5);
+		expect(() => randomInt(1, 1)).toThrow(RangeError);
 	});
 });
 
@@ -339,12 +340,47 @@ describe("string utilities", () => {
 		expect(() => truncateGraphemes("text", 2)).toThrow(Error);
 	});
 
-	it("creates secure strings and UUID v4 identifiers", () => {
-		expect(secureRandomString(24, "abc")).toMatch(/^[abc]{24}$/u);
+	it("copies text through uni-app, Clipboard API, and the browser fallback", async () => {
+		const setClipboardData = vi.fn((options: { data: string; success: () => void }) => {
+			options.success();
+		});
+		vi.stubGlobal("uni", { setClipboardData });
+		await copy("uni text");
+		expect(setClipboardData.mock.calls[0]?.[0].data).toBe("uni text");
+
+		vi.unstubAllGlobals();
+		const writeText = vi.fn((_value: string) => Promise.resolve());
+		vi.stubGlobal("navigator", { clipboard: { writeText } });
+		vi.stubGlobal("isSecureContext", true);
+		await copy("browser text");
+		expect(writeText).toHaveBeenCalledWith("browser text");
+
+		vi.unstubAllGlobals();
+		const textarea = { focus: vi.fn(), remove: vi.fn(), select: vi.fn(), style: {}, value: "" };
+		const appendChild = vi.fn();
+		const execCommand = vi.fn((_command: string) => true);
+		vi.stubGlobal("navigator", {});
+		vi.stubGlobal("isSecureContext", false);
+		vi.stubGlobal("document", { body: { appendChild }, createElement: vi.fn(() => textarea), execCommand });
+		await copy("fallback text");
+		expect(textarea.value).toBe("fallback text");
+		expect(execCommand).toHaveBeenCalledWith("copy");
+		expect(textarea.remove).toHaveBeenCalledOnce();
+	});
+
+	it("creates random strings and UUID v4 identifiers", () => {
+		expect(randomString(24, "abc")).toMatch(/^[abc]{24}$/u);
 		const id = generateUuidV4();
 		expect(isUuidV4(id)).toBe(true);
-		expect(() => secureRandomString(4, "aa")).toThrow(RangeError);
-		expect(() => secureRandomString(1_000_001)).toThrow(RangeError);
+		expect(() => randomString(4, "aa")).toThrow(RangeError);
+		expect(() => randomString(1_000_001)).toThrow(RangeError);
+	});
+
+	it("uses the Math.random fallback for every random entry", () => {
+		vi.stubGlobal("crypto", undefined);
+		for (let index = 0; index < 32; index += 1) expect(randomInt(-5, 5)).toBeGreaterThanOrEqual(-5);
+		expect(randomString(24, "abc")).toMatch(/^[abc]{24}$/u);
+		expect(isUuidV4(generateUuidV4())).toBe(true);
 	});
 });
 

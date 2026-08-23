@@ -69,6 +69,16 @@ encodeBase64Url("path/value");
 
 `encodeSecureBase64` and `decodeSecureBase64` exist only for the legacy dictionary format. Given the same default six-character prefix, valid legacy payloads remain byte-for-byte identical. A historical Base64-length 101–124 dictionary gap uses a one-character fallback that the legacy removal flow understands. This format is not encryption and must not protect passwords, tokens, or other secrets.
 
+## Copy text
+
+```ts
+import { copy } from "@fast-china/utils";
+
+await copy("Fast utilities");
+```
+
+uni-app uses `setClipboardData`. Browsers prefer the Clipboard API and fall back to the legacy browser copy capability when it is unavailable. Unsupported platforms and denied clipboard access throw errors.
+
 ## Identity
 
 ```ts
@@ -79,7 +89,7 @@ configureInstallationIdentity({ cacheKey: "account:installation-id" });
 const installationId = getOrCreateInstallationId();
 ```
 
-Call `configureInstallationIdentity` in the application entry before first use. The default business key is `identity:installation-id`; repeated identical configuration is idempotent and conflicting configuration throws. Installation Identity uses the configured `Local` storage and Web Crypto UUID v4 generation. It never falls back to `Math.random()`.
+Call `configureInstallationIdentity` in the application entry before first use. The default business key is `identity:installation-id`; repeated identical configuration is idempotent and conflicting configuration throws. Installation Identity UUID generation prefers Web Crypto and falls back to `Math.random()` when unavailable.
 
 ## Crypto
 

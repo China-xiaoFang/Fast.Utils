@@ -13,7 +13,7 @@ export default defineConfig(
 	// 忽略依赖、构建结果、缓存、生成文件和包管理器锁文件。
 	globalIgnores(
 		[
-			"**/node_modules/**",
+			"**/.pnpm-store,node_modules/**",
 			"**/{dist,build,coverage,output,temp,tmp}/**",
 			"**/{.cache,.nuxt,.output,.vercel,.nitro}/**",
 			"**/{.vitepress/cache,.vite-inspect}/**",
@@ -376,7 +376,7 @@ export default defineConfig(
 		name: "fast-utils/sort/package-json",
 		files: ["**/package.json"],
 		rules: {
-			// [高影响][可自动修复][按需启用] npm 的 files 清单按字母排序；数组顺序不改打包集合，但首次 diff 较大。
+			// [高影响][可自动修复] npm 的 files 清单按字母排序；数组顺序不改打包集合，但首次 diff 较大。
 			"jsonc/sort-array-values": [
 				"error",
 				{
@@ -384,7 +384,7 @@ export default defineConfig(
 					pathPattern: "^files$",
 				},
 			],
-			// [高影响][可自动修复][按需启用] 仅排序明确安全的 package.json 区域，不进入 exports 条件对象。
+			// [高影响][可自动修复] 仅排序明确安全的 package.json 区域，不进入 exports 条件对象。
 			"jsonc/sort-keys": [
 				"error",
 				// 根字段按常见阅读顺序组织，减少不同项目之间的清单噪声。
@@ -455,7 +455,7 @@ export default defineConfig(
 			// tsconfig 是 JSONC，注释用于解释不直观的编译器取舍，必须保留。
 			"jsonc/no-comments": "off",
 
-			// [高影响][可自动修复][按需启用] 只调整顶层和 compilerOptions 的键顺序，不改写任何选项值或数组。
+			// [高影响][可自动修复] 只调整顶层和 compilerOptions 的键顺序，不改写任何选项值或数组。
 			"jsonc/sort-keys": [
 				"error",
 				// 顶层按继承、选项、项目引用和文件范围的阅读顺序排列。

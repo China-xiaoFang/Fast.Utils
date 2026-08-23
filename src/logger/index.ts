@@ -88,23 +88,13 @@ const levelPriority: Readonly<Record<LogLevel, number>> = {
  */
 const isLogLevel = (value: unknown): value is LogLevel => typeof value === "string" && Object.hasOwn(levelPriority, value);
 
-/** uni-app App-Plus 检测所需的平台全局对象最小视图。 */
-interface RuntimeLoggerGlobals {
-	/** App-Plus 原生运行时标记。 */
-	plus?: unknown;
-	/** uni-app 运行时标记。 */
-	uni?: unknown;
-}
-
-const runtimeLoggerGlobals = globalThis as unknown as RuntimeLoggerGlobals;
-
 /**
  * 检测 uni-app App-Plus 日志环境。
  *
  * @returns 全局 `uni` 与 `plus` 同时存在时返回 `true`。
  */
 const isUniAppPlus = (): boolean => {
-	return runtimeLoggerGlobals.uni !== undefined && runtimeLoggerGlobals.plus !== undefined;
+	return Reflect.get(globalThis, "uni") !== undefined && Reflect.get(globalThis, "plus") !== undefined;
 };
 
 /**

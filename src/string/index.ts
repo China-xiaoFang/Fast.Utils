@@ -2,26 +2,8 @@ const defaultRandomAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvw
 const defaultStringLocale = "en-US";
 const maximumRandomStringLength = 1_000_000;
 const maximumRandomValuesPerBatch = 16_384;
+const uint32Range = 0x1_0000_0000;
 const uuidV4Pattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
-
-/** 字符串随机 API 需要的 Web Crypto 最小能力。 */
-type RuntimeStringCrypto = Partial<Pick<Crypto, "getRandomValues" | "randomUUID">>;
-
-/** 字素分割需要的可选 Intl 能力。 */
-interface RuntimeStringIntl {
-	/** 可选 Segmenter 构造器；缺失时字素 API 使用内部兼容路径。 */
-	Segmenter?: typeof Intl.Segmenter;
-}
-
-/** 字符串工具延迟访问的平台全局对象最小视图。 */
-interface RuntimeStringGlobals {
-	/** 安全随机字符串与 UUID 所需的可选 Web Crypto 能力。 */
-	crypto?: RuntimeStringCrypto;
-	/** 字素分割所需的可选 Intl 能力。 */
-	Intl?: RuntimeStringIntl;
-}
-
-const runtimeGlobals = globalThis as unknown as RuntimeStringGlobals;
 
 /** 查询字符串解析结果；重复键保留为数组，不存在的键读取为 `undefined`。 */
 export type ParsedQueryParameters = Record<string, string | string[] | undefined>;
@@ -29,18 +11,15 @@ export type ParsedQueryParameters = Record<string, string | string[] | undefined
 /** 大小写与字素分割可接受的显式语言；省略时固定使用 `en-US` 以保持输出稳定。 */
 export type StringLocale = string | readonly string[] | undefined;
 
-/**
- * 获取字符串随机 API 所需的 Web Crypto 能力。
- *
- * @returns 具有 `getRandomValues` 的当前 Crypto 对象。
- * @throws `Error` 当平台没有安全随机能力；绝不回退到 `Math.random()`。
- */
-const requireWebCrypto = (): Crypto => {
-	const crypto = runtimeGlobals.crypto;
-	if (typeof crypto?.getRandomValues !== "function") {
-		throw new Error("Web Crypto random generation is unavailable in the current runtime.");
+/** 使用 Web Crypto 填充随机值，能力缺失时回退到 `Math.random()`。 */
+const fillRandomValues = (values: Uint8Array<ArrayBuffer> | Uint32Array<ArrayBuffer>): void => {
+	const crypto = globalThis.crypto;
+	if (typeof crypto?.getRandomValues === "function") {
+		crypto.getRandomValues(values);
+		return;
 	}
-	return crypto as Crypto;
+	const range = values.BYTES_PER_ELEMENT === Uint8Array.BYTES_PER_ELEMENT ? 0x100 : uint32Range;
+	for (let index = 0; index < values.length; index += 1) values[index] = Math.floor(Math.random() * range);
 };
 
 /**
@@ -65,7 +44,7 @@ const createUuidV4FromBytes = (bytes: Uint8Array): string => {
  * @throws `Error` 当平台缺少 `Intl.Segmenter`。
  */
 const splitGraphemes = (value: string, locale: StringLocale): string[] => {
-	const Segmenter = runtimeGlobals.Intl?.Segmenter;
+	const Segmenter = globalThis.Intl?.Segmenter;
 	if (typeof Segmenter !== "function") {
 		throw new Error("Intl.Segmenter is unavailable in the current runtime.");
 	}
@@ -234,14 +213,74 @@ export function truncateGraphemes(value: string, maxLength: number, suffix = "�
 }
 
 /**
- * 使用无偏 Web Crypto 随机数生成字符串。
+ * 把文本复制到系统剪贴板。
  *
+ * @remarks uni-app 使用 `setClipboardData`；浏览器优先使用 Clipboard API，并在该 API 不可用时
+ * 回退到 `document.execCommand("copy")`。平台拒绝访问剪贴板时不会静默忽略错误。
+ * @param value - 要复制的文本。
+ * @returns 复制完成后兑现的 Promise。
+ * @throws `Error` 当运行时没有可用的剪贴板能力或复制失败。
+ */
+export async function copy(value: string): Promise<void> {
+	const uni: unknown = Reflect.get(globalThis, "uni");
+	if (uni !== undefined) {
+		if ((typeof uni !== "object" && typeof uni !== "function") || uni === null) {
+			throw new TypeError("The global uni object does not provide setClipboardData.");
+		}
+		const setClipboardData: unknown = Reflect.get(uni, "setClipboardData");
+		if (typeof setClipboardData !== "function") throw new TypeError("The global uni object does not provide setClipboardData.");
+		await new Promise<void>((resolve, reject) => {
+			Reflect.apply(setClipboardData, uni, [
+				{
+					data: value,
+					fail: (error: unknown): void => {
+						reject(error instanceof Error ? error : new Error("Failed to copy text to the clipboard.", { cause: error }));
+					},
+					success: resolve,
+				},
+			]);
+		});
+		return;
+	}
+
+	const clipboard = globalThis.navigator?.clipboard;
+	if (globalThis.isSecureContext === true && typeof clipboard?.writeText === "function") {
+		await clipboard.writeText(value);
+		return;
+	}
+
+	const document = globalThis.document;
+	if (typeof document?.createElement !== "function" || document.body === null || typeof document.execCommand !== "function") {
+		throw new Error("Clipboard access is unavailable in the current runtime.");
+	}
+	const textarea = document.createElement("textarea");
+	textarea.value = value;
+	textarea.style.left = "-999999px";
+	textarea.style.opacity = "0";
+	textarea.style.position = "fixed";
+	textarea.style.top = "-999999px";
+	document.body.appendChild(textarea);
+	let copied = false;
+	try {
+		textarea.focus();
+		textarea.select();
+		copied = document.execCommand("copy");
+	} finally {
+		textarea.remove();
+	}
+	if (!copied) throw new Error("Failed to copy text to the clipboard.");
+}
+
+/**
+ * 生成随机字符串。
+ *
+ * @remarks 优先使用 Web Crypto；平台缺少安全随机能力时回退到 `Math.random()`。
  * @param length - 字符数量，必须是 0 至 1,000,000 的安全整数。
  * @param alphabet - 不得为空、包含重复字符或超过 2^32 个 Unicode 码点。
  * @returns 由 `alphabet` 中 Unicode 码点组成的随机文本。
- * @throws `RangeError` 当长度或字母表非法；缺少 Web Crypto 时抛出 `Error`。
+ * @throws `RangeError` 当长度或字母表非法。
  */
-export function secureRandomString(length: number, alphabet: string = defaultRandomAlphabet): string {
+export function randomString(length: number, alphabet: string = defaultRandomAlphabet): string {
 	if (!Number.isSafeInteger(length) || length < 0 || length > maximumRandomStringLength) {
 		throw new RangeError(`length must be a safe integer from 0 through ${maximumRandomStringLength}.`);
 	}
@@ -251,15 +290,14 @@ export function secureRandomString(length: number, alphabet: string = defaultRan
 	if (characters.length > 0x1_0000_0000) throw new RangeError("alphabet cannot contain more than 2^32 characters.");
 	if (length === 0) return "";
 
-	const crypto = requireWebCrypto();
-	const uint32Range = 0x1_0000_0000;
 	// 丢弃不能平均映射到字母表的尾部区间，避免 `%` 造成前部字符概率偏高。
 	const acceptanceLimit = Math.floor(uint32Range / characters.length) * characters.length;
 	const result: string[] = [];
 	while (result.length < length) {
 		const remaining = length - result.length;
-		// 分批请求可控制临时内存，并避开 Web Crypto 单次随机数组大小限制。
-		const samples = crypto.getRandomValues(new Uint32Array(Math.min(remaining, maximumRandomValuesPerBatch)));
+		// 分批填充可控制临时内存，并避开 Web Crypto 单次随机数组大小限制。
+		const samples = new Uint32Array(Math.min(remaining, maximumRandomValuesPerBatch));
+		fillRandomValues(samples);
 		for (const sample of samples) {
 			if (sample >= acceptanceLimit) continue;
 			const character = characters[sample % characters.length];
@@ -272,15 +310,18 @@ export function secureRandomString(length: number, alphabet: string = defaultRan
 }
 
 /**
- * 使用 Web Crypto 生成 RFC 4122 version 4 UUID。
+ * 生成 RFC 4122 version 4 UUID。
  *
+ * @remarks 优先使用 Web Crypto；平台缺少安全随机能力时回退到 `Math.random()`。
+ * 该 UUID 适合普通唯一标识，不应作为安全令牌或秘密。
  * @returns 小写、带连字符的 UUID v4。
- * @throws 缺少 Web Crypto 时抛出 `Error`。
  */
 export function generateUuidV4(): string {
-	const crypto = requireWebCrypto();
-	if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
-	return createUuidV4FromBytes(crypto.getRandomValues(new Uint8Array(16)));
+	const crypto = globalThis.crypto;
+	if (typeof crypto?.randomUUID === "function") return crypto.randomUUID();
+	const bytes = new Uint8Array(16);
+	fillRandomValues(bytes);
+	return createUuidV4FromBytes(bytes);
 }
 
 /**

@@ -11,6 +11,7 @@ import {
 	chunk,
 	configureInstallationIdentity,
 	configureStorage,
+	copy,
 	decodeSecureBase64,
 	encodeSecureBase64,
 	formatChineseRelativeTime,
@@ -19,6 +20,8 @@ import {
 	mapConcurrent,
 	parseQueryString,
 	pick,
+	randomInt,
+	randomString,
 	retry,
 	serializeStyle,
 	useEmits,
@@ -71,6 +74,9 @@ const query = parseQueryString("id=1");
 const queryValue: string | string[] | undefined = query["id"];
 // @ts-expect-error Query keys can be absent at runtime.
 const requiredQueryValue: string | string[] = query["missing"];
+const copyResult: Promise<void> = copy("Fast");
+const randomInteger: number = randomInt(0, 10);
+const randomText: string = randomString(16);
 
 const rawEmits = {
 	clear: null,
@@ -120,6 +126,9 @@ void localStorageArea;
 void sessionStorageArea;
 void queryValue;
 void requiredQueryValue;
+void copyResult;
+void randomInteger;
+void randomText;
 void chunks;
 void selected;
 void concurrent;

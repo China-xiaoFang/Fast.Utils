@@ -1,14 +1,6 @@
 const byteUnits = ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"] as const;
 const binaryByteUnits = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"] as const;
 
-/** 安全随机整数延迟读取的平台全局对象最小视图。 */
-interface RuntimeNumberGlobals {
-	/** 可选 Web Crypto 随机填充能力；缺失时安全随机整数明确失败。 */
-	crypto?: Partial<Pick<Crypto, "getRandomValues">>;
-}
-
-const runtimeNumberGlobals = globalThis as unknown as RuntimeNumberGlobals;
-
 /** {@link formatBytes} 的格式化选项。 */
 export interface FormatBytesOptions {
 	/** 计量基数。`1000` 生成 SI 单位，`1024` 生成 IEC 单位；默认 `1024`。 */
@@ -202,14 +194,15 @@ export function formatBytes(bytes: number, options: FormatBytesOptions = {}): st
 }
 
 /**
- * 使用 Web Crypto 在半开区间内生成无偏安全随机整数。
+ * 在半开区间内生成随机整数。
  *
+ * @remarks 优先使用 Web Crypto；平台缺少安全随机能力时回退到 `Math.random()`。
  * @param minimum - 包含的安全整数下界。
  * @param maximumExclusive - 不包含的安全整数上界；区间宽度最大为 2^32。
- * @returns 均匀分布在 `[minimum, maximumExclusive)` 的安全整数。
- * @throws 缺少 Web Crypto 时抛出 `Error`；参数非法时抛出 `RangeError`。
+ * @returns 位于 `[minimum, maximumExclusive)` 的随机整数。
+ * @throws 参数非法时抛出 `RangeError`。
  */
-export function secureRandomInt(minimum: number, maximumExclusive: number): number {
+export function randomInt(minimum: number, maximumExclusive: number): number {
 	if (!Number.isSafeInteger(minimum) || !Number.isSafeInteger(maximumExclusive)) {
 		throw new RangeError("minimum and maximumExclusive must be safe integers.");
 	}
@@ -218,17 +211,16 @@ export function secureRandomInt(minimum: number, maximumExclusive: number): numb
 	if (range <= 0 || range > uint32Range) {
 		throw new RangeError("The interval must be non-empty and no wider than 2^32.");
 	}
-	const crypto = runtimeNumberGlobals.crypto;
-	if (typeof crypto?.getRandomValues !== "function") {
-		throw new Error("Web Crypto random generation is unavailable in the current runtime.");
-	}
+	const crypto = globalThis.crypto;
+	const hasWebCrypto = typeof crypto?.getRandomValues === "function";
 
 	// 只接受可以被区间宽度整除的最大 2^32 前缀，消除取模偏差。
 	const limit = Math.floor(uint32Range / range) * range;
 	const values = new Uint32Array(1);
 	let sample: number;
 	do {
-		crypto.getRandomValues(values);
+		if (hasWebCrypto) crypto.getRandomValues(values);
+		else values[0] = Math.floor(Math.random() * uint32Range);
 		sample = values[0] ?? uint32Range;
 	} while (sample >= limit);
 	return minimum + (sample % range);

@@ -34,12 +34,12 @@ export interface InstallationIdentity {
 	 */
 	clear: () => void;
 	/**
-	 * 按“显式参数、当前内存、持久化值、安全生成值”的优先级取得安装标识。
+	 * 按“显式参数、当前内存、持久化值、随机生成值”的优先级取得安装标识。
 	 *
 	 * @param installationId - 可选 UUID v4；传入时覆盖内存值和当前持久化值。
 	 * @returns 已校验并同时写入 `deviceId` 与 `Local` 的 UUID v4。
 	 * @throws `TypeError` 当显式参数、内存值或持久化值不是 UUID v4。
-	 * @throws `Error` 当当前平台存储不可用，或生成新值时平台缺少 Web Crypto。
+	 * @throws `Error` 当当前平台存储不可用。
 	 */
 	getOrCreate: (installationId?: string) => string;
 	/**
@@ -100,8 +100,8 @@ export function configureInstallationIdentity(options: InstallationIdentityConfi
 /**
  * 全局安装标识状态。
  *
- * @remarks Storage 未显式配置时会使用其默认值。默认随机源只使用 Web Crypto，
- * 能力缺失时明确抛错，不回退到 `Math.random()`。该值不是硬件标识、认证凭证或安全边界。
+ * @remarks Storage 未显式配置时会使用其默认值。生成 UUID 时优先使用 Web Crypto，能力缺失时
+ * 回退到 `Math.random()`。该值不是硬件标识、认证凭证或安全边界。
  */
 export const installationIdentity: InstallationIdentity = {
 	get cacheKey(): string {
@@ -132,12 +132,12 @@ export const installationIdentity: InstallationIdentity = {
 };
 
 /**
- * 返回已有安装标识，否则创建并持久化一个安全 UUID v4。
+ * 返回已有安装标识，否则创建并持久化一个 UUID v4。
  *
  * @param installationId - 可选的显式安装标识；传入时会校验并覆盖当前持久化值。
  * @returns 显式值、内存值、持久化值或新生成值中的最终安装标识。
  * @throws `TypeError` 当显式值或持久化值不是 UUID v4。
- * @throws `Error` 当当前平台存储不可用或缺少 Web Crypto。
+ * @throws `Error` 当当前平台存储不可用。
  */
 export function getOrCreateInstallationId(installationId?: string): string {
 	return installationIdentity.getOrCreate(installationId);

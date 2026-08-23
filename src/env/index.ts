@@ -1,73 +1,18 @@
 /** 可识别的主要 JavaScript 运行环境。 */
 export type RuntimeKind = "browser" | "node" | "unknown" | "worker";
 
-/** 环境检测需要逐项确认的 SubtleCrypto 最小能力集合。 */
-type RuntimeSubtleCrypto = Partial<
-	Pick<SubtleCrypto, "decrypt" | "deriveBits" | "deriveKey" | "digest" | "encrypt" | "exportKey" | "generateKey" | "importKey" | "sign" | "verify">
->;
-
-/** 环境检测读取的 Web Crypto 最小视图。 */
-interface RuntimeEnvironmentCrypto extends Partial<Pick<Crypto, "getRandomValues">> {
-	/** 可选 SubtleCrypto 能力；只有所需方法全部存在时才视为完整 Web Crypto。 */
-	subtle?: RuntimeSubtleCrypto;
-}
-
-/** 环境检测读取的最小 Navigator 视图。 */
-interface RuntimeNavigator {
-	/** 平台报告的最大同时触点数；类型异常时按 `0` 处理。 */
-	maxTouchPoints?: unknown;
-	/** 平台报告的 User-Agent；类型异常时按空字符串处理。 */
-	userAgent?: unknown;
-}
-
-/** 环境检测读取的最小 Node 进程视图。 */
-interface RuntimeProcess {
-	/** 可选运行时版本表。 */
-	versions?: RuntimeVersions;
-}
-
-/** 环境检测读取的最小运行时版本表。 */
-interface RuntimeVersions {
-	/** Node.js 版本文本；存在字符串值时识别为 Node 环境。 */
-	node?: unknown;
-}
-
-/** 环境检测读取的最小 Window 视图。 */
-interface RuntimeWindow {
-	/** DOM 文档标记；只检查是否为非空对象。 */
-	document?: unknown;
-}
-
-/** 可选平台全局对象的结构化视图，避免导入 Node 或 uni-app 全局类型。 */
-interface RuntimeGlobals {
-	/** 可选 Web Crypto 能力；所有方法都在调用前逐项检查，不因对象存在而假定完整实现。 */
-	crypto?: RuntimeEnvironmentCrypto;
-	/** Web Worker 中通常存在的脚本导入函数；只检查其类型，不会在检测阶段调用。 */
-	importScripts?: unknown;
-	/** 浏览器或 WebView 暴露的最小 Navigator 字段；未知类型会被能力读取函数视为缺失。 */
-	navigator?: RuntimeNavigator;
-	/** 工具或测试环境可能暴露的 Node 版本标记；仅用于检测，不代表 Node 属于应用运行时契约。 */
-	process?: RuntimeProcess;
-	/** uni-app 平台标记；Storage 会在调用 `configureStorage` 时读取并校验该全局对象。 */
-	uni?: unknown;
-	/** 浏览器 Window 的最小结构；`document` 只用于能力判定，不在模块导入阶段读取 DOM 内容。 */
-	window?: RuntimeWindow | null;
-}
-
-const runtimeGlobals = globalThis as unknown as RuntimeGlobals;
-
 /**
  * 延迟读取当前 User-Agent。
  *
  * @returns Navigator 不存在或字段类型异常时返回空字符串。
  */
-const currentUserAgent = (): string => (typeof runtimeGlobals.navigator?.userAgent === "string" ? runtimeGlobals.navigator.userAgent : "");
+const currentUserAgent = (): string => (typeof globalThis.navigator?.userAgent === "string" ? globalThis.navigator.userAgent : "");
 /**
  * 延迟读取当前设备报告的最大触点数。
  *
  * @returns Navigator 不存在或字段类型异常时返回 `0`。
  */
-const currentTouchPoints = (): number => (typeof runtimeGlobals.navigator?.maxTouchPoints === "number" ? runtimeGlobals.navigator.maxTouchPoints : 0);
+const currentTouchPoints = (): number => (typeof globalThis.navigator?.maxTouchPoints === "number" ? globalThis.navigator.maxTouchPoints : 0);
 
 /**
  * 判断当前运行时是否具有浏览器 `window` 与 `document`。
@@ -75,7 +20,7 @@ const currentTouchPoints = (): number => (typeof runtimeGlobals.navigator?.maxTo
  * @returns 两项能力均存在时返回 `true`；不读取 DOM 内容。
  */
 export function isBrowser(): boolean {
-	const window = runtimeGlobals.window;
+	const window = globalThis.window;
 	return window !== undefined && window !== null && window.document !== null && typeof window.document === "object";
 }
 
@@ -87,7 +32,7 @@ export function isBrowser(): boolean {
  * @returns 具有 `importScripts` 且不是浏览器 Window 时返回 `true`。
  */
 export function isWebWorker(): boolean {
-	return !isBrowser() && typeof runtimeGlobals.importScripts === "function";
+	return !isBrowser() && typeof Reflect.get(globalThis, "importScripts") === "function";
 }
 
 /**
@@ -96,7 +41,10 @@ export function isWebWorker(): boolean {
  * @returns `process.versions.node` 为字符串时返回 `true`。
  */
 export function isNode(): boolean {
-	return typeof runtimeGlobals.process?.versions?.node === "string";
+	const process: unknown = Reflect.get(globalThis, "process");
+	if ((typeof process !== "object" && typeof process !== "function") || process === null) return false;
+	const versions: unknown = Reflect.get(process, "versions");
+	return (typeof versions === "object" || typeof versions === "function") && versions !== null && typeof Reflect.get(versions, "node") === "string";
 }
 
 /**
@@ -105,18 +53,18 @@ export function isNode(): boolean {
  * @returns 全局属性存在且不为 `undefined` 时返回 `true`；不调用任何平台 API。
  */
 export function isUniApp(): boolean {
-	return runtimeGlobals.uni !== undefined;
+	return Reflect.get(globalThis, "uni") !== undefined;
 }
 
 /**
  * 判断当前运行时是否具备本库完整加密 API 所需的 Web Crypto 能力。
  *
- * @remarks 只具有 `getRandomValues` 的平台仍可调用随机数与随机字符串 API，但本函数
- * 会返回 `false`，因为摘要、PBKDF2、AES-GCM、RSA 与 ECC 还需要完整的 `SubtleCrypto` 方法集。
+ * @remarks 普通随机数、随机字符串和 UUID 在缺少 Web Crypto 时可以回退到 `Math.random()`，但本函数
+ * 仍会返回 `false`，因为摘要、PBKDF2、AES-GCM、RSA 与 ECC 需要完整的 Web Crypto 能力。
  * @returns 同时提供本库 Web Crypto 功能所需方法时返回 `true`。
  */
 export function hasWebCrypto(): boolean {
-	const crypto = runtimeGlobals.crypto;
+	const crypto = globalThis.crypto;
 	const subtle = crypto?.subtle;
 	return (
 		typeof crypto?.getRandomValues === "function" &&
