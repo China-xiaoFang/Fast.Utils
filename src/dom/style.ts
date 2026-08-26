@@ -49,9 +49,9 @@ const toCssPropertyName = (key: string): string => {
  */
 export function addCssUnit(value?: string | number | null, unit = "px"): string {
 	if (value === null || value === undefined || value === "") return "";
-	if (unit.length === 0) throw new RangeError("unit cannot be empty.");
+	if (unit.length === 0) throw new RangeError("`unit` 不能为空。");
 	if (typeof value === "number") {
-		if (!Number.isFinite(value)) throw new RangeError("value must be finite.");
+		if (!Number.isFinite(value)) throw new RangeError("`value` 必须是有限数。");
 		return value === 0 ? "0" : `${value}${unit}`;
 	}
 	const trimmed = value.trim();
@@ -85,7 +85,7 @@ export function serializeStyle(styles: StyleInput): string {
 	return Object.entries(styles)
 		.filter(([, value]) => value !== null && value !== undefined && value !== "")
 		.map(([key, value]) => {
-			if (typeof value === "number" && !Number.isFinite(value)) throw new RangeError(`Style property "${key}" must be finite.`);
+			if (typeof value === "number" && !Number.isFinite(value)) throw new RangeError(`样式属性“${key}”必须是有限数。`);
 			return `${toCssPropertyName(key)}:${String(value)};`;
 		})
 		.join(" ");

@@ -70,7 +70,7 @@ function matchesThrown(thrown: unknown, expected: unknown): boolean {
 	if (expected instanceof RegExp) return expected.test(getErrorMessage(thrown));
 	if (typeof expected === "function") {
 		const prototype = Reflect.get(expected, "prototype") as unknown;
-		return typeof prototype === "object" && prototype !== null && isObject(thrown) && prototype.isPrototypeOf(thrown);
+		return typeof prototype === "object" && prototype !== null && isObject(thrown) && Object.prototype.isPrototypeOf.call(prototype, thrown);
 	}
 	return partialMatches(thrown, expected);
 }
@@ -98,7 +98,8 @@ function createMatchers(actual: unknown, negated = false): Matchers {
 		},
 		toBeInstanceOf(expected): void {
 			const prototype = typeof expected === "function" ? (Reflect.get(expected, "prototype") as unknown) : undefined;
-			const matches = typeof prototype === "object" && prototype !== null && isObject(actual) && prototype.isPrototypeOf(actual);
+			const matches =
+				typeof prototype === "object" && prototype !== null && isObject(actual) && Object.prototype.isPrototypeOf.call(prototype, actual);
 			assertMatch(matches, negated, "Expected value to be an instance of the supplied constructor");
 		},
 		toBeUndefined(): void {

@@ -60,7 +60,7 @@ export interface InstallationIdentity {
  * @throws `TypeError` 当值不是 RFC 4122 UUID v4。
  */
 const assertInstallationId = (value: string): void => {
-	if (!isUuidV4(value)) throw new TypeError("Installation Identity values must be RFC 4122 version 4 UUIDs.");
+	if (!isUuidV4(value)) throw new TypeError("安装标识值必须是符合 RFC 4122 的 UUID v4。");
 };
 
 let activeStorageKey: string | undefined;
@@ -88,13 +88,13 @@ const getInstallationIdentityStorageKey = (): string => {
 export function configureInstallationIdentity(options: InstallationIdentityConfiguration = {}): void {
 	const cacheKey = options.cacheKey ?? defaultInstallationIdentityStorageKey;
 	if (typeof cacheKey !== "string" || cacheKey.length === 0 || cacheKey.trim() !== cacheKey) {
-		throw new TypeError("Installation Identity cacheKey must be a non-empty string without surrounding whitespace.");
+		throw new TypeError("安装标识的 `cacheKey` 必须是无外围空白的非空字符串。");
 	}
 	if (activeStorageKey === undefined) {
 		activeStorageKey = cacheKey;
 		return;
 	}
-	if (activeStorageKey !== cacheKey) throw new Error("Installation Identity has already been configured with a different cacheKey.");
+	if (activeStorageKey !== cacheKey) throw new Error("安装标识已使用其他 `cacheKey` 完成配置。");
 }
 
 /**
@@ -125,7 +125,7 @@ export const installationIdentity: InstallationIdentity = {
 	read(): string | undefined {
 		const stored = Local.get(installationIdentity.cacheKey);
 		if (stored === undefined) return undefined;
-		if (typeof stored !== "string") throw new TypeError("The stored identity is corrupted.");
+		if (typeof stored !== "string") throw new TypeError("存储的安装标识已损坏。");
 		assertInstallationId(stored);
 		return stored;
 	},

@@ -51,10 +51,10 @@ export function useEmits<Emits extends EmitsOptions>(
 		const handlerNames = new Set<string>();
 		for (const eventName of Object.keys(emits)) {
 			if (ignored.has(eventName)) continue;
-			if (eventName.length === 0 || /\s/u.test(eventName)) throw new TypeError(`Invalid Vue event name: "${eventName}".`);
+			if (eventName.length === 0 || /\s/u.test(eventName)) throw new TypeError(`无效的 Vue 事件名称：“${eventName}”。`);
 			const handlerName = toHandlerName(eventName);
 			if (handlerNames.has(handlerName)) {
-				throw new TypeError(`Vue events map to the same handler property: "${handlerName}".`);
+				throw new TypeError(`多个 Vue 事件映射到同一处理器属性：“${handlerName}”。`);
 			}
 			handlerNames.add(handlerName);
 			Object.defineProperty(handlers, handlerName, {

@@ -23,7 +23,7 @@ export interface RgbaColor extends RgbColor {
  */
 const assertRgbChannel = (value: number, channel: string): void => {
 	if (!Number.isFinite(value) || value < 0 || value > 255) {
-		throw new RangeError(`${channel} must be a finite number from 0 through 255.`);
+		throw new RangeError(`\`${channel}\` 必须是 0 到 255 之间的有限数。`);
 	}
 };
 
@@ -35,7 +35,7 @@ const assertRgbChannel = (value: number, channel: string): void => {
  */
 const assertAlpha = (value: number): void => {
 	if (!Number.isFinite(value) || value < 0 || value > 1) {
-		throw new RangeError("alpha must be a finite number from 0 through 1.");
+		throw new RangeError("`alpha` 必须是 0 到 1 之间的有限数。");
 	}
 };
 
@@ -49,7 +49,7 @@ const assertAlpha = (value: number): void => {
 const normalizeHexColor = (value: string): string => {
 	const normalized = value.startsWith("#") ? value.slice(1) : value;
 	if (![3, 4, 6, 8].includes(normalized.length) || !/^[\dA-F]+$/iu.test(normalized)) {
-		throw new TypeError("Expected a 3, 4, 6, or 8 digit hexadecimal color.");
+		throw new TypeError("十六进制颜色必须包含 3、4、6 或 8 个十六进制字符。");
 	}
 	return normalized.length <= 4 ? Array.from(normalized, (character) => `${character}${character}`).join("") : normalized;
 };
@@ -108,7 +108,7 @@ export function formatHexColor(color: RgbColor | RgbaColor, includeAlpha: boolea
  */
 export function mixHexColors(first: string, second: string, amount: number): string {
 	if (!Number.isFinite(amount) || amount < 0 || amount > 1) {
-		throw new RangeError("amount must be a finite number from 0 through 1.");
+		throw new RangeError("`amount` 必须是 0 到 1 之间的有限数。");
 	}
 	const left = parseHexColor(first);
 	const right = parseHexColor(second);

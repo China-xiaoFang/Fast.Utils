@@ -46,7 +46,7 @@ const createUuidV4FromBytes = (bytes: Uint8Array): string => {
 const splitGraphemes = (value: string, locale: StringLocale): string[] => {
 	const Segmenter = globalThis.Intl?.Segmenter;
 	if (typeof Segmenter !== "function") {
-		throw new Error("Intl.Segmenter is unavailable in the current runtime.");
+		throw new Error("当前运行环境不支持 Intl.Segmenter。");
 	}
 	const segmenter = new Segmenter(locale ?? defaultStringLocale, { granularity: "grapheme" });
 	return Array.from(segmenter.segment(value), ({ segment }) => segment);
@@ -61,7 +61,7 @@ const splitGraphemes = (value: string, locale: StringLocale): string[] => {
  * @throws `URIError` 当任一层包含非法百分号序列；深度非法时抛出 `RangeError`。
  */
 export function decodeURIComponentRepeatedly(value: string, maxDepth = 10): string {
-	if (!Number.isSafeInteger(maxDepth) || maxDepth < 0) throw new RangeError("maxDepth must be a non-negative safe integer.");
+	if (!Number.isSafeInteger(maxDepth) || maxDepth < 0) throw new RangeError("`maxDepth` 必须是非负安全整数。");
 	let decoded = value;
 	for (let index = 0; index < maxDepth; index += 1) {
 		const next = decodeURIComponent(decoded);
@@ -207,7 +207,7 @@ export function kebabCase(value: string, locale?: StringLocale): string {
  * `Intl.Segmenter` 时抛出 `Error`。
  */
 export function truncateGraphemes(value: string, maxLength: number, suffix = "…", locale?: StringLocale): string {
-	if (!Number.isSafeInteger(maxLength) || maxLength < 0) throw new RangeError("maxLength must be a non-negative safe integer.");
+	if (!Number.isSafeInteger(maxLength) || maxLength < 0) throw new RangeError("`maxLength` 必须是非负安全整数。");
 	const segments = splitGraphemes(value, locale);
 	return segments.length > maxLength ? segments.slice(0, maxLength).join("") + suffix : value;
 }
@@ -225,16 +225,16 @@ export async function copy(value: string): Promise<void> {
 	const uni: unknown = Reflect.get(globalThis, "uni");
 	if (uni !== undefined) {
 		if ((typeof uni !== "object" && typeof uni !== "function") || uni === null) {
-			throw new TypeError("The global uni object does not provide setClipboardData.");
+			throw new TypeError("全局 uni 对象未提供 `setClipboardData`。");
 		}
 		const setClipboardData: unknown = Reflect.get(uni, "setClipboardData");
-		if (typeof setClipboardData !== "function") throw new TypeError("The global uni object does not provide setClipboardData.");
+		if (typeof setClipboardData !== "function") throw new TypeError("全局 uni 对象未提供 `setClipboardData`。");
 		await new Promise<void>((resolve, reject) => {
 			Reflect.apply(setClipboardData, uni, [
 				{
 					data: value,
 					fail: (error: unknown): void => {
-						reject(error instanceof Error ? error : new Error("Failed to copy text to the clipboard.", { cause: error }));
+						reject(error instanceof Error ? error : new Error("文本复制到剪贴板失败。", { cause: error }));
 					},
 					success: resolve,
 				},
@@ -251,7 +251,7 @@ export async function copy(value: string): Promise<void> {
 
 	const document = globalThis.document;
 	if (typeof document?.createElement !== "function" || document.body === null || typeof document.execCommand !== "function") {
-		throw new Error("Clipboard access is unavailable in the current runtime.");
+		throw new Error("当前运行环境不支持访问剪贴板。");
 	}
 	const textarea = document.createElement("textarea");
 	textarea.value = value;
@@ -260,7 +260,7 @@ export async function copy(value: string): Promise<void> {
 	textarea.style.position = "fixed";
 	textarea.style.top = "-999999px";
 	document.body.appendChild(textarea);
-	let copied = false;
+	let copied: boolean;
 	try {
 		textarea.focus();
 		textarea.select();
@@ -268,7 +268,7 @@ export async function copy(value: string): Promise<void> {
 	} finally {
 		textarea.remove();
 	}
-	if (!copied) throw new Error("Failed to copy text to the clipboard.");
+	if (!copied) throw new Error("文本复制到剪贴板失败。");
 }
 
 /**
@@ -282,12 +282,12 @@ export async function copy(value: string): Promise<void> {
  */
 export function randomString(length: number, alphabet: string = defaultRandomAlphabet): string {
 	if (!Number.isSafeInteger(length) || length < 0 || length > maximumRandomStringLength) {
-		throw new RangeError(`length must be a safe integer from 0 through ${maximumRandomStringLength}.`);
+		throw new RangeError(`\`length\` 必须是 0 到 ${maximumRandomStringLength} 之间的安全整数。`);
 	}
 	const characters = Array.from(alphabet);
-	if (characters.length === 0) throw new RangeError("alphabet cannot be empty.");
-	if (new Set(characters).size !== characters.length) throw new RangeError("alphabet cannot contain duplicate characters.");
-	if (characters.length > 0x1_0000_0000) throw new RangeError("alphabet cannot contain more than 2^32 characters.");
+	if (characters.length === 0) throw new RangeError("`alphabet` 不能为空。");
+	if (new Set(characters).size !== characters.length) throw new RangeError("`alphabet` 不能包含重复字符。");
+	if (characters.length > 0x1_0000_0000) throw new RangeError("`alphabet` 不能包含超过 2^32 个字符。");
 	if (length === 0) return "";
 
 	// 丢弃不能平均映射到字母表的尾部区间，避免 `%` 造成前部字符概率偏高。

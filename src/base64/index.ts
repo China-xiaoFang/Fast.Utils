@@ -13,7 +13,7 @@ type Base64Variant = "standard" | "url";
  * @returns 带有具体变体名称的 `TypeError`。
  */
 const invalidBase64 = (variant: Base64Variant): TypeError => {
-	return new TypeError(`The value is not valid ${variant === "url" ? "Base64URL" : "Base64"}.`);
+	return new TypeError(`该值不是有效的 ${variant === "url" ? "Base64URL" : "Base64"}。`);
 };
 
 /**
@@ -108,7 +108,7 @@ const decodeUtf8 = (bytes: Uint8Array): string => {
 	try {
 		return textDecoder.decode(bytes);
 	} catch (cause) {
-		throw new TypeError("The decoded bytes are not valid UTF-8.", { cause });
+		throw new TypeError("解码后的字节不是有效的 UTF-8。", { cause });
 	}
 };
 
@@ -211,7 +211,7 @@ export function encodeLatin1Base64(value: string): string {
 	const bytes = new Uint8Array(value.length);
 	for (let index = 0; index < value.length; index += 1) {
 		const code = value.charCodeAt(index);
-		if (code > 255) throw new TypeError("The string to be encoded contains characters outside of the Latin-1 range.");
+		if (code > 255) throw new TypeError("待编码字符串包含超出 Latin-1 范围的字符。");
 		bytes[index] = code;
 	}
 	return encodeBase64Bytes(bytes);
@@ -285,7 +285,7 @@ const base64PasswordDictionary: readonly Readonly<Base64PasswordDictionaryEntry>
  * @throws `RangeError` 当长度不是非负安全整数。
  */
 const assertPrefixLength = (length: number): void => {
-	if (!Number.isSafeInteger(length) || length < 0) throw new RangeError("prefixStrLength must be a non-negative safe integer.");
+	if (!Number.isSafeInteger(length) || length < 0) throw new RangeError("`prefixStrLength` 必须是非负安全整数。");
 };
 
 /**
@@ -368,7 +368,7 @@ export function encodeSecureBase64(value: string, prefixLength: number = default
 export function decodeSecureBase64(value: string, prefixLength: number = defaultRandomPrefixLength): string {
 	if (value.length === 0) return "";
 	assertPrefixLength(prefixLength);
-	if (prefixLength > value.length) throw new TypeError("The Base64 value is shorter than its configured prefix.");
+	if (prefixLength > value.length) throw new TypeError("Base64 值的长度小于配置的前缀长度。");
 	let encoded = value.slice(prefixLength);
 	if (prefixLength !== 0) encoded = removeDictionaryCharacters(encoded);
 	return decodeURIComponent(decodeLatin1Base64(encoded));

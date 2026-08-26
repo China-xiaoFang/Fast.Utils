@@ -19,7 +19,7 @@ export interface FormatBytesOptions {
  * @throws `RangeError` 当值为 NaN。
  */
 const assertNotNaN = (value: number, name: string): void => {
-	if (Number.isNaN(value)) throw new RangeError(`${name} cannot be NaN.`);
+	if (Number.isNaN(value)) throw new RangeError(`\`${name}\` 不能是 NaN。`);
 };
 
 /**
@@ -30,7 +30,7 @@ const assertNotNaN = (value: number, name: string): void => {
  * @throws `RangeError` 当值为 NaN 或无穷大。
  */
 const assertFinite = (value: number, name: string): void => {
-	if (!Number.isFinite(value)) throw new RangeError(`${name} must be finite.`);
+	if (!Number.isFinite(value)) throw new RangeError(`\`${name}\` 必须是有限数。`);
 };
 
 /**
@@ -60,7 +60,7 @@ export function clamp(value: number, minimum: number, maximum: number): number {
 	assertNotNaN(value, "value");
 	assertNotNaN(minimum, "minimum");
 	assertNotNaN(maximum, "maximum");
-	if (minimum > maximum) throw new RangeError("minimum cannot be greater than maximum.");
+	if (minimum > maximum) throw new RangeError("`minimum` 不能大于 `maximum`。");
 	return Math.min(Math.max(value, minimum), maximum);
 }
 
@@ -78,7 +78,7 @@ export function inRange(value: number, minimum: number, maximum: number, include
 	assertNotNaN(value, "value");
 	assertNotNaN(minimum, "minimum");
 	assertNotNaN(maximum, "maximum");
-	if (minimum > maximum) throw new RangeError("minimum cannot be greater than maximum.");
+	if (minimum > maximum) throw new RangeError("`minimum` 不能大于 `maximum`。");
 	return value >= minimum && (includeMaximum ? value <= maximum : value < maximum);
 }
 
@@ -94,7 +94,7 @@ export function inRange(value: number, minimum: number, maximum: number, include
 export function roundTo(value: number, digits = 0): number {
 	assertFinite(value, "value");
 	if (!Number.isSafeInteger(digits) || digits < -15 || digits > 15) {
-		throw new RangeError("digits must be a safe integer between -15 and 15.");
+		throw new RangeError("`digits` 必须是 -15 到 15 之间的安全整数。");
 	}
 	const shifted = shiftDecimal(value, digits);
 	// 对已经没有可表示小数的大数，乘以 10^digits 可能溢出；此时舍入不会改变值。
@@ -117,7 +117,7 @@ export function sum(values: readonly number[]): number {
 		// Kahan 补偿保存上一次浮点加法丢失的低位，减少大量小数累计误差。
 		const adjusted = value - compensation;
 		const next = total + adjusted;
-		if (!Number.isFinite(next)) throw new RangeError("The sum exceeds the finite number range.");
+		if (!Number.isFinite(next)) throw new RangeError("总和超出有限数范围。");
 		compensation = next - total - adjusted;
 		total = next;
 	});
@@ -158,7 +158,7 @@ export function lerp(start: number, end: number, amount: number): number {
 	assertFinite(end, "end");
 	assertFinite(amount, "amount");
 	const result = start * (1 - amount) + end * amount;
-	if (!Number.isFinite(result)) throw new RangeError("The interpolation result exceeds the finite number range.");
+	if (!Number.isFinite(result)) throw new RangeError("插值结果超出有限数范围。");
 	return result;
 }
 
@@ -172,13 +172,13 @@ export function lerp(start: number, end: number, amount: number): number {
  */
 export function formatBytes(bytes: number, options: FormatBytesOptions = {}): string {
 	assertFinite(bytes, "bytes");
-	if (bytes < 0) throw new RangeError("bytes cannot be negative.");
+	if (bytes < 0) throw new RangeError("`bytes` 不能为负数。");
 	const requestedBase: unknown = options.base ?? 1024;
-	if (requestedBase !== 1000 && requestedBase !== 1024) throw new RangeError("base must be 1000 or 1024.");
+	if (requestedBase !== 1000 && requestedBase !== 1024) throw new RangeError("`base` 必须是 1000 或 1024。");
 	const base = requestedBase;
 	const decimals = options.decimals ?? 2;
 	if (!Number.isSafeInteger(decimals) || decimals < 0 || decimals > 20) {
-		throw new RangeError("decimals must be a safe integer between 0 and 20.");
+		throw new RangeError("`decimals` 必须是 0 到 20 之间的安全整数。");
 	}
 	if (bytes === 0) return "0 B";
 
@@ -204,12 +204,12 @@ export function formatBytes(bytes: number, options: FormatBytesOptions = {}): st
  */
 export function randomInt(minimum: number, maximumExclusive: number): number {
 	if (!Number.isSafeInteger(minimum) || !Number.isSafeInteger(maximumExclusive)) {
-		throw new RangeError("minimum and maximumExclusive must be safe integers.");
+		throw new RangeError("`minimum` 和 `maximumExclusive` 必须是安全整数。");
 	}
 	const range = maximumExclusive - minimum;
 	const uint32Range = 0x1_0000_0000;
 	if (range <= 0 || range > uint32Range) {
-		throw new RangeError("The interval must be non-empty and no wider than 2^32.");
+		throw new RangeError("区间不能为空且宽度不能超过 2^32。");
 	}
 	const crypto = globalThis.crypto;
 	const hasWebCrypto = typeof crypto?.getRandomValues === "function";

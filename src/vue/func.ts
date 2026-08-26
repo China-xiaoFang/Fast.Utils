@@ -13,5 +13,5 @@ export async function callOptionalFunction<Arguments extends readonly unknown[],
 	...arguments_: Arguments
 ): Promise<Awaited<Result> | undefined> {
 	if (function_ === null || function_ === undefined) return undefined;
-	return await function_(...arguments_);
+	return Promise.resolve(function_(...arguments_));
 }

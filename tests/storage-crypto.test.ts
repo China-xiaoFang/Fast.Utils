@@ -253,7 +253,7 @@ describe("Web Crypto utilities", () => {
 			getRandomValues: <Value extends ArrayBufferView>(value: Value): Value => value,
 		});
 		expect(GenerateRandomBytes(2)).toEqual(Uint8Array.of(0, 0));
-		await expect(SHA256Encrypt("value")).rejects.toThrow("SubtleCrypto is unavailable");
+		await expect(SHA256Encrypt("value")).rejects.toThrow("不支持 Web Crypto SubtleCrypto");
 	});
 
 	it("authenticates AES-GCM text with direct keys and passwords", async () => {
@@ -263,7 +263,7 @@ describe("Web Crypto utilities", () => {
 		const payload = await AESEncryptWithPassword('{"looks":"json"}', "correct horse battery staple", 100_000);
 		expect(payload.startsWith("FAST-AES-256-GCM-V1:")).toBe(true);
 		expect(await AESDecryptWithPassword(payload, "correct horse battery staple")).toBe('{"looks":"json"}');
-		await expect(AESDecryptWithPassword(payload, "wrong password")).rejects.toThrow("authenticated or decrypted");
+		await expect(AESDecryptWithPassword(payload, "wrong password")).rejects.toThrow("无法认证或解密载荷");
 	});
 
 	it("rejects unsupported and tampered payloads", async () => {
@@ -273,7 +273,7 @@ describe("Web Crypto utilities", () => {
 		const mutationIndex = payload.length - 2;
 		const replacement = payload[mutationIndex] === "A" ? "B" : "A";
 		const tampered = `${payload.slice(0, mutationIndex)}${replacement}${payload.slice(mutationIndex + 1)}`;
-		await expect(AESDecryptWithPassword(tampered, "correct horse battery staple")).rejects.toThrow("authenticated or decrypted");
+		await expect(AESDecryptWithPassword(tampered, "correct horse battery staple")).rejects.toThrow("无法认证或解密载荷");
 	});
 
 	it("rejects plaintext that could violate the bounded payload contract", async () => {

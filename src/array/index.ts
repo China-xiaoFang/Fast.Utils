@@ -12,7 +12,7 @@ export type KeySelector<Item, Key> = (item: Item, index: number) => Key;
  */
 export function chunk<Item>(items: readonly Item[], size: number): Item[][] {
 	if (!Number.isSafeInteger(size) || size <= 0) {
-		throw new RangeError("size must be a positive safe integer.");
+		throw new RangeError("`size` 必须是正安全整数。");
 	}
 
 	const result: Item[][] = [];

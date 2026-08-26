@@ -2,6 +2,14 @@
 
 All notable changes to Fast.Utils are documented in this file.
 
+## [2.1.1] - 2026-08-26
+
+### Changed
+
+- Localized built-in validation, platform-capability, storage, cryptography, clipboard, and Vue integration error messages to Chinese while preserving their native error types and causes.
+- Narrowed the `useProps` return type so keys passed through `ignoredProps` are excluded from the inferred computed result.
+- Synchronized the self-contained ESLint Flat Config with the applicable Fast.ESLint.Config source rules and comments, refreshed compatible development dependencies, and documented the VS Code recommendations.
+
 ## [2.1.0] - 2026-08-23
 
 ### Added
@@ -65,6 +73,7 @@ All notable changes to Fast.Utils are documented in this file.
 
 - Added authenticated ciphertext validation, bounded crypto parameters and payloads, unbiased Web Crypto randomness, prototype-safe query/object transforms, and namespace-scoped Storage cleanup.
 
+[2.1.1]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.0.3...v2.1.0
 [2.0.3]: https://github.com/China-xiaoFang/Fast.Utils/releases/tag/v2.0.3
 [2.0.2]: https://github.com/China-xiaoFang/Fast.Utils/releases/tag/v2.0.2

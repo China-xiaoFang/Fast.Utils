@@ -121,6 +121,8 @@ Query and object helpers reject prototype-polluting keys. URL decoders are bound
 
 Programming errors, invalid inputs, unsupported platform capabilities, and malformed protected data throw native errors unless a function explicitly documents a nullable result.
 
+Since Fast.Utils 2.1.1, built-in validation and runtime failure messages are Chinese. Consumers must branch on native error types instead of matching message text.
+
 `randomInt`, `randomString`, `generateUuidV4`, and `GenerateRandomBytes` all prefer Web Crypto and fall back to `Math.random()` when unavailable.
 
 Fast.Utils 2.1.0 removes `secureRandomInt` and `secureRandomString`. This is a breaking change; consumers must migrate to `randomInt` and `randomString`, respectively.

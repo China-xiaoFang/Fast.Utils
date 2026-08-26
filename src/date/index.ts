@@ -20,7 +20,7 @@ export interface RelativeTimeOptions {
  * @throws `RangeError` 当值不是安全整数。
  */
 const assertIntegerAmount = (amount: number): void => {
-	if (!Number.isSafeInteger(amount)) throw new RangeError("amount must be a safe integer.");
+	if (!Number.isSafeInteger(amount)) throw new RangeError("`amount` 必须是安全整数。");
 };
 
 /**
@@ -34,7 +34,7 @@ const assertIntegerAmount = (amount: number): void => {
 export function toDate(value: DateInput): Date {
 	const date = value instanceof Date ? new Date(value.getTime()) : new Date(value);
 	if (!Number.isFinite(date.getTime())) {
-		throw new TypeError("The value is not a valid date.");
+		throw new TypeError("该值不是有效日期。");
 	}
 	return date;
 }
@@ -177,7 +177,7 @@ export function isWithinInterval(value: DateInput, start: DateInput, end: DateIn
 	const timestamp = toDate(value).getTime();
 	const startTimestamp = toDate(start).getTime();
 	const endTimestamp = toDate(end).getTime();
-	if (startTimestamp > endTimestamp) throw new RangeError("start cannot be later than end.");
+	if (startTimestamp > endTimestamp) throw new RangeError("`start` 不能晚于 `end`。");
 	return timestamp >= startTimestamp && timestamp <= endTimestamp;
 }
 

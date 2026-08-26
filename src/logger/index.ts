@@ -156,9 +156,9 @@ export function createLogger(options: LoggerOptions = {}): Logger {
 	const requestedLevel: unknown = options.level ?? "info";
 	const requestedPrefix: unknown = options.prefix ?? "Fast";
 	const sink = options.sink ?? defaultConsoleSink;
-	if (!isLogLevel(requestedLevel)) throw new RangeError(`Unknown logger level: ${String(requestedLevel)}.`);
+	if (!isLogLevel(requestedLevel)) throw new RangeError(`未知的日志级别：${String(requestedLevel)}。`);
 	if (typeof requestedPrefix !== "string" || requestedPrefix.length === 0) {
-		throw new RangeError("Logger prefix must be a non-empty string.");
+		throw new RangeError("日志前缀必须是非空字符串。");
 	}
 	const level = requestedLevel;
 	const prefix = requestedPrefix;
@@ -174,9 +174,9 @@ export function createLogger(options: LoggerOptions = {}): Logger {
 	 * @throws `RangeError` 当作用域不是非空字符串或包含外围空白。
 	 */
 	const write = (messageLevel: LogLevel, scope: string, message: string, data: readonly unknown[]): void => {
-		if (typeof scope !== "string") throw new TypeError("Logger scope must be a string.");
+		if (typeof scope !== "string") throw new TypeError("日志作用域必须是字符串。");
 		if (scope.length === 0 || scope.trim() !== scope) {
-			throw new RangeError("Logger scope must be a non-empty string without surrounding whitespace.");
+			throw new RangeError("日志作用域必须是无外围空白的非空字符串。");
 		}
 		if (levelPriority[messageLevel] < levelPriority[level]) return;
 		const heading = `[${prefix}:${scope}]`;

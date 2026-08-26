@@ -78,7 +78,7 @@ const requireWebCrypto = (): Crypto => {
 		typeof subtle.sign !== "function" ||
 		typeof subtle.verify !== "function"
 	) {
-		throw new Error("Web Crypto SubtleCrypto is unavailable in the current runtime.");
+		throw new Error("当前运行环境不支持 Web Crypto SubtleCrypto。");
 	}
 	return crypto;
 };
@@ -127,7 +127,7 @@ const fromPem = (value: string, label: string): ArrayBuffer => {
 	const header = `-----BEGIN ${label}-----`;
 	const footer = `-----END ${label}-----`;
 	const trimmed = value.trim();
-	if (!trimmed.startsWith(header) || !trimmed.endsWith(footer)) throw new TypeError(`Expected a ${label} PEM value.`);
+	if (!trimmed.startsWith(header) || !trimmed.endsWith(footer)) throw new TypeError(`应提供 ${label} 格式的 PEM 值。`);
 	const encoded = trimmed.slice(header.length, -footer.length).replace(/\s+/gu, "");
 	return toArrayBuffer(decodeBase64Bytes(encoded));
 };
@@ -160,7 +160,7 @@ const exportKeyPair = async (keyPair: CryptoKeyPair): Promise<PemKeyPair> => {
  */
 const assertKeyPair = (value: CryptoKey | CryptoKeyPair): CryptoKeyPair => {
 	if ("privateKey" in value && "publicKey" in value) return value;
-	throw new Error("The runtime did not generate a key pair.");
+	throw new Error("当前运行环境未生成密钥对。");
 };
 
 /**
@@ -173,9 +173,9 @@ const assertKeyPair = (value: CryptoKey | CryptoKeyPair): CryptoKeyPair => {
  */
 const encodeValidatedPassword = (password: string): Uint8Array => {
 	const bytes = encodeUtf8(password);
-	if (bytes.length === 0) throw new TypeError("The encryption password cannot be empty.");
+	if (bytes.length === 0) throw new TypeError("加密密码不能为空。");
 	if (bytes.length > maximumPasswordBytes) {
-		throw new RangeError(`The UTF-8 password cannot exceed ${maximumPasswordBytes} bytes.`);
+		throw new RangeError(`UTF-8 密码不能超过 ${maximumPasswordBytes} 字节。`);
 	}
 	return bytes;
 };
@@ -189,7 +189,7 @@ const encodeValidatedPassword = (password: string): Uint8Array => {
  */
 const validateIterations = (iterations: number): number => {
 	if (!Number.isSafeInteger(iterations) || iterations < minimumPbkdf2Iterations || iterations > maximumPbkdf2Iterations) {
-		throw new RangeError(`iterations must be a safe integer between ${minimumPbkdf2Iterations} and ${maximumPbkdf2Iterations}.`);
+		throw new RangeError(`\`iterations\` 必须是 ${minimumPbkdf2Iterations} 到 ${maximumPbkdf2Iterations} 之间的安全整数。`);
 	}
 	return iterations;
 };
@@ -212,7 +212,7 @@ const toUpperHex = (value: Uint8Array): string => toLowerHex(value).toUpperCase(
  */
 const computeHmacBytes = async (value: string, key: string, hash: "SHA-256" | "SHA-384" | "SHA-512"): Promise<Uint8Array> => {
 	const keyBytes = encodeUtf8(key);
-	if (keyBytes.length === 0) throw new TypeError("The HMAC key cannot be empty.");
+	if (keyBytes.length === 0) throw new TypeError("HMAC 密钥不能为空。");
 
 	const crypto = requireWebCrypto();
 	const cryptoKey = await crypto.subtle.importKey("raw", toArrayBuffer(keyBytes), { hash, name: "HMAC" }, false, ["sign"]);
@@ -230,7 +230,7 @@ const computeHmacBytes = async (value: string, key: string, hash: "SHA-256" | "S
  */
 export function GenerateRandomBytes(length: number): Uint8Array {
 	if (!Number.isSafeInteger(length) || length < 0 || length > 65_536) {
-		throw new RangeError("length must be a safe integer from 0 through 65,536.");
+		throw new RangeError("`length` 必须是 0 到 65,536 之间的安全整数。");
 	}
 	const bytes = new Uint8Array(length);
 	const crypto = globalThis.crypto;
@@ -389,9 +389,9 @@ export async function HMACSHA512Encrypt(value: string, key: string): Promise<str
  */
 export async function PBKDF2SHA256(password: string, salt: Uint8Array, iterations = defaultPbkdf2Iterations, outputLength = 32): Promise<Uint8Array> {
 	const passwordBytes = encodeValidatedPassword(password);
-	if (salt.length < 8) throw new RangeError("The PBKDF2 salt must contain at least 8 bytes; 16 or more is recommended.");
+	if (salt.length < 8) throw new RangeError("PBKDF2 盐值必须至少包含 8 字节，建议不少于 16 字节。");
 	if (!Number.isSafeInteger(outputLength) || outputLength < 1 || outputLength > 1024) {
-		throw new RangeError("outputLength must be a safe integer between 1 and 1,024.");
+		throw new RangeError("`outputLength` 必须是 1 到 1,024 之间的安全整数。");
 	}
 
 	// 密码作为不可导出的 PBKDF2 原始材料导入，派生结果只通过 deriveBits 返回。
@@ -458,7 +458,7 @@ export async function HKDFSHA256(
 	outputLength = 32
 ): Promise<Uint8Array> {
 	if (!Number.isSafeInteger(outputLength) || outputLength < 1 || outputLength > 255 * 32) {
-		throw new RangeError("outputLength must be a safe integer between 1 and 8,160.");
+		throw new RangeError("`outputLength` 必须是 1 到 8,160 之间的安全整数。");
 	}
 
 	// Web Crypto 的 HKDF 实现内部完成 RFC 5869 Extract 和 Expand，并且不会导出中间 PRK。
@@ -493,7 +493,7 @@ export function AESEncrypt(
 	paddingMode: AesPaddingMode = "PKCS7"
 ): string | null {
 	if (dataStr.trim().length === 0 || key.trim().length === 0 || vector.trim().length === 0) return null;
-	if (cipherMode !== "CBC" && cipherMode !== "ECB") throw new RangeError('cipherMode must be "CBC" or "ECB".');
+	if (cipherMode !== "CBC" && cipherMode !== "ECB") throw new RangeError("`cipherMode` 必须是 `CBC` 或 `ECB`。");
 
 	let padding = Pkcs7;
 	switch (paddingMode) {
@@ -513,10 +513,10 @@ export function AESEncrypt(
 			padding = Iso10126;
 			break;
 		default:
-			throw new RangeError("paddingMode is not supported.");
+			throw new RangeError("不支持当前 `paddingMode`。");
 	}
 	if (paddingMode === "None" && encodeUtf8(dataStr).length % 16 !== 0) {
-		throw new RangeError("AES plaintext must contain a whole number of 16-byte blocks when paddingMode is None.");
+		throw new RangeError("当 `paddingMode` 为 `None` 时，AES 明文长度必须是 16 字节的整数倍。");
 	}
 
 	// 按 .NET 入口的字符规则处理密钥和 IV，再由 CryptoJS 统一按 UTF-8 编码。
@@ -545,7 +545,7 @@ export function AESDecrypt(
 	paddingMode: AesPaddingMode = "PKCS7"
 ): string | null {
 	if (dataStr.trim().length === 0 || key.trim().length === 0 || vector.trim().length === 0) return null;
-	if (cipherMode !== "CBC" && cipherMode !== "ECB") throw new RangeError('cipherMode must be "CBC" or "ECB".');
+	if (cipherMode !== "CBC" && cipherMode !== "ECB") throw new RangeError("`cipherMode` 必须是 `CBC` 或 `ECB`。");
 
 	let padding = Pkcs7;
 	switch (paddingMode) {
@@ -566,11 +566,11 @@ export function AESDecrypt(
 			padding = Iso10126;
 			break;
 		default:
-			throw new RangeError("paddingMode is not supported.");
+			throw new RangeError("不支持当前 `paddingMode`。");
 	}
 	const ciphertextBytes = decodeBase64Bytes(dataStr);
 	if (ciphertextBytes.length === 0 || ciphertextBytes.length % 16 !== 0) {
-		throw new RangeError("AES ciphertext must contain one or more complete 16-byte blocks.");
+		throw new RangeError("AES 密文必须至少包含一个完整的 16 字节块。");
 	}
 
 	// 解密必须重复使用加密端相同的字符补齐和截断规则。
@@ -591,7 +591,7 @@ export function AESDecrypt(
  * @throws 密钥为空或运行时缺少 Web Crypto 时抛出错误。
  */
 export async function AESEncryptAuthenticated(plaintext: string, key: string): Promise<string> {
-	if (key.trim().length === 0) throw new TypeError("The encryption key cannot be empty.");
+	if (key.trim().length === 0) throw new TypeError("加密密钥不能为空。");
 	const crypto = requireWebCrypto();
 	const keyBytes = await SHA256Bytes(key);
 	const cryptoKey = await crypto.subtle.importKey("raw", toArrayBuffer(keyBytes), { name: "AES-GCM" }, false, ["encrypt"]);
@@ -619,10 +619,10 @@ export async function AESEncryptAuthenticated(plaintext: string, key: string): P
  * @throws 载荷格式无效、密钥错误或认证失败时抛出错误。
  */
 export async function AESDecryptAuthenticated(payload: string, key: string): Promise<string> {
-	if (key.trim().length === 0) throw new TypeError("The encryption key cannot be empty.");
+	if (key.trim().length === 0) throw new TypeError("加密密钥不能为空。");
 	const decoded = decodeBase64Bytes(payload);
 	if (decoded.length < 29 || decoded[0] !== authenticatedAesPayloadVersion) {
-		throw new TypeError("The AES-GCM payload format or version is not supported.");
+		throw new TypeError("不支持该 AES-GCM 载荷格式或版本。");
 	}
 
 	const nonce = decoded.subarray(1, 13);
@@ -659,7 +659,7 @@ export async function AESEncryptWithPassword(plaintext: string, password: string
 	const passwordBytes = encodeValidatedPassword(password);
 	const plaintextBytes = encodeUtf8(plaintext);
 	if (plaintextBytes.length > maximumPlaintextBytes) {
-		throw new RangeError(`The UTF-8 plaintext cannot exceed ${maximumPlaintextBytes} bytes.`);
+		throw new RangeError(`UTF-8 明文不能超过 ${maximumPlaintextBytes} 字节。`);
 	}
 	const validatedIterations = validateIterations(iterations);
 	const crypto = requireWebCrypto();
@@ -702,12 +702,12 @@ export async function AESEncryptWithPassword(plaintext: string, password: string
 export async function AESDecryptWithPassword(payload: string, password: string): Promise<string> {
 	const passwordBytes = encodeValidatedPassword(password);
 	if (payload.length > maximumPayloadLength) {
-		throw new RangeError("The encrypted payload exceeds the supported size.");
+		throw new RangeError("加密载荷超出支持的大小。");
 	}
 	// 先验证固定字段数和版本，再对高成本 KDF 与解密进行任何工作。
 	const parts = payload.split(":");
 	if (parts.length !== 5 || parts[0] !== encryptedPayloadPrefix) {
-		throw new TypeError("The encrypted payload format is not supported.");
+		throw new TypeError("不支持该加密载荷格式。");
 	}
 
 	let iterations: number;
@@ -720,10 +720,10 @@ export async function AESDecryptWithPassword(payload: string, password: string):
 		iv = decodeBase64UrlBytes(parts[3] ?? "");
 		ciphertext = decodeBase64UrlBytes(parts[4] ?? "");
 		if (salt.length !== 16 || iv.length !== 12 || ciphertext.length < 16) {
-			throw new TypeError("The encrypted payload has invalid field lengths.");
+			throw new TypeError("加密载荷的字段长度无效。");
 		}
 	} catch (cause) {
-		throw new TypeError("The encrypted payload contains invalid fields.", { cause });
+		throw new TypeError("加密载荷包含无效字段。", { cause });
 	}
 
 	const crypto = requireWebCrypto();
@@ -745,7 +745,7 @@ export async function AESDecryptWithPassword(payload: string, password: string):
 		);
 		return textDecoder.decode(plaintext);
 	} catch (cause) {
-		throw new Error("The payload could not be authenticated or decrypted.", { cause });
+		throw new Error("无法认证或解密载荷。", { cause });
 	}
 }
 
@@ -758,7 +758,7 @@ export async function AESDecryptWithPassword(payload: string, password: string):
  */
 export async function GenerateRSAKeyPair(modulusLength = 2048): Promise<PemKeyPair> {
 	if (!Number.isSafeInteger(modulusLength) || modulusLength < 2048 || modulusLength % 256 !== 0) {
-		throw new RangeError("modulusLength must be a safe integer of at least 2048 and divisible by 256.");
+		throw new RangeError("`modulusLength` 必须是大于或等于 2048 且能被 256 整除的安全整数。");
 	}
 	const crypto = requireWebCrypto();
 	const keyPair = assertKeyPair(

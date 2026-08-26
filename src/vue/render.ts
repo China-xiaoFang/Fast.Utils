@@ -14,6 +14,6 @@ interface MutableVueComponentInstance {
  */
 export function useRender(render: () => VNode): void {
 	const instance = getCurrentInstance();
-	if (instance === null) throw new Error("useRender must be called from inside a setup function.");
+	if (instance === null) throw new Error("`useRender` 必须在 `setup` 函数内部调用。");
 	(instance as unknown as MutableVueComponentInstance).render = render;
 }

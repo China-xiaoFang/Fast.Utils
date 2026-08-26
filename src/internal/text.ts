@@ -7,7 +7,7 @@
 export const getTextDecoder = (): TextDecoder => {
 	const TextDecoderConstructor = globalThis.TextDecoder;
 	if (typeof TextDecoderConstructor !== "function") {
-		throw new Error("TextDecoder is unavailable in the current runtime.");
+		throw new Error("当前运行环境不支持 TextDecoder。");
 	}
 	return new TextDecoderConstructor("utf-8", { fatal: true });
 };
@@ -21,7 +21,7 @@ export const getTextDecoder = (): TextDecoder => {
 export const getTextEncoder = (): TextEncoder => {
 	const TextEncoderConstructor = globalThis.TextEncoder;
 	if (typeof TextEncoderConstructor !== "function") {
-		throw new Error("TextEncoder is unavailable in the current runtime.");
+		throw new Error("当前运行环境不支持 TextEncoder。");
 	}
 	return new TextEncoderConstructor();
 };

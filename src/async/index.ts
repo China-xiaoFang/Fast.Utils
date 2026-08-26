@@ -107,7 +107,7 @@ export interface ThrottledFunction<Arguments extends unknown[], Result> {
  * @returns 名称为 `AbortError` 的新错误实例。
  */
 const createAbortError = (signal: AbortSignal): Error => {
-	const error = new Error("The operation was aborted.", { cause: signal.reason });
+	const error = new Error("操作已取消。", { cause: signal.reason });
 	error.name = "AbortError";
 	return error;
 };
@@ -132,7 +132,7 @@ const throwIfAborted = (signal: AbortSignal | undefined): void => {
  */
 const assertDelay = (milliseconds: number, name = "milliseconds"): number => {
 	if (!Number.isFinite(milliseconds) || milliseconds < 0 || milliseconds > maximumTimerDelay) {
-		throw new RangeError(`${name} must be a finite number from 0 through ${maximumTimerDelay}.`);
+		throw new RangeError(`\`${name}\` 必须是 0 到 ${maximumTimerDelay} 之间的有限数。`);
 	}
 	return milliseconds;
 };
@@ -151,13 +151,14 @@ export function sleep(milliseconds: number, options: AbortOptions = {}): Promise
 	throwIfAborted(signal);
 
 	return new Promise<void>((resolve, reject) => {
+		let timer: ReturnType<typeof setTimeout>;
 		/** 取消计时器并使用标准取消错误拒绝等待。 */
-		const onAbort = (): void => {
+		function onAbort(): void {
 			if (signal === undefined) return;
 			clearTimeout(timer);
 			reject(createAbortError(signal));
-		};
-		const timer = setTimeout(() => {
+		}
+		timer = setTimeout(() => {
 			signal?.removeEventListener("abort", onAbort);
 			resolve();
 		}, delay);
@@ -183,32 +184,33 @@ export function withTimeout<Result>(promise: PromiseLike<Result>, timeoutMs: num
 
 	return new Promise<Result>((resolve, reject) => {
 		let settled = false;
+		let timer: ReturnType<typeof setTimeout>;
 		/** 清理竞争结束后不再需要的计时器和监听器。 */
-		const cleanup = (): void => {
+		function cleanup(): void {
 			clearTimeout(timer);
 			signal?.removeEventListener("abort", onAbort);
-		};
+		}
 		/**
 		 * 只允许 Promise、超时和取消三个竞争来源中的首个结果生效。
 		 *
 		 * @param action - 首个完成来源的结算动作。
 		 */
-		const settle = (action: () => void): void => {
+		function settle(action: () => void): void {
 			if (settled) return;
 			settled = true;
 			cleanup();
 			action();
-		};
+		}
 		/** 使用调用方取消原因结束当前等待。 */
-		const onAbort = (): void => {
+		function onAbort(): void {
 			if (signal === undefined) return;
 			settle(() => {
 				reject(createAbortError(signal));
 			});
-		};
-		const timer = setTimeout(() => {
+		}
+		timer = setTimeout(() => {
 			settle(() => {
-				reject(new Error(options.message ?? `The operation exceeded ${delay} ms.`));
+				reject(new Error(options.message ?? `操作超过 ${delay} 毫秒仍未完成。`));
 			});
 		}, delay);
 
@@ -245,8 +247,8 @@ export async function retry<Result>(
 	const initialDelay = assertDelay(options.delayMs ?? 200, "delayMs");
 	const maximumDelay = assertDelay(options.maxDelayMs ?? 30_000, "maxDelayMs");
 	const factor = options.factor ?? 2;
-	if (!Number.isSafeInteger(attempts) || attempts <= 0) throw new RangeError("attempts must be a positive safe integer.");
-	if (!Number.isFinite(factor) || factor < 1) throw new RangeError("factor must be a finite number greater than or equal to 1.");
+	if (!Number.isSafeInteger(attempts) || attempts <= 0) throw new RangeError("`attempts` 必须是正安全整数。");
+	if (!Number.isFinite(factor) || factor < 1) throw new RangeError("`factor` 必须是大于或等于 1 的有限数。");
 
 	for (let attempt = 1; attempt <= attempts; attempt += 1) {
 		throwIfAborted(options.signal);
@@ -262,7 +264,7 @@ export async function retry<Result>(
 		}
 	}
 
-	throw new Error("Retry finished without a result.");
+	throw new Error("重试结束但未获得结果。");
 }
 
 /**
@@ -284,7 +286,7 @@ export async function mapConcurrent<Item, Result>(
 	options: ConcurrentMapOptions = {}
 ): Promise<Awaited<Result>[]> {
 	if (!Number.isSafeInteger(concurrency) || concurrency <= 0) {
-		throw new RangeError("concurrency must be a positive safe integer.");
+		throw new RangeError("`concurrency` 必须是正安全整数。");
 	}
 	throwIfAborted(options.signal);
 
@@ -347,7 +349,7 @@ export function debounce<Arguments extends unknown[], Result>(
 	const execute = async (): Promise<Awaited<Result>> => {
 		const arguments_ = latestArguments;
 		if (arguments_ === undefined) {
-			throw new Error("No debounced invocation is pending.");
+			throw new Error("当前没有待处理的防抖调用。");
 		}
 		latestArguments = undefined;
 		timer = undefined;
@@ -386,7 +388,7 @@ export function debounce<Arguments extends unknown[], Result>(
 		if (timer !== undefined) clearTimeout(timer);
 		timer = undefined;
 		latestArguments = undefined;
-		const error = reason ?? new Error("The debounced invocation was cancelled.");
+		const error = reason ?? new Error("防抖调用已取消。");
 		waiters.forEach((waiter) => {
 			waiter.reject(error);
 		});

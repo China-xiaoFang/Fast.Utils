@@ -44,11 +44,11 @@ interface VueAppRegistrationTarget {
  */
 const assertApp = (value: App): VueAppRegistrationTarget => {
 	if (typeof value !== "object" || value === null) {
-		throw new TypeError("Vue plugin installation requires a Vue 3 App.");
+		throw new TypeError("安装 Vue 插件需要 Vue 3 App 实例。");
 	}
 	const app = value as unknown as Partial<VueAppRegistrationTarget>;
 	if (typeof app.component !== "function" || typeof app.directive !== "function") {
-		throw new TypeError("Vue plugin installation requires component() and directive() registration methods.");
+		throw new TypeError("安装 Vue 插件需要 `component()` 和 `directive()` 注册方法。");
 	}
 	return app as VueAppRegistrationTarget;
 };
@@ -63,7 +63,7 @@ const assertApp = (value: App): VueAppRegistrationTarget => {
 const getComponentName = (component: VueInstallValue): string => {
 	const name = (component as { name?: unknown }).name;
 	if (typeof name !== "string" || name.length === 0 || /\s/u.test(name)) {
-		throw new TypeError("Installable Vue components must expose a non-empty name without whitespace.");
+		throw new TypeError("可安装的 Vue 组件必须公开不含空白的非空名称。");
 	}
 	return name;
 };
@@ -91,7 +91,7 @@ const prepareComponentRegistration = (app: VueAppRegistrationTarget, component: 
 	const name = getComponentName(component);
 	const existing = app.component(name);
 	if (existing !== undefined && existing !== component) {
-		throw new Error(`Vue component name "${name}" is already registered by another component.`);
+		throw new Error(`Vue 组件名称“${name}”已被其他组件注册。`);
 	}
 	return { component, name, registered: existing === component };
 };
@@ -112,17 +112,17 @@ export function withInstall<Main extends VueInstallValue, Extras extends Record<
 	extras?: Extras
 ): Installable<Main> & Extras {
 	const componentNames = new Set([getComponentName(main)]);
-	if ("install" in Object(main)) throw new TypeError("The Vue component already defines an install property.");
+	if ("install" in Object(main)) throw new TypeError("Vue 组件已定义 `install` 属性。");
 	const extraEntries = Object.entries(extras ?? {});
 	if (extras !== undefined && Object.getOwnPropertySymbols(extras).some((key) => Object.prototype.propertyIsEnumerable.call(extras, key))) {
-		throw new TypeError("Vue component extras must use string property names.");
+		throw new TypeError("Vue 组件附属项必须使用字符串属性名。");
 	}
 	for (const [key, component] of extraEntries) {
 		const componentName = getComponentName(component);
-		if (componentNames.has(componentName)) throw new TypeError(`Vue component name "${componentName}" is registered more than once.`);
+		if (componentNames.has(componentName)) throw new TypeError(`Vue 组件名称“${componentName}”被重复注册。`);
 		componentNames.add(componentName);
 		if (key === "install" || key in Object(main)) {
-			throw new TypeError(`Vue component extra "${key}" would overwrite a property on the main component.`);
+			throw new TypeError(`Vue 组件附属项“${key}”会覆盖主组件上的属性。`);
 		}
 	}
 	const installable = main as Installable<Main> & Extras;
@@ -152,7 +152,7 @@ export function withInstall<Main extends VueInstallValue, Extras extends Record<
  * @throws `TypeError` 当组件自身或原型链已经存在 `install`。
  */
 export function withNoopInstall<Value extends VueInstallValue>(component: Value): TSXWithInstall<Value> {
-	if ("install" in Object(component)) throw new TypeError("The Vue component already defines an install property.");
+	if ("install" in Object(component)) throw new TypeError("Vue 组件已定义 `install` 属性。");
 	const installable = component as TSXWithInstall<Value>;
 	installable.install = (): void => undefined;
 	return installable;
@@ -171,15 +171,15 @@ export function withNoopInstall<Value extends VueInstallValue>(component: Value)
  */
 export function withInstallDirective<Value extends VueInstallValue>(directive: Value, name: string): Installable<Value> {
 	if (name.length === 0 || /\s/u.test(name) || name.startsWith("v-")) {
-		throw new TypeError("Installable Vue directives require a name without whitespace or a v- prefix.");
+		throw new TypeError("可安装的 Vue 指令名称不能包含空白或 `v-` 前缀。");
 	}
-	if ("install" in Object(directive)) throw new TypeError("The Vue directive already defines an install property.");
+	if ("install" in Object(directive)) throw new TypeError("Vue 指令已定义 `install` 属性。");
 	const installable = directive as Installable<Value>;
 	installable.install = (value: App): void => {
 		const app = assertApp(value);
 		const existing = app.directive(name);
 		if (existing !== undefined && existing !== directive) {
-			throw new Error(`Vue directive name "${name}" is already registered by another directive.`);
+			throw new Error(`Vue 指令名称“${name}”已被其他指令注册。`);
 		}
 		if (existing !== directive) app.directive(name, directive);
 	};

@@ -19,7 +19,7 @@ describe("cancellation and timeout", () => {
 
 	it("enforces a timeout without claiming to cancel the source Promise", async () => {
 		const pending = withTimeout(new Promise<string>(() => undefined), 5);
-		await expect(pending).rejects.toThrow("exceeded 5 ms");
+		await expect(pending).rejects.toThrow("超过 5 毫秒");
 	});
 });
 
@@ -105,7 +105,7 @@ describe("debounce and throttle", () => {
 
 		const cancelled = debounced("cancel");
 		debounced.cancel();
-		await expect(cancelled).rejects.toThrow("cancelled");
+		await expect(cancelled).rejects.toThrow("防抖调用已取消");
 	});
 
 	it("shares a leading Promise and prevents overlap after the cooldown", async () => {

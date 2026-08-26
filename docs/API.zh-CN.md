@@ -121,6 +121,8 @@ Query 与 Object API 拒绝原型污染键，URL 解码有最大深度，Storage
 
 除明确说明返回空值的函数外，编程错误、非法输入、平台能力缺失和受保护数据损坏均抛出原生错误。
 
+自 Fast.Utils 2.1.1 起，内置校验与运行时失败消息统一使用中文；调用方应依据原生错误类型分支，不应匹配消息文本。
+
 `randomInt`、`randomString`、`generateUuidV4` 与 `GenerateRandomBytes` 默认都优先使用 Web Crypto，能力缺失时回退到 `Math.random()`。
 
 Fast.Utils 2.1.0 已删除 `secureRandomInt` 与 `secureRandomString`，这是破坏性修改；调用方应分别改用 `randomInt` 与 `randomString`。

@@ -167,7 +167,7 @@ const getGlobalUniStorage = (): UniStorageLike | undefined => {
 	const value: unknown = Reflect.get(globalThis, "uni");
 	if (value === undefined) return undefined;
 	if ((typeof value !== "object" && typeof value !== "function") || value === null) {
-		throw new TypeError("The global uni object does not provide synchronous Storage APIs.");
+		throw new TypeError("全局 uni 对象未提供同步 Storage API。");
 	}
 	const storage = value as Partial<UniStorageLike>;
 	if (
@@ -176,7 +176,7 @@ const getGlobalUniStorage = (): UniStorageLike | undefined => {
 		typeof storage.removeStorageSync !== "function" ||
 		typeof storage.setStorageSync !== "function"
 	) {
-		throw new TypeError("The global uni object does not provide synchronous Storage APIs.");
+		throw new TypeError("全局 uni 对象未提供同步 Storage API。");
 	}
 	return storage as UniStorageLike;
 };
@@ -186,7 +186,7 @@ const jsonCodec: StorageCodec = {
 	decode: (value): unknown => JSON.parse(value) as unknown,
 	encode: (value): string => {
 		const encoded: unknown = JSON.stringify(value);
-		if (typeof encoded !== "string") throw new TypeError("The storage value is not JSON-serializable.");
+		if (typeof encoded !== "string") throw new TypeError("存储值无法序列化为 JSON。");
 		return encoded;
 	},
 };
@@ -196,7 +196,7 @@ export const base64StorageCodec: StorageCodec = {
 	decode: (value): unknown => JSON.parse(decodeSecureBase64(value)) as unknown,
 	encode: (value): string => {
 		const encoded: unknown = JSON.stringify(value);
-		if (typeof encoded !== "string") throw new TypeError("The storage value is not JSON-serializable.");
+		if (typeof encoded !== "string") throw new TypeError("存储值无法序列化为 JSON。");
 		return encodeSecureBase64(encoded);
 	},
 };
@@ -219,7 +219,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> => typeof va
  * @throws `TypeError` 当值不是非空字符串。
  */
 const assertKey = (key: string): void => {
-	if (typeof key !== "string" || key.length === 0) throw new TypeError("Storage keys must be non-empty strings.");
+	if (typeof key !== "string" || key.length === 0) throw new TypeError("Storage 键必须是非空字符串。");
 };
 
 /**
@@ -232,7 +232,7 @@ const assertKey = (key: string): void => {
  */
 const createWebStorageBackend = (kind: "local" | "session"): StorageBackend => {
 	const storage = kind === "local" ? globalThis.localStorage : globalThis.sessionStorage;
-	if (storage === undefined) throw new Error(`${kind}Storage is unavailable in the current runtime.`);
+	if (storage === undefined) throw new Error(`当前运行环境不支持 ${kind}Storage。`);
 	return {
 		getItem: (key): string | null => storage.getItem(key),
 		keys: (): string[] => {
@@ -283,7 +283,7 @@ const createUniStorageBackend = (storage: UniStorageLike): StorageBackend => ({
  * @throws `TypeError` 当原始值不是字符串、JSON 损坏、版本不支持或字段类型非法。
  */
 const parseStoredEnvelope = (rawValue: unknown, key: string): StoredEnvelope => {
-	if (typeof rawValue !== "string") throw new TypeError(`Storage entry "${key}" is not a string.`);
+	if (typeof rawValue !== "string") throw new TypeError(`Storage 条目“${key}”不是字符串。`);
 	try {
 		const parsed = JSON.parse(rawValue) as unknown;
 		if (
@@ -292,11 +292,11 @@ const parseStoredEnvelope = (rawValue: unknown, key: string): StoredEnvelope => 
 			typeof parsed["data"] !== "string" ||
 			!(parsed["expiresAt"] === null || (typeof parsed["expiresAt"] === "number" && Number.isFinite(parsed["expiresAt"])))
 		) {
-			throw new TypeError("Unsupported storage envelope.");
+			throw new TypeError("不支持该存储包络。");
 		}
 		return { data: parsed["data"], expiresAt: parsed["expiresAt"], version: 3 };
 	} catch (cause) {
-		throw new TypeError(`Storage entry "${key}" is corrupted or unsupported.`, { cause });
+		throw new TypeError(`Storage 条目“${key}”已损坏或不受支持。`, { cause });
 	}
 };
 
@@ -327,7 +327,7 @@ const createStorageArea = (backendFactory: () => StorageBackend, prefix: string,
 	const listBusinessKeys = (backend: StorageBackend): string[] => {
 		const keys = backend.keys();
 		if (!Array.isArray(keys) || !keys.every((key) => typeof key === "string")) {
-			throw new TypeError("Storage backend keys must be strings.");
+			throw new TypeError("Storage 后端返回的键必须是字符串。");
 		}
 		return [...new Set(keys.filter((key) => key.startsWith(prefix)).map((key) => key.slice(prefix.length)))].sort();
 	};
@@ -348,7 +348,7 @@ const createStorageArea = (backendFactory: () => StorageBackend, prefix: string,
 		const envelope = parseStoredEnvelope(rawValue, storageKey);
 		if (envelope.expiresAt === null) return envelope;
 		const timestamp = now();
-		if (!Number.isFinite(timestamp)) throw new RangeError("Storage clock must return a finite timestamp.");
+		if (!Number.isFinite(timestamp)) throw new RangeError("Storage 时钟必须返回有限时间戳。");
 		if (timestamp < envelope.expiresAt) return envelope;
 		// 过期项在读取时立即删除，后续 has/keys/pruneExpired 观察到一致状态。
 		backend.removeItem(storageKey);
@@ -367,7 +367,7 @@ const createStorageArea = (backendFactory: () => StorageBackend, prefix: string,
 			try {
 				return codec.decode(envelope.data) as Value;
 			} catch (cause) {
-				throw new TypeError(`Storage entry "${toStorageKey(key)}" could not be decoded.`, { cause });
+				throw new TypeError(`无法解码 Storage 条目“${toStorageKey(key)}”。`, { cause });
 			}
 		},
 		has: (key): boolean => readStoredEnvelope(backendFactory(), key) !== undefined,
@@ -393,22 +393,22 @@ const createStorageArea = (backendFactory: () => StorageBackend, prefix: string,
 		},
 		set<Value>(key: string, value: Value, options: StorageWriteOptions = {}): void {
 			assertKey(key);
-			if (value === undefined) throw new TypeError("Top-level undefined cannot be stored; remove the key instead.");
+			if (value === undefined) throw new TypeError("不能存储顶层 `undefined`，请改为移除对应的键。");
 			let expiresAt: number | null = null;
 			if (options.ttlMs !== undefined) {
-				if (!Number.isFinite(options.ttlMs) || options.ttlMs <= 0) throw new RangeError("ttlMs must be a positive finite number.");
+				if (!Number.isFinite(options.ttlMs) || options.ttlMs <= 0) throw new RangeError("`ttlMs` 必须是大于 0 的有限数。");
 				const timestamp = now();
 				if (!Number.isFinite(timestamp) || !Number.isFinite(timestamp + options.ttlMs)) {
-					throw new RangeError("Storage expiry exceeds the supported timestamp range.");
+					throw new RangeError("Storage 过期时间超出支持的时间戳范围。");
 				}
 				expiresAt = timestamp + options.ttlMs;
 			}
 			let data: string;
 			try {
 				data = codec.encode(value);
-				if (typeof data !== "string") throw new TypeError("Storage codecs must return strings.");
+				if (typeof data !== "string") throw new TypeError("Storage Codec 必须返回字符串。");
 			} catch (cause) {
-				throw new TypeError("The storage value could not be encoded.", { cause });
+				throw new TypeError("无法编码存储值。", { cause });
 			}
 			backendFactory().setItem(toStorageKey(key), JSON.stringify({ data, expiresAt, version: 3 } satisfies StoredEnvelope));
 		},
@@ -422,7 +422,7 @@ const createStorageArea = (backendFactory: () => StorageBackend, prefix: string,
  */
 const requireStorageConfiguration = (): ActiveStorageConfiguration => {
 	if (activeConfiguration === undefined) configureStorage();
-	if (activeConfiguration === undefined) throw new Error("Storage configuration could not be initialized.");
+	if (activeConfiguration === undefined) throw new Error("无法初始化 Storage 配置。");
 	return activeConfiguration;
 };
 
@@ -442,7 +442,7 @@ const createStorageAreaProxy = (select: (configuration: ActiveStorageConfigurati
 	 */
 	const getArea = (): StorageArea => {
 		const area = select(requireStorageConfiguration());
-		if (area === undefined) throw new Error(`${name} is unavailable in uni-app.`);
+		if (area === undefined) throw new Error(`uni-app 中不支持 ${name}。`);
 		return area;
 	};
 	return {
@@ -486,10 +486,10 @@ export const Session: StorageArea = createStorageAreaProxy((configuration) => co
 export function configureStorage(options: StorageConfiguration = {}): void {
 	const prefix = options.prefix ?? "fast__";
 	if (typeof prefix !== "string" || prefix.length === 0) {
-		throw new TypeError("Storage prefix must be a non-empty string.");
+		throw new TypeError("Storage 前缀必须是非空字符串。");
 	}
 	if (options.codec !== undefined && options.crypto === true) {
-		throw new TypeError("Storage codec and crypto options cannot be used together.");
+		throw new TypeError("Storage 的 Codec 和加密选项不能同时使用。");
 	}
 	const codec = options.codec ?? (options.crypto === true ? base64StorageCodec : jsonCodec);
 	const now = options.now ?? Date.now;
@@ -498,7 +498,7 @@ export function configureStorage(options: StorageConfiguration = {}): void {
 		if (activeConfiguration.prefix === prefix && activeConfiguration.codec === codec && activeConfiguration.now === now) {
 			return;
 		}
-		throw new Error("Storage has already been configured with different options.");
+		throw new Error("Storage 已使用其他选项完成配置。");
 	}
 	const uni = getGlobalUniStorage();
 	const localBackend =

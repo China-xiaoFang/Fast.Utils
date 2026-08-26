@@ -130,7 +130,7 @@ export function shallowEqual(left: object, right: object): boolean {
  */
 const serializeQueryValue = (value: Exclude<QueryPrimitive, null | undefined>): string => {
 	if (typeof value === "number" && !Number.isFinite(value)) {
-		throw new RangeError("Query parameter numbers must be finite.");
+		throw new RangeError("查询参数中的数字必须是有限数。");
 	}
 	return String(value);
 };
