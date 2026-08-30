@@ -119,6 +119,7 @@ try {
 		[[1, 2], [3]]
 	);
 	assert.equal(typeof cdnContext.FastUtils.useEmits, "function");
+	assert.equal(vm.runInNewContext('FastUtils.decodeBase64(FastUtils.encodeBase64("{\\"id\\":1}")).parseJson().id', cdnContext), 1);
 	fs.writeFileSync(
 		consumerPath,
 		[
@@ -126,11 +127,12 @@ try {
 			'import { useEmits } from "@fast-china/utils";',
 			'if (JSON.stringify(chunk([1, 2, 3], 2)) !== "[[1,2],[3]]") throw new Error("Root array export failed.");',
 			'if (decodeBase64(encodeBase64("Fast 工具库")) !== "Fast 工具库") throw new Error("Base64 round trip failed.");',
+			'if (JSON.stringify(decodeBase64(encodeBase64("{\\"id\\":1}")).parseJson()) !== "{\\"id\\":1}") throw new Error("Base64 JSON parsing failed.");',
 			'if (toQueryString({ id: [1, 2] }) !== "id=1&id=2") throw new Error("Query serialization failed.");',
 			"class MemoryStorage { /** @type {Map<string, string>} */ #values = new Map(); get length() { return this.#values.size; } clear() { this.#values.clear(); } getItem(/** @type {string} */ key) { return this.#values.get(key) ?? null; } key(/** @type {number} */ index) { return [...this.#values.keys()][index] ?? null; } removeItem(/** @type {string} */ key) { this.#values.delete(key); } setItem(/** @type {string} */ key, /** @type {string} */ value) { this.#values.set(key, String(value)); } }",
 			"globalThis.localStorage = new MemoryStorage(); globalThis.sessionStorage = new MemoryStorage();",
-			'Local.set("local", 1); Session.set("session", 2);',
-			'if (Local.get("local") !== 1 || Session.get("session") !== 2) throw new Error("Storage facade failed.");',
+			'Local.set("local", 1); Local.set("text", "value"); Local.set("private", { id: 1 }, { crypto: true }); Session.set("session", 2);',
+			'if (JSON.stringify(Local.get("local")) !== "1" || Local.get("text") !== "value" || JSON.stringify(Local.get("private", { crypto: true })) !== "{\\"id\\":1}" || JSON.stringify(Session.get("session")) !== "2") throw new Error("Storage facade failed.");',
 			'if (globalThis.localStorage.getItem("fast__local") === null) throw new Error("Default Storage prefix failed.");',
 			'const handlers = useEmits({ clear: null }, (eventName, ..._arguments) => { if (eventName !== "clear") throw new Error("Vue emit mapping failed."); });',
 			"handlers.value.onClear?.();",

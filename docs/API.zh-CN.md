@@ -21,9 +21,14 @@ import { Local, Session } from "@fast-china/utils";
 
 Local.set("profile", { name: "Ada" }, { ttlMs: 3_600_000 });
 Session.set("draft", { step: 2 });
+
+Local.set("private-profile", { name: "Ada" }, { crypto: true });
+Local.get<{ name: string }>("private-profile", { crypto: true });
 ```
 
 `Local` 和 `Session` 提供 `get`、`set`、`has`、`remove`、`removeByPrefix`、`keys`、`pruneExpired` 和仅清理当前命名空间的 `clear`。键缺失或过期时返回 `undefined`。TTL 非法、Prefix 为空、存储包络损坏、平台 Storage 不可用或重复配置发生冲突时抛出错误；浏览器配额与隐私策略错误直接向上传播。自定义选项必须在首次 Storage 操作前配置。
+
+`get<Value = string>()` 在未传泛型时的静态返回类型为 `string | undefined`，可以直接读取字符串条目。Codec 在运行时仍通过 JSON 反序列化恢复原值，因此对象、数组或其他非字符串值不会被转换成字符串；需要准确类型提示时显式传入对应泛型。
 
 uni-app 中，首次 Storage 操作或显式调用 `configureStorage` 会自动检测全局 `uni` 并使用其同步 Storage API。uni-app 没有独立 Session 后端，因此该模式调用 `Session` 会明确抛错。
 
@@ -33,7 +38,11 @@ import { Local } from "@fast-china/utils";
 Local.set("token", "value");
 ```
 
-`configureStorage({ prefix: "admin:", crypto: true })` 恢复了旧版全局前缀与 Base64 混淆选项。`crypto: true` 和 `base64StorageCodec` 都只是可逆编码，不是加密，不能保护敏感数据。可以使用自定义 `codec` 替代 `crypto`。
+`configureStorage({ prefix: "admin:", crypto: true })` 恢复了旧版全局前缀与 Base64 混淆选项。`Local` 与 `Session` 的 `set/get` 也接受单次 `{ crypto: boolean }`：`true` 使用 Base64 Codec，`false` 使用 JSON Codec，省略时沿用全局 Codec。单次设置不会修改全局配置；当前 v3 包络不记录 Codec，读写同一条目时必须传入一致选项，错误配置会明确抛出解码错误。
+
+`crypto: true` 和 `base64StorageCodec` 都只是可逆编码，不是加密，不能保护敏感数据。可以使用自定义 `codec` 替代全局 `crypto`。
+
+`decodeBase64`、`decodeBase64Url`、`decodeLatin1Base64` 与 `decodeSecureBase64` 返回原始字符串类型 `DecodedText`，可以直接赋值给 `string` 或参与严格比较；显式调用 `.parseJson<T = any>()` 才返回 JSON 值，库不会根据文本内容自动推断 JSON。首次文本解码会按需安装不可枚举的 `String.prototype.parseJson`；若同名属性已被其他实现占用则抛出 `TypeError`，不会覆盖。泛型只描述期望类型，不执行运行时结构校验。
 
 `encodeSecureBase64` 与 `decodeSecureBase64` 保留旧字典兼容载荷。随机前缀优先使用 Web Crypto，能力缺失时回退到 `Math.random()`；它不承担安全用途。给定相同的默认 6 字符前缀时，有效旧载荷保持逐字符兼容；旧字典在 Base64 长度 101–124 时会引用越界，当前实现使用单字符回退，旧删除字典流程仍可解码。旧自定义长度参数始终生成 6 个随机字符，当前 API 已按 `prefixLength` 正确生成。自定义 `prefixLength` 必须在编码和解码时保持一致；传入 `0` 会同时关闭随机前缀与字典插入。该格式仍是可逆编码，不等同于加密。
 
@@ -55,16 +64,24 @@ installationIdentity.clear();
 
 ## Logger
 
-Logger 作用域属于每条日志，不保存在可变 Logger 或 Child 实例中：
+Logger 作用域属于每条日志，不保存在 Logger 或 Child 实例中。默认 `logger` 无需创建即可使用，最低输出级别为 `debug`；uni-app App-Plus
+需要拆分对象输出时，在应用入口配置一次：
 
 ```ts
-import { logger } from "@fast-china/utils";
+import { configureLogger, logger } from "@fast-china/utils";
 
-logger.info("storage", "profile loaded", { userId: 1 });
+configureLogger({ uniAppPlusSplit: true });
+logger.log("Launch", { code: 200, data: { id: 1 } });
+logger.log("storage", "profile loaded", { userId: 1 });
 logger.error("network", "request failed", error);
 ```
 
-`createLogger` 只配置最低级别、品牌前缀、Sink 和可选的 uni-app App-Plus 拆分输出。作用域必须是无外围空白的非空字符串。
+日志内容可省略，也可以直接传入对象、数组、`Error` 等任意值。普通环境会把非字符串值原样传给 Sink；启用 App-Plus
+拆分输出后，为解决 HBuilderX 无法正确显示对象的问题，标题单独输出，附加值逐条转换为可读文本。
+
+`configureLogger` 会替换默认 `logger` 的完整配置，已经保存的 `logger` 引用也会立即使用新配置；无参数调用会恢复默认值。
+`createLogger` 用于创建不受全局配置影响的独立实例。Logger 的 `debug`、`log`、`warn`、`error` 分别调用 Sink 的同名方法，默认 Sink 对应 `console.debug`、`console.log`、`console.warn`、`console.error`。两者均支持最低级别、品牌前缀、Sink 和可选的 App-Plus 拆分输出。
+作用域必须是无外围空白的非空字符串。
 
 ## 剪贴板
 
@@ -93,13 +110,21 @@ TypeScript Crypto 公共 API 与 .NET `CryptoUtil` 的公开方法及算法名�
 
 `AESEncryptAuthenticated` 的 Base64 v1 载荷、`AESEncryptWithPassword` 的 `FAST-AES-256-GCM-V1` 载荷、PBKDF2 密码哈希以及 PKCS#8/SPKI PEM 密钥均可与 .NET 双向使用。MD5 与 HMAC 输出小写十六进制；SHA-1/256/384/512 输出大写十六进制，与 .NET 保持一致。
 
+`AESDecrypt`、`AESDecryptAuthenticated`、`AESDecryptWithPassword` 与 `RSADecryptOAEP` 返回原始字符串类型 `DecodedText`（异步入口返回其 Promise）。返回值可直接作为明文字符串使用，也可通过 `.parseJson<T = any>()` 显式解析 JSON：
+
+```ts
+const plaintext = await AESDecryptWithPassword(payload, password);
+const raw: string = plaintext;
+const result = plaintext.parseJson<{ id: number }>();
+```
+
 密码存储使用 `HashPasswordPBKDF2SHA256` 和 `VerifyPasswordPBKDF2SHA256`；该哈希不可解密。需要同时保证机密性和完整性的文本使用 AES-GCM 入口。HMAC 用于共享密钥认证，SHA-2 用于摘要，HKDF/PBKDF2 用于密钥派生。MD5、SHA-1、AES-CBC 和 AES-ECB 不提供现代密码存储或认证加密保证。
 
 ## 模块
 
 - `array`：分块、压缩、去重、分组、分区、差集、交集和一致性判断。
 - `async`：支持取消的 Sleep、超时、重试、受限并发映射、防抖和节流。
-- `base64`：严格 UTF-8 Base64/Base64URL 字节与文本函数，以及 Latin-1 和 SecureBase64 兼容函数。
+- `base64`：严格 UTF-8 Base64/Base64URL 字节与链式文本结果，以及 Latin-1 和 SecureBase64 兼容函数。
 - `color`：颜色解析、格式化、混合、明暗、亮度和对比度。
 - `crypto`：随机字节、摘要、HMAC、PBKDF2、HKDF、AES、RSA-OAEP/PSS、ECDSA 和 ECDH。
 - `date`：日期校验、加减、日范围、相对时间，以及七个历史日期功能的具名函数。

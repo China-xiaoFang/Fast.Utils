@@ -82,7 +82,7 @@ import {
 	unique,
 	uniqueBy,
 } from "../src/index";
-import { createLogger } from "../src/logger/index";
+import { configureLogger, createLogger, logger as defaultLogger } from "../src/logger/index";
 import { expect, vi } from "./test-helpers";
 
 const legacyBase64Dictionary = [
@@ -194,8 +194,15 @@ describe("array utilities", () => {
 describe("Base64 utilities", () => {
 	it("round-trips UTF-8, Base64URL, and arbitrary bytes", () => {
 		const text = "Fast 工具库 🚀".repeat(8);
-		expect(decodeBase64(encodeBase64(text))).toBe(text);
+		const decodedText = decodeBase64(encodeBase64(text));
+		expect(decodedText).toBe(text);
+		expect(typeof decodedText).toBe("string");
+		expect(decodedText.toString()).toBe(text);
+		expect(decodedText.valueOf()).toBe(text);
+		expect(Object.getOwnPropertyDescriptor(String.prototype, "parseJson")?.enumerable).toBe(false);
 		expect(decodeBase64Url(encodeBase64Url(text))).toBe(text);
+		expect(decodeBase64(encodeBase64('{"id":1}')).parseJson<{ id: number }>()).toEqual({ id: 1 });
+		expect(() => decodeBase64(encodeBase64("not json")).parseJson<unknown>()).toThrow(TypeError);
 		const bytes = Uint8Array.of(0, 1, 2, 127, 128, 254, 255);
 		expect(decodeBase64Bytes(encodeBase64Bytes(bytes))).toEqual(bytes);
 	});
@@ -491,16 +498,38 @@ describe("color, style, environment, and logger utilities", () => {
 
 	it("creates isolated scoped loggers with severity filtering", () => {
 		const sink = { debug: vi.fn(), error: vi.fn(), log: vi.fn(), warn: vi.fn() };
-		const logger = createLogger({ level: "warn", prefix: "Test", sink });
-		logger.info("storage", "ignored");
-		logger.warn("storage", "expired", { key: "a" });
+		const customLogger = createLogger({ level: "warn", prefix: "Test", sink });
+		customLogger.log("storage", "ignored");
+		customLogger.warn("storage", "expired", { key: "a" });
+		customLogger.error("storage", { code: 500 });
 		expect(sink.log).not.toHaveBeenCalled();
 		expect(sink.warn).toHaveBeenCalledWith("[Test:storage]", "expired", { key: "a" });
+		expect(sink.error).toHaveBeenCalledWith("[Test:storage]", { code: 500 });
 		expect(() => createLogger({ level: "trace" as never, sink })).toThrow(RangeError);
+		expect(() => createLogger({ level: "info" as never, sink })).toThrow(RangeError);
 		expect(() => createLogger({ prefix: 1 as never, sink })).toThrow(RangeError);
 		expect(() => {
-			logger.warn("", "invalid");
+			customLogger.warn("", "invalid");
 		}).toThrow(RangeError);
+	});
+
+	it("configures the stable default logger and accepts data without a message", () => {
+		vi.stubGlobal("uni", {});
+		vi.stubGlobal("plus", {});
+		const sink = { debug: vi.fn(), error: vi.fn(), log: vi.fn(), warn: vi.fn() };
+		const loggerReference = defaultLogger;
+		try {
+			configureLogger({ prefix: "App", sink, uniAppPlusSplit: true });
+			const apiResponse = { code: 200, data: { id: 1 } };
+			loggerReference.log("Launch", apiResponse);
+			defaultLogger.debug("Launch");
+			expect(sink.log).toHaveBeenNthCalledWith(1, "[App:Launch]");
+			expect(sink.log).toHaveBeenNthCalledWith(2, '{\n  "code": 200,\n  "data": {\n    "id": 1\n  }\n}');
+			expect(sink.debug).toHaveBeenCalledWith("[App:Launch]");
+		} finally {
+			configureLogger();
+			vi.unstubAllGlobals();
+		}
 	});
 
 	it("splits uni-app App-Plus data into HBuilderX-friendly lines", () => {
@@ -511,7 +540,7 @@ describe("color, style, environment, and logger utilities", () => {
 		circular.self = circular;
 		const logger = createLogger({ level: "debug", sink, uniAppPlusSplit: true });
 		const error = new Error("failed");
-		logger.info("network", "request", { id: 1 }, 2n, circular);
+		logger.log("network", "request", { id: 1 }, 2n, circular);
 		logger.debug("network", "debug", { id: 2 });
 		logger.warn("network", "warn", { id: 3 });
 		logger.error("network", "error", error);

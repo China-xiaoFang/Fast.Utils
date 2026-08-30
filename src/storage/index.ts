@@ -62,8 +62,17 @@ export interface StorageConfiguration {
 	prefix?: string;
 }
 
+/** 单次 Storage 读取配置。 */
+export interface StorageReadOptions {
+	/**
+	 * 仅覆盖本次读取使用的 Codec；`true` 使用 Base64 混淆，`false` 使用 JSON，省略时使用全局配置。
+	 * 必须与写入该条目时使用的单次设置一致。
+	 */
+	crypto?: boolean;
+}
+
 /** 单次 Storage 写入配置。 */
-export interface StorageWriteOptions {
+export interface StorageWriteOptions extends StorageReadOptions {
 	/** 从写入时刻开始的有效毫秒数；必须是大于 0 的有限数，省略时永久有效。 */
 	ttlMs?: number;
 }
@@ -80,10 +89,11 @@ export interface StorageArea {
 	/**
 	 * 获取并解码业务值；已过期记录会在读取时删除。
 	 * @param key - 不含全局前缀的非空业务键。
-	 * @returns 解码后的值；键缺失或过期时返回 `undefined`。
+	 * @param options - 可选的单次 Base64 混淆开关；必须与写入时一致。
+	 * @returns 解码后的值；未传泛型时静态类型默认为 `string`，键缺失或过期时返回 `undefined`。
 	 * @throws 当键非法、包络损坏、Codec 解码失败或后端不可用时抛出错误。
 	 */
-	get: <Value = unknown>(key: string) => Value | undefined;
+	get: <Value = string>(key: string, options?: StorageReadOptions) => Value | undefined;
 	/**
 	 * 判断一个可成功读取且未过期的业务键是否存在。
 	 * @param key - 不含全局前缀的非空业务键。
@@ -115,7 +125,7 @@ export interface StorageArea {
 	 * 编码并写入业务值，可附加惰性清理的 TTL。
 	 * @param key - 不含全局前缀的非空业务键。
 	 * @param value - 必须受当前 Codec 支持的业务值。
-	 * @param options - 可选的单次写入 TTL。
+	 * @param options - 可选的单次写入 TTL 与 Base64 混淆开关。
 	 * @throws 当键、TTL、业务值或后端写入无效时抛出错误。
 	 */
 	set: <Value>(key: string, value: Value, options?: StorageWriteOptions) => void;
@@ -193,7 +203,7 @@ const jsonCodec: StorageCodec = {
 
 /** Base64 混淆 Codec；只隐藏明文外观，不提供加密、完整性或认证。 */
 export const base64StorageCodec: StorageCodec = {
-	decode: (value): unknown => JSON.parse(decodeSecureBase64(value)) as unknown,
+	decode: (value): unknown => decodeSecureBase64(value).parseJson(),
 	encode: (value): string => {
 		const encoded: unknown = JSON.stringify(value);
 		if (typeof encoded !== "string") throw new TypeError("存储值无法序列化为 JSON。");
@@ -318,6 +328,18 @@ const createStorageArea = (backendFactory: () => StorageBackend, prefix: string,
 	 */
 	const toStorageKey = (key: string): string => `${prefix}${key}`;
 	/**
+	 * 解析本次读写实际使用的 Codec。
+	 *
+	 * @param crypto - 单次 Base64 混淆开关；省略时沿用 Area 全局 Codec。
+	 * @returns 本次操作使用的全局、JSON 或 Base64 Codec。
+	 * @throws `TypeError` 当 JavaScript 调用方传入非布尔值。
+	 */
+	const resolveOperationCodec = (crypto: boolean | undefined): StorageCodec => {
+		if (crypto === undefined) return codec;
+		if (typeof crypto !== "boolean") throw new TypeError("Storage 单次 `crypto` 选项必须是布尔值。");
+		return crypto ? base64StorageCodec : jsonCodec;
+	};
+	/**
 	 * 枚举当前命名空间中的业务键。
 	 *
 	 * @param backend - 本次操作使用的后端。
@@ -361,11 +383,11 @@ const createStorageArea = (backendFactory: () => StorageBackend, prefix: string,
 			const backend = backendFactory();
 			for (const key of listBusinessKeys(backend)) backend.removeItem(toStorageKey(key));
 		},
-		get<Value>(key: string): Value | undefined {
+		get<Value>(key: string, options: StorageReadOptions = {}): Value | undefined {
 			const envelope = readStoredEnvelope(backendFactory(), key);
 			if (envelope === undefined) return undefined;
 			try {
-				return codec.decode(envelope.data) as Value;
+				return resolveOperationCodec(options.crypto).decode(envelope.data) as Value;
 			} catch (cause) {
 				throw new TypeError(`无法解码 Storage 条目“${toStorageKey(key)}”。`, { cause });
 			}
@@ -405,7 +427,7 @@ const createStorageArea = (backendFactory: () => StorageBackend, prefix: string,
 			}
 			let data: string;
 			try {
-				data = codec.encode(value);
+				data = resolveOperationCodec(options.crypto).encode(value);
 				if (typeof data !== "string") throw new TypeError("Storage Codec 必须返回字符串。");
 			} catch (cause) {
 				throw new TypeError("无法编码存储值。", { cause });
@@ -452,7 +474,7 @@ const createStorageAreaProxy = (select: (configuration: ActiveStorageConfigurati
 		clear: (): void => {
 			getArea().clear();
 		},
-		get: <Value>(key: string): Value | undefined => getArea().get<Value>(key),
+		get: <Value>(key: string, options?: StorageReadOptions): Value | undefined => getArea().get<Value>(key, options),
 		has: (key): boolean => getArea().has(key),
 		keys: (): string[] => getArea().keys(),
 		pruneExpired: (): number => getArea().pruneExpired(),

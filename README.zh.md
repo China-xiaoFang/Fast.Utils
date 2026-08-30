@@ -39,8 +39,14 @@ import { Local, Session } from "@fast-china/utils";
 Local.set("user", { id: 1 }, { ttlMs: 30 * 60 * 1000 });
 const user = Local.get<{ id: number }>("user");
 
+Local.set("private-user", { id: 2 }, { crypto: true });
+const privateUser = Local.get<{ id: number }>("private-user", { crypto: true });
+
 Session.set("redirect", "/home");
+const redirect = Session.get("redirect"); // string | undefined
 ```
+
+`get<Value = string>()` 未传泛型时默认返回 `string | undefined`，因此字符串场景可以直接调用。Storage Codec 仍会在运行时执行 JSON 反序列化；若存储的是对象、数组或其他非字符串值，建议显式传入对应泛型以获得准确类型。
 
 只有需要覆盖默认值时，才需在首次 Storage 操作前调用 `configureStorage`。兼容旧版的 `crypto` 选项只执行可逆 Base64 混淆，不是加密，不能保护敏感数据：
 
@@ -53,7 +59,7 @@ configureStorage({
 });
 ```
 
-激活后的配置不可变；相同配置重复调用保持幂等，不同配置会抛错。自定义 `codec` 与 `crypto` 不能同时使用。uni-app 中 `Local` 会自动使用全局同步 Storage API；由于没有等价的 sessionStorage，`Session` 会明确抛错。`clear()` 只清理当前前缀。
+激活后的全局配置不可变；相同配置重复调用保持幂等，不同配置会抛错。`set/get` 的 `crypto` 选项只覆盖单次操作，读写同一条目时必须保持一致，不会改变全局配置。自定义 `codec` 与全局 `crypto` 不能同时使用。uni-app 中 `Local` 会自动使用全局同步 Storage API；由于没有等价的 sessionStorage，`Session` 会明确抛错。`clear()` 只清理当前前缀。
 
 ## Base64
 
@@ -62,8 +68,10 @@ configureStorage({
 ```ts
 import { decodeBase64, encodeBase64, encodeBase64Url } from "@fast-china/utils";
 
-const encoded = encodeBase64("Fast 工具库");
-decodeBase64(encoded);
+const encoded = encodeBase64('{"name":"Fast 工具库"}');
+const decoded = decodeBase64(encoded);
+decoded;
+decoded.parseJson<{ name: string }>();
 encodeBase64Url("path/参数");
 ```
 
@@ -91,6 +99,21 @@ const installationId = getOrCreateInstallationId();
 
 在程序入口、首次使用安装标识前调用 `configureInstallationIdentity`。默认业务键是 `identity:installation-id`；相同配置可幂等重复调用，不同配置会抛错。安装标识 UUID 优先使用 Web Crypto 生成，能力缺失时回退到 `Math.random()`。它不是硬件 ID、认证凭证或风控信号。
 
+## Logger
+
+默认 `logger` 可以直接使用，最低输出级别为 `debug`。uni-app App-Plus 需要兼容 HBuilderX 对象输出时，在应用入口配置拆分模式：
+
+```ts
+import { configureLogger, logger } from "@fast-china/utils";
+
+configureLogger({ uniAppPlusSplit: true });
+logger.log("Launch", { code: 200, data: { id: 1 } });
+logger.error("Request", "请求失败", error);
+```
+
+日志消息可以省略，对象、数组和错误等值可以直接传入。普通环境保留原始值；App-Plus 拆分模式会将附加值逐条转换为可读文本。
+需要独立配置且不受默认 Logger 影响时使用 `createLogger`。
+
 ## Crypto
 
 TypeScript Crypto API 与 .NET `CryptoUtil` 的公开方法及算法名称大小写保持一致。AES-GCM、密码 AES 载荷、PBKDF2 密码哈希和 PEM 密钥支持两端互操作。
@@ -100,7 +123,13 @@ import { AESDecryptWithPassword, AESEncryptWithPassword } from "@fast-china/util
 
 const payload = await AESEncryptWithPassword("受保护内容", "correct horse battery staple");
 const plaintext = await AESDecryptWithPassword(payload, "correct horse battery staple");
+plaintext;
+
+const jsonPayload = await AESEncryptWithPassword('{"id":1}', "correct horse battery staple");
+const result = (await AESDecryptWithPassword(jsonPayload, "correct horse battery staple")).parseJson<{ id: number }>();
 ```
+
+Base64 与 Crypto 的文本解码/解密入口返回原始字符串类型 `DecodedText`，可以直接作为 `string` 使用；只有显式调用 `.parseJson<T = any>()` 才解析 JSON。首次文本解码会按需安装不可枚举的 `String.prototype.parseJson`，若同名方法已被其他实现占用则明确抛错。泛型不会验证不可信 JSON 的实际结构。
 
 密码存储使用 `HashPasswordPBKDF2SHA256` 和 `VerifyPasswordPBKDF2SHA256`。MD5、SHA-1、AES-CBC 与 AES-ECB 不提供密码存储或认证加密保证。完整方法列表和安全边界见 [API 文档](./docs/API.zh-CN.md#crypto)。
 

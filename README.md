@@ -39,8 +39,14 @@ import { Local, Session } from "@fast-china/utils";
 Local.set("user", { id: 1 }, { ttlMs: 30 * 60 * 1000 });
 const user = Local.get<{ id: number }>("user");
 
+Local.set("private-user", { id: 2 }, { crypto: true });
+const privateUser = Local.get<{ id: number }>("private-user", { crypto: true });
+
 Session.set("redirect", "/home");
+const redirect = Session.get("redirect"); // string | undefined
 ```
+
+`get<Value = string>()` returns `string | undefined` when its generic is omitted, so string values require no type argument. Storage codecs still deserialize JSON at runtime; pass an explicit generic for an accurate type when the stored value is an object, array, or another non-string value.
 
 Call `configureStorage` before the first Storage operation only when overriding defaults. The legacy-compatible `crypto` option applies reversible Base64 obfuscation; it is not encryption and must not protect secrets:
 
@@ -53,7 +59,7 @@ configureStorage({
 });
 ```
 
-The active configuration is immutable. Repeating the same configuration is idempotent; a conflicting configuration throws. A custom `codec` may be supplied instead of `crypto`. In uni-app, `Local` automatically uses the global synchronous Storage API; `Session` throws because uni-app has no sessionStorage equivalent. `clear()` removes only keys inside the active prefix.
+The active global configuration is immutable. Repeating the same configuration is idempotent; a conflicting configuration throws. The `crypto` option on `set/get` overrides only that operation and must match when writing and reading the same entry; it does not mutate global configuration. A custom `codec` may be supplied instead of global `crypto`. In uni-app, `Local` automatically uses the global synchronous Storage API; `Session` throws because uni-app has no sessionStorage equivalent. `clear()` removes only keys inside the active prefix.
 
 ## Base64
 
@@ -62,8 +68,10 @@ Prefer the UTF-8 or Base64URL APIs in new code:
 ```ts
 import { decodeBase64, encodeBase64, encodeBase64Url } from "@fast-china/utils";
 
-const encoded = encodeBase64("Fast utilities");
-decodeBase64(encoded);
+const encoded = encodeBase64('{"name":"Fast utilities"}');
+const decoded = decodeBase64(encoded);
+decoded;
+decoded.parseJson<{ name: string }>();
 encodeBase64Url("path/value");
 ```
 
@@ -91,6 +99,21 @@ const installationId = getOrCreateInstallationId();
 
 Call `configureInstallationIdentity` in the application entry before first use. The default business key is `identity:installation-id`; repeated identical configuration is idempotent and conflicting configuration throws. Installation Identity UUID generation prefers Web Crypto and falls back to `Math.random()` when unavailable.
 
+## Logger
+
+The default `logger` works without construction and has a minimum level of `debug`. Enable split mode at application startup when uni-app App-Plus needs HBuilderX-compatible object output:
+
+```ts
+import { configureLogger, logger } from "@fast-china/utils";
+
+configureLogger({ uniAppPlusSplit: true });
+logger.log("Launch", { code: 200, data: { id: 1 } });
+logger.error("Request", "request failed", error);
+```
+
+Log messages are optional, so objects, arrays, errors, and other values may be passed directly. Normal runtimes preserve the original values; App-Plus
+split mode converts additional values into readable text one at a time. Use `createLogger` for an isolated configuration unaffected by the default Logger.
+
 ## Crypto
 
 The TypeScript Crypto API mirrors the public methods and algorithm casing of .NET `CryptoUtil`. AES-GCM payloads, password-based AES payloads, PBKDF2 password hashes, and PEM keys interoperate across both implementations.
@@ -100,7 +123,13 @@ import { AESDecryptWithPassword, AESEncryptWithPassword } from "@fast-china/util
 
 const payload = await AESEncryptWithPassword("protected content", "correct horse battery staple");
 const plaintext = await AESDecryptWithPassword(payload, "correct horse battery staple");
+plaintext;
+
+const jsonPayload = await AESEncryptWithPassword('{"id":1}', "correct horse battery staple");
+const result = (await AESDecryptWithPassword(jsonPayload, "correct horse battery staple")).parseJson<{ id: number }>();
 ```
+
+Base64 and Crypto text decoding/decryption functions return the primitive-string `DecodedText` type, which can be used directly as a `string`; JSON is parsed only by an explicit `.parseJson<T = any>()` call. The first text decode lazily installs a non-enumerable `String.prototype.parseJson`; a foreign method with the same name causes an explicit conflict error. The generic type does not validate the runtime structure of untrusted JSON.
 
 Store passwords with `HashPasswordPBKDF2SHA256` and `VerifyPasswordPBKDF2SHA256`. MD5, SHA-1, AES-CBC, and AES-ECB do not provide password-storage or authenticated-encryption guarantees. See the [API reference](./docs/API.md#crypto) for the complete method list and security boundaries.
 

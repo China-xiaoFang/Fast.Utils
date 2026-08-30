@@ -3,6 +3,7 @@ import { defineComponent, h } from "vue";
 import {
 	AESDecrypt,
 	AESEncrypt,
+	type DecodedText,
 	GenerateRSAKeyPair,
 	Local,
 	MD5Encrypt,
@@ -10,12 +11,14 @@ import {
 	type StorageArea,
 	chunk,
 	configureInstallationIdentity,
+	configureLogger,
 	configureStorage,
 	copy,
 	decodeSecureBase64,
 	encodeSecureBase64,
 	formatChineseRelativeTime,
 	groupBy,
+	logger,
 	makeSlots,
 	mapConcurrent,
 	parseQueryString,
@@ -59,14 +62,28 @@ const md5Digest: string = MD5Encrypt("Fast");
 const inlineStyle: string = serializeStyle({ fontSize: "14px" });
 const dateText: string = formatChineseRelativeTime(Date.now());
 const encryptedJson = AESEncrypt(JSON.stringify({ id: 1 }), "key", "vector");
-const decryptedJson: string | null = AESDecrypt(encryptedJson ?? "", "key", "vector");
+const decryptedJson: { id: number } | null = AESDecrypt(encryptedJson ?? "", "key", "vector")?.parseJson<{ id: number }>() ?? null;
 const rsaKeys: Promise<{ privateKey: string; publicKey: string }> = GenerateRSAKeyPair();
-const secureBase64Text: string = decodeSecureBase64(encodeSecureBase64("Fast"));
+const decodedText: DecodedText = decodeSecureBase64(encodeSecureBase64("Fast"));
+const secureBase64Text: string = decodedText;
+const secureBase64Json: { id: number } = decodeSecureBase64(encodeSecureBase64('{"id":1}')).parseJson<{ id: number }>();
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- 验证未传泛型时公共 API 默认返回 any。
+const inferredAnyJson = decodeSecureBase64(encodeSecureBase64('{"id":1}')).parseJson();
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- any 应允许调用方直接读取预期字段。
+const uncheckedJsonId: number = inferredAnyJson.id;
 
 configureStorage({ prefix: "type-test:" });
 configureInstallationIdentity({ cacheKey: "identity:installation-id" });
+configureLogger({ uniAppPlusSplit: true });
+logger.log("Launch", { code: 200 });
+logger.log("Launch", "ready", { code: 200 });
+logger.log("Launch");
+Local.set("single-crypto", { id: 1 }, { crypto: true });
+const singleCryptoValue = Local.get<{ id: number }>("single-crypto", { crypto: true });
 const localStorageArea: StorageArea = Local;
 const sessionStorageArea: StorageArea = Session;
+const defaultStored = Local.get("plain-item");
+type DefaultStorageResult = Expect<Equal<typeof defaultStored, string | undefined>>;
 const stored = Local.get<{ id: number }>("item");
 type StorageResult = Expect<Equal<typeof stored, { id: number } | undefined>>;
 
@@ -119,6 +136,7 @@ defineComponent({
 void (null as unknown as ChunkResult);
 void (null as unknown as PickResult);
 void (null as unknown as ConcurrentResult);
+void (null as unknown as DefaultStorageResult);
 void (null as unknown as StorageResult);
 void groupedCheck;
 void retryCheck;
@@ -132,6 +150,7 @@ void randomText;
 void chunks;
 void selected;
 void concurrent;
+void defaultStored;
 void stored;
 void md5Digest;
 void inlineStyle;
@@ -139,5 +158,8 @@ void dateText;
 void decryptedJson;
 void rsaKeys;
 void secureBase64Text;
+void secureBase64Json;
+void uncheckedJsonId;
+void singleCryptoValue;
 void typedValue;
 void slots;

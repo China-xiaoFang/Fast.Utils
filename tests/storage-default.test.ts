@@ -39,13 +39,17 @@ describe("default browser storage", () => {
 
 		expect(isStorageConfigured()).toBe(false);
 		Local.set("profile", { id: 1 });
+		Local.set("private-profile", { id: 2 }, { crypto: true });
 		Session.set("route", "/home");
 
 		expect(isStorageConfigured()).toBe(true);
 		expect(Local.prefix).toBe("fast__");
 		expect(Local.get("profile")).toEqual({ id: 1 });
+		expect(Local.get("private-profile", { crypto: true })).toEqual({ id: 2 });
+		expect(() => Local.get("private-profile")).toThrow(TypeError);
 		expect(Session.get("route")).toBe("/home");
 		expect(local.getItem("fast__profile")).toContain("id");
+		expect(local.getItem("fast__private-profile")).not.toContain("id");
 		expect(typeof session.getItem("fast__route")).toBe("string");
 
 		configureStorage();

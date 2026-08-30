@@ -88,12 +88,20 @@ describe("configured browser storage", () => {
 		}).toThrow(TypeError);
 
 		Local.set("user", { id: 1 });
+		Local.set("plain-user", { id: 2 }, { crypto: false });
 		Session.set("route", "/home");
 		expect(Local.get("user")).toEqual({ id: 1 });
+		expect(Local.get("plain-user", { crypto: false })).toEqual({ id: 2 });
+		expect(() => Local.get("plain-user")).toThrow(TypeError);
+		expect(() => Local.get("plain-user", { crypto: "yes" as never })).toThrow(TypeError);
 		expect(Session.get("route")).toBe("/home");
 		expect(local.getItem("test:user")).toContain('"version":3');
 		expect(local.getItem("test:user")).not.toContain("id");
+		expect(local.getItem("test:plain-user")).toContain("id");
 		expect(session.getItem("test:route")).toContain('"version":3');
+		expect(() => {
+			Local.set("invalid", 1, { crypto: "yes" as never });
+		}).toThrow(TypeError);
 	});
 
 	it("supports TTL, scoped removal, pruning, and namespace-only clearing", () => {
@@ -262,7 +270,9 @@ describe("Web Crypto utilities", () => {
 
 		const payload = await AESEncryptWithPassword('{"looks":"json"}', "correct horse battery staple", 100_000);
 		expect(payload.startsWith("FAST-AES-256-GCM-V1:")).toBe(true);
-		expect(await AESDecryptWithPassword(payload, "correct horse battery staple")).toBe('{"looks":"json"}');
+		expect((await AESDecryptWithPassword(payload, "correct horse battery staple")).parseJson<{ looks: string }>()).toEqual({
+			looks: "json",
+		});
 		await expect(AESDecryptWithPassword(payload, "wrong password")).rejects.toThrow("无法认证或解密载荷");
 	});
 

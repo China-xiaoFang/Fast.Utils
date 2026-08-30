@@ -2,6 +2,20 @@
 
 All notable changes to Fast.Utils are documented in this file.
 
+## [2.1.2] - 2026-08-30
+
+### Added
+
+- Added per-operation Storage `crypto` overrides for `Local` and `Session` reads and writes without mutating global configuration.
+- Added chainable `.parseJson<T = any>()` access to primitive string results from Base64 and Crypto text decoding APIs.
+- Added `configureLogger` for the default Logger and allowed Logger severity methods to emit data without a message string.
+
+### Breaking Changes
+
+- Replaced Logger's `info` method and level with `log`; `logger.log()` now maps directly to `sink.log()` and `console.log()`, and the default minimum level is now `debug`.
+- Changed the default type parameter of `StorageArea.get` from `unknown` to `string`; runtime codec results remain unchanged and may still be objects or other JSON values.
+- Refined `decodeBase64`, `decodeBase64Url`, `decodeLatin1Base64`, `decodeSecureBase64`, `AESDecrypt`, `AESDecryptAuthenticated`, `AESDecryptWithPassword`, and `RSADecryptOAEP` results to the primitive-string `DecodedText` type. The first text decode installs a non-enumerable `String.prototype.parseJson`; an existing foreign implementation causes an explicit conflict error instead of being overwritten.
+
 ## [2.1.1] - 2026-08-26
 
 ### Changed
@@ -73,6 +87,7 @@ All notable changes to Fast.Utils are documented in this file.
 
 - Added authenticated ciphertext validation, bounded crypto parameters and payloads, unbiased Web Crypto randomness, prototype-safe query/object transforms, and namespace-scoped Storage cleanup.
 
+[2.1.2]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.0.3...v2.1.0
 [2.0.3]: https://github.com/China-xiaoFang/Fast.Utils/releases/tag/v2.0.3

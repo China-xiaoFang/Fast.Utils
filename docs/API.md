@@ -21,9 +21,14 @@ import { Local, Session } from "@fast-china/utils";
 
 Local.set("profile", { name: "Ada" }, { ttlMs: 3_600_000 });
 Session.set("draft", { step: 2 });
+
+Local.set("private-profile", { name: "Ada" }, { crypto: true });
+Local.get<{ name: string }>("private-profile", { crypto: true });
 ```
 
 `Local` and `Session` provide `get`, `set`, `has`, `remove`, `removeByPrefix`, `keys`, `pruneExpired`, and namespace-scoped `clear`. Missing and expired values return `undefined`. Invalid TTL values, empty prefixes, malformed stored envelopes, unavailable platform storage, and conflicting repeated configuration throw errors. Native storage quota and privacy errors are propagated. Custom options must be configured before the first Storage operation.
+
+`get<Value = string>()` has the static return type `string | undefined` when its generic is omitted, so string entries can be read directly. The codec still restores the original JSON value at runtime and does not convert objects, arrays, or other non-string values to strings; pass an explicit generic when accurate type information is required.
 
 For uni-app, the first Storage operation or an explicit `configureStorage` call detects the global `uni` object and uses its synchronous Storage API. uni-app has no separate session backend, so `Session` throws when called in this mode.
 
@@ -33,7 +38,11 @@ import { Local } from "@fast-china/utils";
 Local.set("token", "value");
 ```
 
-`configureStorage({ prefix: "admin:", crypto: true })` restores the old global prefix and Base64-obfuscation options. `crypto: true` and `base64StorageCodec` are reversible encoding rather than encryption and must not protect secrets. A custom `codec` may be supplied instead of `crypto`.
+`configureStorage({ prefix: "admin:", crypto: true })` restores the old global prefix and Base64-obfuscation options. `Local` and `Session` `set/get` also accept a per-operation `{ crypto: boolean }`: `true` selects the Base64 codec, `false` selects the JSON codec, and omission uses the global codec. An operation override does not mutate global configuration. The current v3 envelope does not record its codec, so writes and reads of the same entry must use matching options; a mismatch throws a decoding error.
+
+`crypto: true` and `base64StorageCodec` are reversible encoding rather than encryption and must not protect secrets. A custom `codec` may be supplied instead of global `crypto`.
+
+`decodeBase64`, `decodeBase64Url`, `decodeLatin1Base64`, and `decodeSecureBase64` return the primitive-string `DecodedText` type. It is directly assignable to `string` and supports strict equality; JSON is returned only through an explicit `.parseJson<T = any>()` call, and the library never infers JSON from text content. The first text decode lazily installs a non-enumerable `String.prototype.parseJson`; a foreign property with the same name causes a `TypeError` instead of being overwritten. The generic type describes the expected shape but does not perform runtime validation.
 
 `encodeSecureBase64` and `decodeSecureBase64` preserve the legacy dictionary payload. The random prefix prefers Web Crypto and falls back to `Math.random()` when unavailable; it does not provide a security property. Given the same default six-character prefix, valid legacy payloads remain byte-for-byte compatible. The old dictionary references an unavailable character for Base64 lengths 101–124, so the current implementation inserts a one-character fallback that the legacy removal flow can decode. The old custom-length argument always generated six random characters; the current API correctly generates `prefixLength` characters. Custom lengths must match during encoding and decoding; `0` disables both the prefix and dictionary insertion. The format remains reversible encoding rather than encryption.
 
@@ -55,16 +64,25 @@ The identifier is an installation-scoped value, not a hardware identifier, authe
 
 ## Logger
 
-Logger scope belongs to each message rather than a mutable logger or child instance:
+Logger scope belongs to each entry rather than a logger or child instance. The default `logger` works without construction and has a minimum level of `debug`. Configure it once
+at application startup when uni-app App-Plus needs split object output:
 
 ```ts
-import { logger } from "@fast-china/utils";
+import { configureLogger, logger } from "@fast-china/utils";
 
-logger.info("storage", "profile loaded", { userId: 1 });
+configureLogger({ uniAppPlusSplit: true });
+logger.log("Launch", { code: 200, data: { id: 1 } });
+logger.log("storage", "profile loaded", { userId: 1 });
 logger.error("network", "request failed", error);
 ```
 
-`createLogger` configures the minimum level, brand prefix, sink, and optional uni-app App-Plus split output. Scope must be a non-empty string without surrounding whitespace.
+Log content is optional and may directly contain objects, arrays, `Error` instances, or other values. Non-string values are passed unchanged to
+the Sink in normal runtimes. With App-Plus splitting enabled, the heading is emitted separately and each additional value is converted to readable
+text because HBuilderX does not reliably display objects.
+
+`configureLogger` replaces the complete configuration of the default `logger`; previously retained `logger` references immediately observe the new
+configuration. Calling it without options restores all defaults. `createLogger` creates an isolated instance unaffected by global configuration.
+Logger's `debug`, `log`, `warn`, and `error` methods call the matching Sink methods; the default Sink maps them to `console.debug`, `console.log`, `console.warn`, and `console.error`. Both support a minimum level, brand prefix, Sink, and optional App-Plus split output. Scope must be a non-empty string without surrounding whitespace.
 
 ## Clipboard
 
@@ -93,13 +111,21 @@ The TypeScript Crypto public API mirrors the public methods and algorithm casing
 
 The Base64 v1 payload produced by `AESEncryptAuthenticated`, the `FAST-AES-256-GCM-V1` password payload, PBKDF2 password hashes, and PKCS#8/SPKI PEM keys interoperate with .NET in both directions. MD5 and HMAC output lowercase hexadecimal; SHA-1/256/384/512 output uppercase hexadecimal, matching .NET.
 
+`AESDecrypt`, `AESDecryptAuthenticated`, `AESDecryptWithPassword`, and `RSADecryptOAEP` return the primitive-string `DecodedText` type (wrapped in a Promise for asynchronous APIs). Use the result directly as plaintext or call `.parseJson<T = any>()` explicitly:
+
+```ts
+const plaintext = await AESDecryptWithPassword(payload, password);
+const raw: string = plaintext;
+const result = plaintext.parseJson<{ id: number }>();
+```
+
 Store passwords with `HashPasswordPBKDF2SHA256` and `VerifyPasswordPBKDF2SHA256`; the result is not decryptable. AES-GCM provides confidentiality and integrity, HMAC authenticates with a shared key, SHA-2 computes digests, and HKDF/PBKDF2 derive keys. MD5, SHA-1, AES-CBC, and AES-ECB do not provide modern password-storage or authenticated-encryption guarantees.
 
 ## Modules
 
 - `array`: `chunk`, `removeNullishValues`, `unique`, `uniqueBy`, `groupBy`, `partition`, `difference`, `intersection`, `hasDuplicatesBy`, and `allEqualBy`.
 - `async`: abort-aware `sleep`, timeout, retry, bounded concurrent mapping, debounce, and throttle primitives.
-- `base64`: strict UTF-8 Base64/Base64URL byte and text functions plus the historical Latin-1 and dictionary-obfuscation functions.
+- `base64`: strict UTF-8 Base64/Base64URL byte functions and chainable text results plus the historical Latin-1 and dictionary-obfuscation functions.
 - `color`: Hex parsing/formatting/mixing, explicit black/white mixing, luminance, and contrast helpers.
 - `crypto`: random bytes, digests, HMAC, PBKDF2, HKDF, AES, RSA-OAEP/PSS, ECDSA, and ECDH.
 - `date`: date validation and arithmetic, day ranges, relative formatting, and the seven historical date helpers as named functions.

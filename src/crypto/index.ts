@@ -11,7 +11,7 @@ import Pkcs7 from "crypto-js/pad-pkcs7.js";
 import ZeroPadding from "crypto-js/pad-zeropadding.js";
 import SHA1 from "crypto-js/sha1.js";
 import { decodeBase64Bytes, decodeBase64UrlBytes, encodeBase64Bytes, encodeBase64UrlBytes } from "../base64/index";
-import { encodeUtf8, getTextDecoder } from "../internal/text";
+import { type DecodedText, createDecodedText, encodeUtf8, getTextDecoder } from "../internal/text";
 
 /** PBKDF2 默认迭代次数。 */
 const defaultPbkdf2Iterations = 600_000;
@@ -534,7 +534,7 @@ export function AESEncrypt(
  * @param vector - 加密时使用的初始化向量文本。
  * @param cipherMode - AES 分组模式，默认 `CBC`。
  * @param paddingMode - AES 填充模式，默认 `PKCS7`。
- * @returns 解密后的 UTF-8 文本；输入、密钥或 IV 为空白时返回 `null`。
+ * @returns 可直接使用或显式调用 `.parseJson<Value>()` 的原始 UTF-8 字符串；输入、密钥或 IV 为空白时返回 `null`。
  * @throws 模式、填充、Base64、密钥或密文无效时抛出错误。
  */
 export function AESDecrypt(
@@ -543,7 +543,7 @@ export function AESDecrypt(
 	vector: string,
 	cipherMode: AesCipherMode = "CBC",
 	paddingMode: AesPaddingMode = "PKCS7"
-): string | null {
+): DecodedText | null {
 	if (dataStr.trim().length === 0 || key.trim().length === 0 || vector.trim().length === 0) return null;
 	if (cipherMode !== "CBC" && cipherMode !== "ECB") throw new RangeError("`cipherMode` 必须是 `CBC` 或 `ECB`。");
 
@@ -576,8 +576,8 @@ export function AESDecrypt(
 	// 解密必须重复使用加密端相同的字符补齐和截断规则。
 	const keyBytes = Utf8.parse(key.padEnd(32, "f").slice(0, 32));
 	const vectorBytes = Utf8.parse(vector.padEnd(16, "f").slice(0, 16));
-	return AES.decrypt(dataStr, keyBytes, cipherMode === "CBC" ? { iv: vectorBytes, padding } : { iv: vectorBytes, mode: ECB, padding }).toString(
-		Utf8
+	return createDecodedText(
+		AES.decrypt(dataStr, keyBytes, cipherMode === "CBC" ? { iv: vectorBytes, padding } : { iv: vectorBytes, mode: ECB, padding }).toString(Utf8)
 	);
 }
 
@@ -615,10 +615,10 @@ export async function AESEncryptAuthenticated(plaintext: string, key: string): P
  *
  * @param payload - Base64 编码的 v1 AES-GCM 二进制载荷。
  * @param key - 加密时使用的非空 UTF-8 文本密钥。
- * @returns 通过认证的 UTF-8 明文。
+ * @returns 可直接使用或显式调用 `.parseJson<Value>()` 的原始 UTF-8 字符串。
  * @throws 载荷格式无效、密钥错误或认证失败时抛出错误。
  */
-export async function AESDecryptAuthenticated(payload: string, key: string): Promise<string> {
+export async function AESDecryptAuthenticated(payload: string, key: string): Promise<DecodedText> {
 	if (key.trim().length === 0) throw new TypeError("加密密钥不能为空。");
 	const decoded = decodeBase64Bytes(payload);
 	if (decoded.length < 29 || decoded[0] !== authenticatedAesPayloadVersion) {
@@ -640,7 +640,7 @@ export async function AESDecryptAuthenticated(payload: string, key: string): Pro
 		cryptoKey,
 		toArrayBuffer(ciphertextAndTag)
 	);
-	return getTextDecoder().decode(plaintext);
+	return createDecodedText(getTextDecoder().decode(plaintext));
 }
 
 /**
@@ -695,11 +695,11 @@ export async function AESEncryptWithPassword(plaintext: string, password: string
  *
  * @param payload - 未修改的 v1 载荷，最大约 16 MiB 文本。
  * @param password - 加密时使用的口令。
- * @returns 原始 UTF-8 文本。
+ * @returns 可直接使用或显式调用 `.parseJson<Value>()` 的原始 UTF-8 字符串。
  * @throws 格式或字段非法时抛出 `TypeError`，载荷过大时抛出 `RangeError`，认证或密码
  * 失败及缺少平台能力时抛出 `Error`。
  */
-export async function AESDecryptWithPassword(payload: string, password: string): Promise<string> {
+export async function AESDecryptWithPassword(payload: string, password: string): Promise<DecodedText> {
 	const passwordBytes = encodeValidatedPassword(password);
 	if (payload.length > maximumPayloadLength) {
 		throw new RangeError("加密载荷超出支持的大小。");
@@ -743,7 +743,7 @@ export async function AESDecryptWithPassword(payload: string, password: string):
 			key,
 			toArrayBuffer(ciphertext)
 		);
-		return textDecoder.decode(plaintext);
+		return createDecodedText(textDecoder.decode(plaintext));
 	} catch (cause) {
 		throw new Error("无法认证或解密载荷。", { cause });
 	}
@@ -798,16 +798,16 @@ export async function RSAEncryptOAEP(plaintext: string, publicKeyPem: string): P
  *
  * @param ciphertext - Base64 编码的 RSA 密文。
  * @param privateKeyPem - 未加密的 PKCS#8 PEM 私钥。
- * @returns 解密后的 UTF-8 文本。
+ * @returns 可直接使用或显式调用 `.parseJson<Value>()` 的原始 UTF-8 字符串。
  * @throws 私钥、Base64 或密文无效时抛出错误。
  */
-export async function RSADecryptOAEP(ciphertext: string, privateKeyPem: string): Promise<string> {
+export async function RSADecryptOAEP(ciphertext: string, privateKeyPem: string): Promise<DecodedText> {
 	const crypto = requireWebCrypto();
 	const key = await crypto.subtle.importKey("pkcs8", fromPem(privateKeyPem, pemLabels.private), { hash: "SHA-256", name: "RSA-OAEP" }, false, [
 		"decrypt",
 	]);
 	const plaintext = await crypto.subtle.decrypt({ name: "RSA-OAEP" }, key, toArrayBuffer(decodeBase64Bytes(ciphertext)));
-	return getTextDecoder().decode(plaintext);
+	return createDecodedText(getTextDecoder().decode(plaintext));
 }
 
 /**

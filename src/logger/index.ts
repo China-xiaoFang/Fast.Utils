@@ -1,5 +1,5 @@
 /** 日志严重级别，按从低到高排列。 */
-export type LogLevel = "debug" | "info" | "warn" | "error";
+export type LogLevel = "debug" | "log" | "warn" | "error";
 
 /** 日志输出目标需要实现的最小控制台接口。 */
 export interface LoggerSink {
@@ -9,7 +9,7 @@ export interface LoggerSink {
 	 */
 	debug: (...data: unknown[]) => void;
 	/**
-	 * 接收通过级别过滤后的普通信息参数；对应 Logger 的 `info` 级别。
+	 * 接收通过级别过滤后的普通日志参数；对应 Logger 的 `log` 级别。
 	 * @param data - 已格式化的品牌、作用域、消息以及保持原始类型的附加值。
 	 */
 	log: (...data: unknown[]) => void;
@@ -27,7 +27,7 @@ export interface LoggerSink {
 
 /** {@link createLogger} 的不可变配置。 */
 export interface LoggerOptions {
-	/** 最低输出级别，默认 `info`；低于该优先级的消息不会传给 Sink。 */
+	/** 最低输出级别，默认 `debug`；低于该优先级的消息不会传给 Sink。 */
 	level?: LogLevel;
 	/** 日志品牌前缀，默认 `Fast`；必须是无外围空白的非空字符串。 */
 	prefix?: string;
@@ -37,45 +37,41 @@ export interface LoggerOptions {
 	uniAppPlusSplit?: boolean;
 }
 
-/** 配置隔离、无全局可变状态的轻量日志器。 */
+/** 配置隔离的轻量日志器。 */
 export interface Logger {
 	/**
-	 * 输出指定作用域的调试信息。
+	 * 输出指定作用域的调试信息或数据。
 	 * @param scope - 模块、组件或业务来源名称。
-	 * @param message - 主消息文本。
-	 * @param data - 保持原始类型的附加值。
+	 * @param content - 可选的消息与附加值；非字符串值保持原始类型。
 	 * @throws `TypeError` 或 `RangeError` 当作用域不是无外围空白的非空字符串。
 	 */
-	debug: (scope: string, message: string, ...data: unknown[]) => void;
+	debug: (scope: string, ...content: unknown[]) => void;
 	/**
-	 * 输出指定作用域的普通信息。
+	 * 输出指定作用域的普通信息或数据。
 	 * @param scope - 模块、组件或业务来源名称。
-	 * @param message - 主消息文本。
-	 * @param data - 保持原始类型的附加值。
+	 * @param content - 可选的消息与附加值；非字符串值保持原始类型。
 	 * @throws `TypeError` 或 `RangeError` 当作用域不是无外围空白的非空字符串。
 	 */
-	info: (scope: string, message: string, ...data: unknown[]) => void;
+	log: (scope: string, ...content: unknown[]) => void;
 	/**
-	 * 输出指定作用域的警告信息。
+	 * 输出指定作用域的警告信息或数据。
 	 * @param scope - 模块、组件或业务来源名称。
-	 * @param message - 主消息文本。
-	 * @param data - 保持原始类型的附加值。
+	 * @param content - 可选的消息与附加值；非字符串值保持原始类型。
 	 * @throws `TypeError` 或 `RangeError` 当作用域不是无外围空白的非空字符串。
 	 */
-	warn: (scope: string, message: string, ...data: unknown[]) => void;
+	warn: (scope: string, ...content: unknown[]) => void;
 	/**
-	 * 输出指定作用域的错误信息。
+	 * 输出指定作用域的错误信息或数据。
 	 * @param scope - 模块、组件或业务来源名称。
-	 * @param message - 主消息文本。
-	 * @param data - 保持原始类型的附加值。
+	 * @param content - 可选的消息与附加值；非字符串值保持原始类型。
 	 * @throws `TypeError` 或 `RangeError` 当作用域不是无外围空白的非空字符串。
 	 */
-	error: (scope: string, message: string, ...data: unknown[]) => void;
+	error: (scope: string, ...content: unknown[]) => void;
 }
 
 const levelPriority: Readonly<Record<LogLevel, number>> = {
 	debug: 10,
-	info: 20,
+	log: 20,
 	warn: 30,
 	error: 40,
 };
@@ -84,7 +80,7 @@ const levelPriority: Readonly<Record<LogLevel, number>> = {
  * 判断未知值是否为受支持日志级别。
  *
  * @param value - 待检查配置值。
- * @returns 值是 `debug`、`info`、`warn` 或 `error` 时返回 `true`。
+ * @returns 值是 `debug`、`log`、`warn` 或 `error` 时返回 `true`。
  */
 const isLogLevel = (value: unknown): value is LogLevel => typeof value === "string" && Object.hasOwn(levelPriority, value);
 
@@ -153,7 +149,7 @@ const defaultConsoleSink: LoggerSink = {
  * @throws `RangeError` 当级别未知，或前缀、作用域不是有效的非空字符串。
  */
 export function createLogger(options: LoggerOptions = {}): Logger {
-	const requestedLevel: unknown = options.level ?? "info";
+	const requestedLevel: unknown = options.level ?? "debug";
 	const requestedPrefix: unknown = options.prefix ?? "Fast";
 	const sink = options.sink ?? defaultConsoleSink;
 	if (!isLogLevel(requestedLevel)) throw new RangeError(`未知的日志级别：${String(requestedLevel)}。`);
@@ -169,41 +165,72 @@ export function createLogger(options: LoggerOptions = {}): Logger {
 	 *
 	 * @param messageLevel - 本条消息的严重级别。
 	 * @param scope - 模块、组件或业务来源名称。
-	 * @param message - 主消息文本。
-	 * @param data - 保持原始类型的附加值。
+	 * @param content - 可选的消息与保持原始类型的附加值。
 	 * @throws `RangeError` 当作用域不是非空字符串或包含外围空白。
 	 */
-	const write = (messageLevel: LogLevel, scope: string, message: string, data: readonly unknown[]): void => {
+	const write = (messageLevel: LogLevel, scope: string, content: readonly unknown[]): void => {
 		if (typeof scope !== "string") throw new TypeError("日志作用域必须是字符串。");
 		if (scope.length === 0 || scope.trim() !== scope) {
 			throw new RangeError("日志作用域必须是无外围空白的非空字符串。");
 		}
 		if (levelPriority[messageLevel] < levelPriority[level]) return;
 		const heading = `[${prefix}:${scope}]`;
-		const sinkMethod: keyof LoggerSink = messageLevel === "info" ? "log" : messageLevel;
+		const sinkMethod: keyof LoggerSink = messageLevel;
 		if (uniAppPlusSplit && isUniAppPlus()) {
-			sink[sinkMethod](`${heading} ${message}`);
-			for (const item of data) sink[sinkMethod](formatSplitValue(item));
+			const [first, ...remaining] = content;
+			if (typeof first === "string") {
+				sink[sinkMethod](`${heading} ${first}`);
+				for (const item of remaining) sink[sinkMethod](formatSplitValue(item));
+			} else {
+				sink[sinkMethod](heading);
+				for (const item of content) sink[sinkMethod](formatSplitValue(item));
+			}
 			return;
 		}
-		sink[sinkMethod](heading, message, ...data);
+		sink[sinkMethod](heading, ...content);
 	};
 
 	return {
-		debug: (scope, message, ...data): void => {
-			write("debug", scope, message, data);
+		debug: (scope, ...content): void => {
+			write("debug", scope, content);
 		},
-		info: (scope, message, ...data): void => {
-			write("info", scope, message, data);
+		log: (scope, ...content): void => {
+			write("log", scope, content);
 		},
-		warn: (scope, message, ...data): void => {
-			write("warn", scope, message, data);
+		warn: (scope, ...content): void => {
+			write("warn", scope, content);
 		},
-		error: (scope, message, ...data): void => {
-			write("error", scope, message, data);
+		error: (scope, ...content): void => {
+			write("error", scope, content);
 		},
 	};
 }
 
-/** 默认使用 `Fast` 前缀和 `info` 级别的便捷日志器。 */
-export const logger: Logger = createLogger();
+let activeDefaultLogger: Logger = createLogger();
+
+/**
+ * 替换默认 {@link logger} 的完整配置。
+ *
+ * @remarks 已创建的独立 Logger 不受影响；默认 Logger 对象引用保持稳定，并立即转发到新配置。
+ * 省略选项会恢复 `createLogger()` 的全部默认值。
+ * @param options - 默认 Logger 使用的级别、前缀、输出目标和 uni-app App-Plus 拆分选项。
+ */
+export function configureLogger(options: LoggerOptions = {}): void {
+	activeDefaultLogger = createLogger(options);
+}
+
+/** 默认使用 `Fast` 前缀和 `debug` 级别、可通过 {@link configureLogger} 配置的便捷日志器。 */
+export const logger: Logger = {
+	debug: (scope, ...content): void => {
+		activeDefaultLogger.debug(scope, ...content);
+	},
+	log: (scope, ...content): void => {
+		activeDefaultLogger.log(scope, ...content);
+	},
+	warn: (scope, ...content): void => {
+		activeDefaultLogger.warn(scope, ...content);
+	},
+	error: (scope, ...content): void => {
+		activeDefaultLogger.error(scope, ...content);
+	},
+};

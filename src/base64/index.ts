@@ -1,5 +1,7 @@
-import { encodeUtf8, getTextDecoder } from "../internal/text";
+import { type DecodedText, createDecodedText, encodeUtf8, getTextDecoder } from "../internal/text";
 import { randomInt } from "../number/index";
+
+export type { DecodedText } from "../internal/text";
 
 const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -149,11 +151,11 @@ export function encodeBase64(value: string): string {
  * 将标准 Base64 解码为 UTF-8 文本。
  *
  * @param value - Base64 文本。
- * @returns 解码后的 Unicode 字符串。
+ * @returns 可直接使用或显式调用 `.parseJson<Value>()` 的原始 Unicode 字符串。
  * @throws Base64 或 UTF-8 非法时抛出 `TypeError`；缺少 Encoding API 时抛出 `Error`。
  */
-export function decodeBase64(value: string): string {
-	return decodeUtf8(decodeBase64Bytes(value));
+export function decodeBase64(value: string): DecodedText {
+	return createDecodedText(decodeUtf8(decodeBase64Bytes(value)));
 }
 
 /**
@@ -193,11 +195,11 @@ export function encodeBase64Url(value: string): string {
  * 将 Base64URL 解码为 UTF-8 文本。
  *
  * @param value - 带填充或无填充的 Base64URL 文本。
- * @returns 解码后的 Unicode 字符串。
+ * @returns 可直接使用或显式调用 `.parseJson<Value>()` 的原始 Unicode 字符串。
  * @throws Base64URL 或 UTF-8 非法时抛出 `TypeError`；缺少 Encoding API 时抛出 `Error`。
  */
-export function decodeBase64Url(value: string): string {
-	return decodeUtf8(decodeBase64UrlBytes(value));
+export function decodeBase64Url(value: string): DecodedText {
+	return createDecodedText(decodeUtf8(decodeBase64UrlBytes(value)));
 }
 
 /**
@@ -221,14 +223,14 @@ export function encodeLatin1Base64(value: string): string {
  * 把标准 Base64 解码为 Latin-1 文本。
  *
  * @param value - 标准 Base64 文本；允许 ASCII 空白和省略尾部填充。
- * @returns 每个字节直接映射为同值 UTF-16 码元的文本。
+ * @returns 可直接使用或显式调用 `.parseJson<Value>()` 的 Latin-1 原始字符串。
  * @throws `TypeError` 当 Base64 格式或尾部位非法。
  */
-export function decodeLatin1Base64(value: string): string {
+export function decodeLatin1Base64(value: string): DecodedText {
 	const bytes = decodeBase64Bytes(value);
 	let result = "";
 	for (const byte of bytes) result += String.fromCharCode(byte);
-	return result;
+	return createDecodedText(result);
 }
 
 const randomPrefixAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -362,14 +364,14 @@ export function encodeSecureBase64(value: string, prefixLength: number = default
  *
  * @param value - SecureBase64 文本；必须使用与编码时相同的前缀长度。
  * @param prefixLength - 需要移除的前缀长度；默认 `6`，传入 `0` 时不移除字典字符。
- * @returns 解码后的 Unicode 文本；空输入返回空字符串。
+ * @returns 可直接使用或显式调用 `.parseJson<Value>()` 的原始 Unicode 字符串；空输入返回空字符串。
  * @throws `RangeError` 当前缀长度不是非负安全整数；载荷、Base64 或 URI 编码非法时抛出 `TypeError` 或 `URIError`。
  */
-export function decodeSecureBase64(value: string, prefixLength: number = defaultRandomPrefixLength): string {
-	if (value.length === 0) return "";
+export function decodeSecureBase64(value: string, prefixLength: number = defaultRandomPrefixLength): DecodedText {
+	if (value.length === 0) return createDecodedText("");
 	assertPrefixLength(prefixLength);
 	if (prefixLength > value.length) throw new TypeError("Base64 值的长度小于配置的前缀长度。");
 	let encoded = value.slice(prefixLength);
 	if (prefixLength !== 0) encoded = removeDictionaryCharacters(encoded);
-	return decodeURIComponent(decodeLatin1Base64(encoded));
+	return createDecodedText(decodeURIComponent(decodeLatin1Base64(encoded)));
 }
