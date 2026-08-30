@@ -120,6 +120,7 @@ try {
 	);
 	assert.equal(typeof cdnContext.FastUtils.useEmits, "function");
 	assert.equal(vm.runInNewContext('FastUtils.decodeBase64(FastUtils.encodeBase64("{\\"id\\":1}")).parseJson().id', cdnContext), 1);
+	assert.equal(vm.runInNewContext('FastUtils.decodeBase64(FastUtils.encodeBase64("plain")).parseJson()', cdnContext), "plain");
 	fs.writeFileSync(
 		consumerPath,
 		[
@@ -128,6 +129,7 @@ try {
 			'if (JSON.stringify(chunk([1, 2, 3], 2)) !== "[[1,2],[3]]") throw new Error("Root array export failed.");',
 			'if (decodeBase64(encodeBase64("Fast 工具库")) !== "Fast 工具库") throw new Error("Base64 round trip failed.");',
 			'if (JSON.stringify(decodeBase64(encodeBase64("{\\"id\\":1}")).parseJson()) !== "{\\"id\\":1}") throw new Error("Base64 JSON parsing failed.");',
+			'if (decodeBase64(encodeBase64("plain")).parseJson() !== "plain") throw new Error("Base64 JSON fallback failed.");',
 			'if (toQueryString({ id: [1, 2] }) !== "id=1&id=2") throw new Error("Query serialization failed.");',
 			"class MemoryStorage { /** @type {Map<string, string>} */ #values = new Map(); get length() { return this.#values.size; } clear() { this.#values.clear(); } getItem(/** @type {string} */ key) { return this.#values.get(key) ?? null; } key(/** @type {number} */ index) { return [...this.#values.keys()][index] ?? null; } removeItem(/** @type {string} */ key) { this.#values.delete(key); } setItem(/** @type {string} */ key, /** @type {string} */ value) { this.#values.set(key, String(value)); } }",
 			"globalThis.localStorage = new MemoryStorage(); globalThis.sessionStorage = new MemoryStorage();",

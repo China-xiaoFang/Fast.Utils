@@ -42,7 +42,7 @@ Local.set("token", "value");
 
 `crypto: true` 和 `base64StorageCodec` 都只是可逆编码，不是加密，不能保护敏感数据。可以使用自定义 `codec` 替代全局 `crypto`。
 
-`decodeBase64`、`decodeBase64Url`、`decodeLatin1Base64` 与 `decodeSecureBase64` 返回原始字符串类型 `DecodedText`，可以直接赋值给 `string` 或参与严格比较；显式调用 `.parseJson<T = any>()` 才返回 JSON 值，库不会根据文本内容自动推断 JSON。首次文本解码会按需安装不可枚举的 `String.prototype.parseJson`；若同名属性已被其他实现占用则抛出 `TypeError`，不会覆盖。泛型只描述期望类型，不执行运行时结构校验。
+`decodeBase64`、`decodeBase64Url`、`decodeLatin1Base64` 与 `decodeSecureBase64` 返回原始字符串类型 `DecodedText`，可以直接赋值给 `string` 或参与严格比较；显式调用 `.parseJson<T = any>()` 才尝试解析 JSON，语法无效时返回未经修改的原始字符串。首次文本解码会按需安装不可枚举的 `String.prototype.parseJson`；若同名属性已被其他实现占用则抛出 `TypeError`，不会覆盖。泛型只描述期望类型，不执行运行时结构校验，也不保证结果一定是对象。Storage Codec 不使用该容错行为，仍会严格拒绝非法 JSON。
 
 `encodeSecureBase64` 与 `decodeSecureBase64` 保留旧字典兼容载荷。随机前缀优先使用 Web Crypto，能力缺失时回退到 `Math.random()`；它不承担安全用途。给定相同的默认 6 字符前缀时，有效旧载荷保持逐字符兼容；旧字典在 Base64 长度 101–124 时会引用越界，当前实现使用单字符回退，旧删除字典流程仍可解码。旧自定义长度参数始终生成 6 个随机字符，当前 API 已按 `prefixLength` 正确生成。自定义 `prefixLength` 必须在编码和解码时保持一致；传入 `0` 会同时关闭随机前缀与字典插入。该格式仍是可逆编码，不等同于加密。
 

@@ -129,7 +129,7 @@ const jsonPayload = await AESEncryptWithPassword('{"id":1}', "correct horse batt
 const result = (await AESDecryptWithPassword(jsonPayload, "correct horse battery staple")).parseJson<{ id: number }>();
 ```
 
-Base64 and Crypto text decoding/decryption functions return the primitive-string `DecodedText` type, which can be used directly as a `string`; JSON is parsed only by an explicit `.parseJson<T = any>()` call. The first text decode lazily installs a non-enumerable `String.prototype.parseJson`; a foreign method with the same name causes an explicit conflict error. The generic type does not validate the runtime structure of untrusted JSON.
+Base64 and Crypto text decoding/decryption functions return the primitive-string `DecodedText` type, which can be used directly as a `string`; an explicit `.parseJson<T = any>()` call attempts JSON parsing and returns the original string when parsing fails. The first text decode lazily installs a non-enumerable `String.prototype.parseJson`; a foreign method with the same name causes an explicit conflict error. The generic type does not validate untrusted JSON or guarantee an object result at runtime.
 
 Store passwords with `HashPasswordPBKDF2SHA256` and `VerifyPasswordPBKDF2SHA256`. MD5, SHA-1, AES-CBC, and AES-ECB do not provide password-storage or authenticated-encryption guarantees. See the [API reference](./docs/API.md#crypto) for the complete method list and security boundaries.
 

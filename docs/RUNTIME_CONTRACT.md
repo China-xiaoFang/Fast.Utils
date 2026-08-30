@@ -19,7 +19,7 @@ Importing a module does not itself read `window`, browser Storage, or `uni`, so 
 
 - Stateless Array, Date, String, Number, Object, Base64, Color, DOM, Env, Async, and Crypto capabilities use named exports.
 - The public API uses named functions instead of mutable aggregate utility objects.
-- Base64 and Crypto text decoders return primitive strings typed as `DecodedText`. They can be used directly as strings; JSON parsing occurs only through an explicit `.parseJson<T = any>()` call. The first text decode lazily installs a non-enumerable `String.prototype.parseJson` and rejects a foreign same-name property instead of overwriting it. Storage codecs continue to parse JSON automatically.
+- Base64 and Crypto text decoders return primitive strings typed as `DecodedText`. They can be used directly as strings; an explicit `.parseJson<T = any>()` call attempts JSON parsing and falls back to the original string for invalid JSON. The first text decode lazily installs a non-enumerable `String.prototype.parseJson` and rejects a foreign same-name property instead of overwriting it. Storage codecs continue to parse JSON automatically and strictly.
 - Stateful browser capabilities use cohesive package-owned objects: `Local`, `Session`, `installationIdentity`, and Logger instances. Logger exposes the matching `debug`, `log`, `warn`, and `error` levels, defaults to the `debug` minimum, and receives scope on each method rather than storing it in child instances. `createLogger` returns isolated instances, while `configureLogger` only changes the default `logger` facade.
 - Internal adapters and client factories are implementation details and are not public export paths.
 - Removing a named function, changing Storage/ciphertext formats, raising the browser syntax target, or changing the Vue peer range requires an explicit major-version Breaking Change.
@@ -39,4 +39,4 @@ Importing a module does not itself read `window`, browser Storage, or `uni`, so 
 
 模块导入本身不读取 `window`、浏览器 Storage 或 `uni`，不具备对应平台能力时只在调用相关 API 时明确失败。
 
-无状态能力统一使用具名导出。Base64 与 Crypto 文本解码入口返回原始字符串类型 `DecodedText`，可以直接作为字符串使用；JSON 只在显式调用 `.parseJson<T = any>()` 时解析。首次文本解码会按需安装不可枚举的 `String.prototype.parseJson`，若同名属性已被其他实现占用则拒绝覆盖并抛错。Storage Codec 继续自动解析 JSON。有状态浏览器能力使用 `Local`、`Session`、`installationIdentity` 和 Logger 实例；Logger 提供与 Sink 同名的 `debug`、`log`、`warn`、`error` 级别，默认最低级别为 `debug`，作用域随每次调用传入，不创建 Child Logger。`createLogger` 返回隔离实例，`configureLogger` 只修改默认 `logger` 门面。
+无状态能力统一使用具名导出。Base64 与 Crypto 文本解码入口返回原始字符串类型 `DecodedText`，可以直接作为字符串使用；`.parseJson<T = any>()` 只在显式调用时尝试解析 JSON，非法 JSON 回退为原始字符串。首次文本解码会按需安装不可枚举的 `String.prototype.parseJson`，若同名属性已被其他实现占用则拒绝覆盖并抛错。Storage Codec 继续严格自动解析 JSON。有状态浏览器能力使用 `Local`、`Session`、`installationIdentity` 和 Logger 实例；Logger 提供与 Sink 同名的 `debug`、`log`、`warn`、`error` 级别，默认最低级别为 `debug`，作用域随每次调用传入，不创建 Child Logger。`createLogger` 返回隔离实例，`configureLogger` 只修改默认 `logger` 门面。

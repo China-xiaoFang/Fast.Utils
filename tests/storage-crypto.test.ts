@@ -1,5 +1,5 @@
 import { afterEach, describe, it } from "node:test";
-import { decodeSecureBase64 } from "../src/base64/index";
+import { decodeSecureBase64, encodeSecureBase64 } from "../src/base64/index";
 import {
 	AESDecrypt,
 	AESDecryptAuthenticated,
@@ -132,6 +132,7 @@ describe("configured browser storage", () => {
 		const encoded = base64StorageCodec.encode({ value: "Fast" });
 		expect(decodeSecureBase64(encoded)).toBe('{"value":"Fast"}');
 		expect(base64StorageCodec.decode(encoded)).toEqual({ value: "Fast" });
+		expect(() => base64StorageCodec.decode(encodeSecureBase64("not json"))).toThrow(SyntaxError);
 	});
 });
 

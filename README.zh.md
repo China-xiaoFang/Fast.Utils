@@ -129,7 +129,7 @@ const jsonPayload = await AESEncryptWithPassword('{"id":1}', "correct horse batt
 const result = (await AESDecryptWithPassword(jsonPayload, "correct horse battery staple")).parseJson<{ id: number }>();
 ```
 
-Base64 与 Crypto 的文本解码/解密入口返回原始字符串类型 `DecodedText`，可以直接作为 `string` 使用；只有显式调用 `.parseJson<T = any>()` 才解析 JSON。首次文本解码会按需安装不可枚举的 `String.prototype.parseJson`，若同名方法已被其他实现占用则明确抛错。泛型不会验证不可信 JSON 的实际结构。
+Base64 与 Crypto 的文本解码/解密入口返回原始字符串类型 `DecodedText`，可以直接作为 `string` 使用；只有显式调用 `.parseJson<T = any>()` 才尝试解析 JSON，解析失败时直接返回原始字符串。首次文本解码会按需安装不可枚举的 `String.prototype.parseJson`，若同名方法已被其他实现占用则明确抛错。泛型不会验证不可信 JSON 的实际结构，也不保证运行时结果一定是对象。
 
 密码存储使用 `HashPasswordPBKDF2SHA256` 和 `VerifyPasswordPBKDF2SHA256`。MD5、SHA-1、AES-CBC 与 AES-ECB 不提供密码存储或认证加密保证。完整方法列表和安全边界见 [API 文档](./docs/API.zh-CN.md#crypto)。
 

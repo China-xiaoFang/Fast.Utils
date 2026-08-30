@@ -2,6 +2,13 @@
 
 All notable changes to Fast.Utils are documented in this file.
 
+## [2.1.3] - 2026-08-30
+
+### Changed
+
+- Changed chainable `.parseJson<T = any>()` to return the original string when decoded Crypto/Base64 text is not valid JSON instead of throwing a syntax error.
+- Kept Storage codecs strict so malformed persisted JSON continues to fail explicitly rather than using the text fallback.
+
 ## [2.1.2] - 2026-08-30
 
 ### Added
@@ -87,6 +94,7 @@ All notable changes to Fast.Utils are documented in this file.
 
 - Added authenticated ciphertext validation, bounded crypto parameters and payloads, unbiased Web Crypto randomness, prototype-safe query/object transforms, and namespace-scoped Storage cleanup.
 
+[2.1.3]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.1.2...v2.1.3
 [2.1.2]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.0.3...v2.1.0

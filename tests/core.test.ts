@@ -202,7 +202,7 @@ describe("Base64 utilities", () => {
 		expect(Object.getOwnPropertyDescriptor(String.prototype, "parseJson")?.enumerable).toBe(false);
 		expect(decodeBase64Url(encodeBase64Url(text))).toBe(text);
 		expect(decodeBase64(encodeBase64('{"id":1}')).parseJson<{ id: number }>()).toEqual({ id: 1 });
-		expect(() => decodeBase64(encodeBase64("not json")).parseJson<unknown>()).toThrow(TypeError);
+		expect(decodeBase64(encodeBase64("not json")).parseJson()).toBe("not json");
 		const bytes = Uint8Array.of(0, 1, 2, 127, 128, 254, 255);
 		expect(decodeBase64Bytes(encodeBase64Bytes(bytes))).toEqual(bytes);
 	});

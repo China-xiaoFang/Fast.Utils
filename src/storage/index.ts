@@ -203,7 +203,7 @@ const jsonCodec: StorageCodec = {
 
 /** Base64 混淆 Codec；只隐藏明文外观，不提供加密、完整性或认证。 */
 export const base64StorageCodec: StorageCodec = {
-	decode: (value): unknown => decodeSecureBase64(value).parseJson(),
+	decode: (value): unknown => JSON.parse(decodeSecureBase64(value)) as unknown,
 	encode: (value): string => {
 		const encoded: unknown = JSON.stringify(value);
 		if (typeof encoded !== "string") throw new TypeError("存储值无法序列化为 JSON。");
