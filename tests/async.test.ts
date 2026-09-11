@@ -4,8 +4,12 @@ import { expect, vi } from "./test-helpers";
 
 describe("cancellation and timeout", () => {
 	it("rejects timer values that runtimes would silently clamp", () => {
-		expect(() => sleep(2_147_483_648)).toThrow(RangeError);
-		expect(() => withTimeout(Promise.resolve(), 2_147_483_648)).toThrow(RangeError);
+		expect(() => {
+			sleep(2_147_483_648);
+		}).toThrow(RangeError);
+		expect(() => {
+			withTimeout(Promise.resolve(), 2_147_483_648);
+		}).toThrow(RangeError);
 		expect(() => debounce(() => undefined, 2_147_483_648)).toThrow(RangeError);
 		expect(() => throttle(() => undefined, 2_147_483_648)).toThrow(RangeError);
 	});
@@ -18,7 +22,12 @@ describe("cancellation and timeout", () => {
 	});
 
 	it("enforces a timeout without claiming to cancel the source Promise", async () => {
-		const pending = withTimeout(new Promise<string>(() => undefined), 5);
+		const pending = withTimeout(
+			new Promise<string>(() => {
+				return;
+			}),
+			5
+		);
 		await expect(pending).rejects.toThrow("超过 5 毫秒");
 	});
 });
@@ -110,7 +119,7 @@ describe("debounce and throttle", () => {
 
 	it("shares a leading Promise and prevents overlap after the cooldown", async () => {
 		let resolveOperation: ((value: number) => void) | undefined;
-		const callback = vi.fn((value: number) =>
+		const callback = vi.fn(async (value: number) =>
 			new Promise<number>((resolve) => {
 				resolveOperation = resolve;
 			}).then(() => value)

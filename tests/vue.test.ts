@@ -82,7 +82,7 @@ describe("Vue event and props helpers", () => {
 		expect(withDefineType(value)).toBe(value);
 		expect(withDefineType<{ id: number }>()).toBeUndefined();
 		await expect(callOptionalFunction((amount: number) => amount + 1, 1)).resolves.toBe(2);
-		await expect(callOptionalFunction((amount: number) => Promise.resolve(amount + 2), 1)).resolves.toBe(3);
+		await expect(callOptionalFunction(async (amount: number) => Promise.resolve(amount + 2), 1)).resolves.toBe(3);
 		await expect(callOptionalFunction(undefined)).resolves.toBe(undefined);
 	});
 });

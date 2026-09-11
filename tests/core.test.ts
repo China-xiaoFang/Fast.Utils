@@ -356,7 +356,7 @@ describe("string utilities", () => {
 		expect(setClipboardData.mock.calls[0]?.[0].data).toBe("uni text");
 
 		vi.unstubAllGlobals();
-		const writeText = vi.fn((_value: string) => Promise.resolve());
+		const writeText = vi.fn(async (_value: string) => Promise.resolve());
 		vi.stubGlobal("navigator", { clipboard: { writeText } });
 		vi.stubGlobal("isSecureContext", true);
 		await copy("browser text");

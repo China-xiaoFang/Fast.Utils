@@ -52,10 +52,10 @@ const groupedCheck: Map<"a" | "b", { kind: "a" | "b"; value: number }[]> = group
 const selected = pick({ count: 1, label: "fast" }, ["label"] as const);
 type PickResult = Expect<Equal<typeof selected, { label: string }>>;
 
-const retried = retry(({ attempt }) => (attempt > 1 ? "done" : Promise.reject(new Error("retry"))));
+const retried = retry(async ({ attempt }) => (attempt > 1 ? "done" : Promise.reject(new Error("retry"))));
 const retryCheck: Promise<string> = retried;
 
-const concurrent = mapConcurrent([1, 2], 2, (value) => Promise.resolve(String(value)));
+const concurrent = mapConcurrent([1, 2], 2, async (value) => Promise.resolve(String(value)));
 type ConcurrentResult = Expect<Equal<typeof concurrent, Promise<string[]>>>;
 
 const md5Digest: string = MD5Encrypt("Fast");
