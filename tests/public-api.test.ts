@@ -133,33 +133,31 @@ defineComponent({
 	},
 });
 
-void (null as unknown as ChunkResult);
-void (null as unknown as PickResult);
-void (null as unknown as ConcurrentResult);
-void (null as unknown as DefaultStorageResult);
-void (null as unknown as StorageResult);
-void groupedCheck;
-void retryCheck;
-void localStorageArea;
-void sessionStorageArea;
-void queryValue;
-void requiredQueryValue;
-void copyResult;
-void randomInteger;
-void randomText;
-void chunks;
-void selected;
-void concurrent;
-void defaultStored;
-void stored;
-void md5Digest;
-void inlineStyle;
-void dateText;
-void decryptedJson;
-void rsaKeys;
-void secureBase64Text;
-void secureBase64Json;
-void uncheckedJsonId;
-void singleCryptoValue;
-void typedValue;
-void slots;
+export {
+	chunks,
+	concurrent,
+	copyResult,
+	dateText,
+	defaultStored,
+	decryptedJson,
+	groupedCheck,
+	inlineStyle,
+	localStorageArea,
+	md5Digest,
+	queryValue,
+	randomInteger,
+	randomText,
+	requiredQueryValue,
+	retryCheck,
+	rsaKeys,
+	secureBase64Json,
+	secureBase64Text,
+	selected,
+	sessionStorageArea,
+	singleCryptoValue,
+	slots,
+	stored,
+	typedValue,
+	uncheckedJsonId,
+};
+export type { ChunkResult, ConcurrentResult, DefaultStorageResult, PickResult, StorageResult };

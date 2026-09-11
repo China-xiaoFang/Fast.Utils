@@ -91,8 +91,11 @@ export function parseQueryString(input: string): ParsedQueryParameters {
 		if (existing === undefined) {
 			// defineProperty 让 `__proto__` 成为普通自有键，不触发 Object.prototype Setter。
 			Object.defineProperty(result, key, { configurable: true, enumerable: true, value, writable: true });
-		} else if (Array.isArray(existing)) existing.push(value);
-		else Object.defineProperty(result, key, { configurable: true, enumerable: true, value: [existing, value], writable: true });
+		} else if (Array.isArray(existing)) {
+			existing.push(value);
+		} else {
+			Object.defineProperty(result, key, { configurable: true, enumerable: true, value: [existing, value], writable: true });
+		}
 	}
 	return result;
 }
@@ -244,7 +247,7 @@ export async function copy(value: string): Promise<void> {
 	}
 
 	const clipboard = globalThis.navigator?.clipboard;
-	if (globalThis.isSecureContext === true && typeof clipboard?.writeText === "function") {
+	if (globalThis.isSecureContext && typeof clipboard?.writeText === "function") {
 		await clipboard.writeText(value);
 		return;
 	}

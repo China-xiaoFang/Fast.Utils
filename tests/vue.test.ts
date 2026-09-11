@@ -13,10 +13,7 @@ import { expect, vi } from "./test-helpers";
 describe("Vue event and props helpers", () => {
 	it("maps event tuple types to real Vue handler names", () => {
 		const emits = { clear: null, "update:modelValue": (_value: string): boolean => true };
-		const emit = vi.fn((eventName: string, ...arguments_: unknown[]): void => {
-			void eventName;
-			void arguments_;
-		});
+		const emit = vi.fn((_eventName: string, ..._arguments_: unknown[]): void => undefined);
 		const handlers = useEmits(emits, emit).value;
 		handlers["onUpdate:modelValue"]?.("value");
 		handlers.onClear?.();
