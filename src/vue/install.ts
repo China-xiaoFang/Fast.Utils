@@ -42,7 +42,7 @@ interface VueAppRegistrationTarget {
  * @returns 只包含组件和指令注册能力的 App。
  * @throws `TypeError` 当目标不是对象或缺少 `component`、`directive` 方法。
  */
-const assertApp = (value: App): VueAppRegistrationTarget => {
+const assertApp = (value: unknown): VueAppRegistrationTarget => {
 	if (typeof value !== "object" || value === null) {
 		throw new TypeError("安装 Vue 插件需要 Vue 3 App 实例。");
 	}
@@ -107,6 +107,7 @@ const prepareComponentRegistration = (app: VueAppRegistrationTarget, component: 
  * @throws `TypeError` 当组件缺少合法名称、已有 `install`、附属键或名称发生冲突。
  * @throws `Error` 当 App 中同名位置已经注册其他组件。
  */
+// eslint-disable-next-line @typescript-eslint/no-generated-empty-object-type -- 空 Record 是无附属组件时精确且已发布的默认返回契约。
 export function withInstall<Main extends VueInstallValue, Extras extends Record<string, VueInstallValue> = Record<never, never>>(
 	main: Main,
 	extras?: Extras

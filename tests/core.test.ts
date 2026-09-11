@@ -264,7 +264,10 @@ describe("number utilities", () => {
 		expect(() => sum([Number.MAX_VALUE, Number.MAX_VALUE])).toThrow(RangeError);
 		expect(average([2, 4])).toBe(3);
 		expect(average([Number.MAX_VALUE, Number.MAX_VALUE])).toBe(Number.MAX_VALUE);
-		expect(average([2, , 4] as number[])).toBe(3);
+		const sparseValues = new Array<number>(3);
+		sparseValues[0] = 2;
+		sparseValues[2] = 4;
+		expect(average(sparseValues)).toBe(3);
 		expect(average([])).toBeUndefined();
 		expect(average(new Array<number>(2))).toBeUndefined();
 	});

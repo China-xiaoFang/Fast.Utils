@@ -1,3 +1,5 @@
+import { runtimeGlobals } from "../internal/runtime";
+
 /** 可识别的主要 JavaScript 运行环境。 */
 export type RuntimeKind = "browser" | "node" | "unknown" | "worker";
 
@@ -6,13 +8,19 @@ export type RuntimeKind = "browser" | "node" | "unknown" | "worker";
  *
  * @returns Navigator 不存在或字段类型异常时返回空字符串。
  */
-const currentUserAgent = (): string => (typeof globalThis.navigator?.userAgent === "string" ? globalThis.navigator.userAgent : "");
+const currentUserAgent = (): string => {
+	const userAgent: unknown = runtimeGlobals.navigator?.userAgent;
+	return typeof userAgent === "string" ? userAgent : "";
+};
 /**
  * 延迟读取当前设备报告的最大触点数。
  *
  * @returns Navigator 不存在或字段类型异常时返回 `0`。
  */
-const currentTouchPoints = (): number => (typeof globalThis.navigator?.maxTouchPoints === "number" ? globalThis.navigator.maxTouchPoints : 0);
+const currentTouchPoints = (): number => {
+	const maxTouchPoints: unknown = runtimeGlobals.navigator?.maxTouchPoints;
+	return typeof maxTouchPoints === "number" ? maxTouchPoints : 0;
+};
 
 /**
  * 判断当前运行时是否具有浏览器 `window` 与 `document`。
@@ -20,8 +28,7 @@ const currentTouchPoints = (): number => (typeof globalThis.navigator?.maxTouchP
  * @returns 两项能力均存在时返回 `true`；不读取 DOM 内容。
  */
 export function isBrowser(): boolean {
-	const window = globalThis.window;
-	return window !== undefined && window !== null && window.document !== null && typeof window.document === "object";
+	return runtimeGlobals.window?.document !== undefined;
 }
 
 /**
@@ -32,7 +39,7 @@ export function isBrowser(): boolean {
  * @returns 具有 `importScripts` 且不是浏览器 Window 时返回 `true`。
  */
 export function isWebWorker(): boolean {
-	return !isBrowser() && typeof Reflect.get(globalThis, "importScripts") === "function";
+	return !isBrowser() && typeof runtimeGlobals.importScripts === "function";
 }
 
 /**
@@ -41,10 +48,11 @@ export function isWebWorker(): boolean {
  * @returns `process.versions.node` 为字符串时返回 `true`。
  */
 export function isNode(): boolean {
-	const process: unknown = Reflect.get(globalThis, "process");
+	const process = runtimeGlobals.process;
 	if ((typeof process !== "object" && typeof process !== "function") || process === null) return false;
-	const versions: unknown = Reflect.get(process, "versions");
-	return (typeof versions === "object" || typeof versions === "function") && versions !== null && typeof Reflect.get(versions, "node") === "string";
+	const versions: unknown = (process as { versions?: unknown }).versions;
+	if ((typeof versions !== "object" && typeof versions !== "function") || versions === null) return false;
+	return typeof (versions as { node?: unknown }).node === "string";
 }
 
 /**
@@ -53,7 +61,7 @@ export function isNode(): boolean {
  * @returns 全局属性存在且不为 `undefined` 时返回 `true`；不调用任何平台 API。
  */
 export function isUniApp(): boolean {
-	return Reflect.get(globalThis, "uni") !== undefined;
+	return runtimeGlobals.uni !== undefined;
 }
 
 /**
@@ -64,7 +72,7 @@ export function isUniApp(): boolean {
  * @returns 同时提供本库 Web Crypto 功能所需方法时返回 `true`。
  */
 export function hasWebCrypto(): boolean {
-	const crypto = globalThis.crypto;
+	const crypto = runtimeGlobals.crypto;
 	const subtle = crypto?.subtle;
 	return (
 		typeof crypto?.getRandomValues === "function" &&

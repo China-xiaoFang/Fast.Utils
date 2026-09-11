@@ -888,41 +888,6 @@ export default defineConfig(
 		files: ["**/*.md"],
 		extends: [eslintMarkdown.configs.recommended],
 	},
-	// 外部平台对象、存储内容和 JavaScript 调用方不受当前 TypeScript 声明约束，保留必要的运行时防御。
-	{
-		name: "fast-utils/runtime-boundaries",
-		files: ["src/**/*.ts"],
-		rules: { "@typescript-eslint/no-unnecessary-condition": "off" },
-	},
-	// 异步工具刻意保留同步参数校验和同一 Promise 引用，不用 async 包装改变已发布语义。
-	{
-		name: "fast-utils/promise-identity-contract",
-		files: ["src/async/index.ts"],
-		rules: { "@typescript-eslint/promise-function-async": "off" },
-	},
-	// 这些泛型和空记录默认值属于公开类型契约；字符串归一化与废弃 DOM API 用于跨平台兼容回退。
-	{
-		name: "fast-utils/public-contract-compatibility",
-		files: ["src/internal/text.ts", "src/storage/**/*.ts", "src/string/index.ts", "src/vue/install.ts", "tests/public-api.test.ts"],
-		rules: {
-			"@typescript-eslint/no-deprecated": "off",
-			"@typescript-eslint/no-generated-empty-object-type": "off",
-			"@typescript-eslint/no-unnecessary-type-conversion": "off",
-			"@typescript-eslint/no-unnecessary-type-parameters": "off",
-		},
-	},
-	// 稀疏数组测试需要直接表达数组空槽，验证工具函数不会把空槽当作 undefined。
-	{
-		name: "fast-utils/sparse-array-tests",
-		files: ["tests/**/*.test.ts"],
-		rules: { "no-sparse-arrays": "off" },
-	},
-	// Logger 实现本身需要写入 Console；除此之外源码仍受 no-console 约束。
-	{
-		name: "fast-utils/intentional-console",
-		files: ["src/logger/index.ts"],
-		rules: { "no-console": "off" },
-	},
 	// 创建 Prettier 兼容层。
 	{
 		...eslintConfigPrettier,

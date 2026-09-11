@@ -1,4 +1,5 @@
 import { decodeSecureBase64, encodeSecureBase64 } from "../base64/index";
+import { runtimeGlobals } from "../internal/runtime";
 
 /** uni-app 同步存储信息中本库实际读取的字段。 */
 interface UniStorageInfo {
@@ -93,6 +94,7 @@ export interface StorageArea {
 	 * @returns 解码后的值；未传泛型时静态类型默认为 `string`，键缺失或过期时返回 `undefined`。
 	 * @throws 当键非法、包络损坏、Codec 解码失败或后端不可用时抛出错误。
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- 调用方通过泛型声明解码后的业务类型，是已发布 API。
 	get: <Value = string>(key: string, options?: StorageReadOptions) => Value | undefined;
 	/**
 	 * 判断一个可成功读取且未过期的业务键是否存在。
@@ -128,6 +130,7 @@ export interface StorageArea {
 	 * @param options - 可选的单次写入 TTL 与 Base64 混淆开关。
 	 * @throws 当键、TTL、业务值或后端写入无效时抛出错误。
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- 泛型保留写入值的精确类型，供调用方和包装器复用。
 	set: <Value>(key: string, value: Value, options?: StorageWriteOptions) => void;
 }
 
@@ -174,7 +177,7 @@ interface ActiveStorageConfiguration {
  * @throws `TypeError` 当全局 `uni` 存在但缺少本库需要的同步 Storage 方法。
  */
 const getGlobalUniStorage = (): UniStorageLike | undefined => {
-	const value: unknown = Reflect.get(globalThis, "uni");
+	const value = runtimeGlobals.uni;
 	if (value === undefined) return undefined;
 	if ((typeof value !== "object" && typeof value !== "function") || value === null) {
 		throw new TypeError("全局 uni 对象未提供同步 Storage API。");
@@ -241,7 +244,7 @@ const assertKey = (key: string): void => {
  * @throws `Error` 当所选 Storage 在当前环境不可用。
  */
 const createWebStorageBackend = (kind: "local" | "session"): StorageBackend => {
-	const storage = kind === "local" ? globalThis.localStorage : globalThis.sessionStorage;
+	const storage = kind === "local" ? runtimeGlobals.localStorage : runtimeGlobals.sessionStorage;
 	if (storage === undefined) throw new Error(`当前运行环境不支持 ${kind}Storage。`);
 	return {
 		getItem: (key): string | null => storage.getItem(key),
@@ -383,6 +386,7 @@ const createStorageArea = (backendFactory: () => StorageBackend, prefix: string,
 			const backend = backendFactory();
 			for (const key of listBusinessKeys(backend)) backend.removeItem(toStorageKey(key));
 		},
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- 实现必须保留 StorageArea.get 的调用方指定返回类型。
 		get<Value>(key: string, options: StorageReadOptions = {}): Value | undefined {
 			const envelope = readStoredEnvelope(backendFactory(), key);
 			if (envelope === undefined) return undefined;
@@ -413,6 +417,7 @@ const createStorageArea = (backendFactory: () => StorageBackend, prefix: string,
 			const backend = backendFactory();
 			for (const key of listBusinessKeys(backend)) if (key.startsWith(keyPrefix)) backend.removeItem(toStorageKey(key));
 		},
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- 实现必须保留 StorageArea.set 的精确值类型。
 		set<Value>(key: string, value: Value, options: StorageWriteOptions = {}): void {
 			assertKey(key);
 			if (value === undefined) throw new TypeError("不能存储顶层 `undefined`，请改为移除对应的键。");
@@ -474,6 +479,7 @@ const createStorageAreaProxy = (select: (configuration: ActiveStorageConfigurati
 		clear: (): void => {
 			getArea().clear();
 		},
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- 代理透传 StorageArea.get 的公开泛型。
 		get: <Value>(key: string, options?: StorageReadOptions): Value | undefined => getArea().get<Value>(key, options),
 		has: (key): boolean => getArea().has(key),
 		keys: (): string[] => getArea().keys(),
@@ -484,6 +490,7 @@ const createStorageAreaProxy = (select: (configuration: ActiveStorageConfigurati
 		removeByPrefix: (keyPrefix): void => {
 			getArea().removeByPrefix(keyPrefix);
 		},
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- 代理透传 StorageArea.set 的公开泛型。
 		set: <Value>(key: string, value: Value, options?: StorageWriteOptions): void => {
 			getArea().set(key, value, options);
 		},

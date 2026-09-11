@@ -1,3 +1,5 @@
+import { runtimeGlobals } from "../internal/runtime";
+
 const byteUnits = ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"] as const;
 const binaryByteUnits = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"] as const;
 
@@ -211,15 +213,15 @@ export function randomInt(minimum: number, maximumExclusive: number): number {
 	if (range <= 0 || range > uint32Range) {
 		throw new RangeError("区间不能为空且宽度不能超过 2^32。");
 	}
-	const crypto = globalThis.crypto;
-	const hasWebCrypto = typeof crypto?.getRandomValues === "function";
+	const crypto = runtimeGlobals.crypto;
+	const getRandomValues = crypto?.getRandomValues?.bind(crypto);
 
 	// 只接受可以被区间宽度整除的最大 2^32 前缀，消除取模偏差。
 	const limit = Math.floor(uint32Range / range) * range;
 	const values = new Uint32Array(1);
 	let sample: number;
 	do {
-		if (hasWebCrypto) crypto.getRandomValues(values);
+		if (getRandomValues !== undefined) getRandomValues(values);
 		else values[0] = Math.floor(Math.random() * uint32Range);
 		sample = values[0] ?? uint32Range;
 	} while (sample >= limit);

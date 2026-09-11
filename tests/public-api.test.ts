@@ -34,7 +34,7 @@ import {
 } from "@fast-china/utils";
 import type { ComputedRef } from "vue";
 
-type Equal<Left, Right> = (<Value>() => Value extends Left ? 1 : 2) extends <Value>() => Value extends Right ? 1 : 2 ? true : false;
+type Equal<Left, Right> = [Left, Right] extends [Right, Left] ? true : false;
 type Expect<Value extends true> = Value;
 
 const chunks = chunk([1, 2, 3] as const, 2);

@@ -2,6 +2,13 @@
 
 All notable changes to Fast.Utils are documented in this file.
 
+## [2.1.4] - 2026-09-11
+
+### Changed
+
+- Removed broad repository-specific ESLint rule overrides and resolved all resulting errors and warnings with focused source and test updates.
+- Centralized optional host capabilities behind a typed internal runtime view while keeping standard property and method calls, synchronous Promise argument validation, shared throttle Promise identity, public generic types, and the legacy clipboard fallback.
+
 ## [2.1.3] - 2026-08-30
 
 ### Changed
@@ -94,6 +101,7 @@ All notable changes to Fast.Utils are documented in this file.
 
 - Added authenticated ciphertext validation, bounded crypto parameters and payloads, unbiased Web Crypto randomness, prototype-safe query/object transforms, and namespace-scoped Storage cleanup.
 
+[2.1.4]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.1.3...v2.1.4
 [2.1.3]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.1.2...v2.1.3
 [2.1.2]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.1.0...v2.1.1

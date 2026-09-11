@@ -83,12 +83,15 @@ describe("retry and bounded concurrency", () => {
 	});
 
 	it("preserves sparse holes without passing undefined to the mapper", async () => {
-		const input = [1, , 3] as number[];
+		const input = new Array<number>(3);
+		input[0] = 1;
+		input[2] = 3;
 		const mapper = vi.fn((value: number) => value * 2);
 		const result = await mapConcurrent(input, 2, mapper);
 
 		expect(result).toHaveLength(3);
-		expect(result).toEqual([2, , 6]);
+		expect(result[0]).toBe(2);
+		expect(result[2]).toBe(6);
 		expect(1 in result).toBe(false);
 		expect(mapper).toHaveBeenCalledTimes(2);
 	});
@@ -129,6 +132,7 @@ describe("debounce and throttle", () => {
 		await sleep(10);
 		const second = throttled(2);
 		expect(callback).toHaveBeenCalledOnce();
+		expect(second).toBe(first);
 		resolveOperation?.(0);
 		await expect(first).resolves.toBe(1);
 		await expect(second).resolves.toBe(1);

@@ -1,3 +1,5 @@
+import { runtimeGlobals } from "../internal/runtime";
+
 const defaultRandomAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 const defaultStringLocale = "en-US";
 const maximumRandomStringLength = 1_000_000;
@@ -11,9 +13,14 @@ export type ParsedQueryParameters = Record<string, string | string[] | undefined
 /** 大小写与字素分割可接受的显式语言；省略时固定使用 `en-US` 以保持输出稳定。 */
 export type StringLocale = string | readonly string[] | undefined;
 
+/** uni-app 文本复制所需的最小运行时能力。 */
+interface UniClipboard {
+	setClipboardData: (options: { data: string; fail: (error: unknown) => void; success: () => void }) => void;
+}
+
 /** 使用 Web Crypto 填充随机值，能力缺失时回退到 `Math.random()`。 */
 const fillRandomValues = (values: Uint8Array<ArrayBuffer> | Uint32Array<ArrayBuffer>): void => {
-	const crypto = globalThis.crypto;
+	const crypto = runtimeGlobals.crypto;
 	if (typeof crypto?.getRandomValues === "function") {
 		crypto.getRandomValues(values);
 		return;
@@ -44,7 +51,7 @@ const createUuidV4FromBytes = (bytes: Uint8Array): string => {
  * @throws `Error` 当平台缺少 `Intl.Segmenter`。
  */
 const splitGraphemes = (value: string, locale: StringLocale): string[] => {
-	const Segmenter = globalThis.Intl?.Segmenter;
+	const Segmenter = runtimeGlobals.Intl?.Segmenter;
 	if (typeof Segmenter !== "function") {
 		throw new Error("当前运行环境不支持 Intl.Segmenter。");
 	}
@@ -225,35 +232,35 @@ export function truncateGraphemes(value: string, maxLength: number, suffix = "�
  * @throws `Error` 当运行时没有可用的剪贴板能力或复制失败。
  */
 export async function copy(value: string): Promise<void> {
-	const uni: unknown = Reflect.get(globalThis, "uni");
+	const uni = runtimeGlobals.uni;
 	if (uni !== undefined) {
 		if ((typeof uni !== "object" && typeof uni !== "function") || uni === null) {
 			throw new TypeError("全局 uni 对象未提供 `setClipboardData`。");
 		}
-		const setClipboardData: unknown = Reflect.get(uni, "setClipboardData");
-		if (typeof setClipboardData !== "function") throw new TypeError("全局 uni 对象未提供 `setClipboardData`。");
+		const clipboard = uni as Partial<UniClipboard>;
+		const setClipboardData = clipboard.setClipboardData?.bind(clipboard);
+		if (setClipboardData === undefined) throw new TypeError("全局 uni 对象未提供 `setClipboardData`。");
 		await new Promise<void>((resolve, reject) => {
-			Reflect.apply(setClipboardData, uni, [
-				{
-					data: value,
-					fail: (error: unknown): void => {
-						reject(error instanceof Error ? error : new Error("文本复制到剪贴板失败。", { cause: error }));
-					},
-					success: resolve,
+			setClipboardData({
+				data: value,
+				fail: (error: unknown): void => {
+					reject(error instanceof Error ? error : new Error("文本复制到剪贴板失败。", { cause: error }));
 				},
-			]);
+				success: resolve,
+			});
 		});
 		return;
 	}
 
-	const clipboard = globalThis.navigator?.clipboard;
-	if (globalThis.isSecureContext && typeof clipboard?.writeText === "function") {
-		await clipboard.writeText(value);
+	const browserClipboard = runtimeGlobals.navigator?.clipboard;
+	if (runtimeGlobals.isSecureContext === true && typeof browserClipboard?.writeText === "function") {
+		await browserClipboard.writeText(value);
 		return;
 	}
 
-	const document = globalThis.document;
-	if (typeof document?.createElement !== "function" || document.body === null || typeof document.execCommand !== "function") {
+	const document = runtimeGlobals.document;
+	// eslint-disable-next-line @typescript-eslint/no-deprecated -- 兼容不支持 Clipboard API 的旧 WebView。
+	if (typeof document?.createElement !== "function" || document.body == null || typeof document.execCommand !== "function") {
 		throw new Error("当前运行环境不支持访问剪贴板。");
 	}
 	const textarea = document.createElement("textarea");
@@ -267,6 +274,7 @@ export async function copy(value: string): Promise<void> {
 	try {
 		textarea.focus();
 		textarea.select();
+		// eslint-disable-next-line @typescript-eslint/no-deprecated -- 兼容不支持 Clipboard API 的旧 WebView。
 		copied = document.execCommand("copy");
 	} finally {
 		textarea.remove();
@@ -320,7 +328,7 @@ export function randomString(length: number, alphabet: string = defaultRandomAlp
  * @returns 小写、带连字符的 UUID v4。
  */
 export function generateUuidV4(): string {
-	const crypto = globalThis.crypto;
+	const crypto = runtimeGlobals.crypto;
 	if (typeof crypto?.randomUUID === "function") return crypto.randomUUID();
 	const bytes = new Uint8Array(16);
 	fillRandomValues(bytes);

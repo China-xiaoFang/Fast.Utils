@@ -1,3 +1,5 @@
+import { runtimeGlobals } from "../internal/runtime";
+
 /** 日志严重级别，按从低到高排列。 */
 export type LogLevel = "debug" | "log" | "warn" | "error";
 
@@ -90,7 +92,7 @@ const isLogLevel = (value: unknown): value is LogLevel => typeof value === "stri
  * @returns 全局 `uni` 与 `plus` 同时存在时返回 `true`。
  */
 const isUniAppPlus = (): boolean => {
-	return Reflect.get(globalThis, "uni") !== undefined && Reflect.get(globalThis, "plus") !== undefined;
+	return runtimeGlobals.uni !== undefined && runtimeGlobals.plus !== undefined;
 };
 
 /**
@@ -125,10 +127,13 @@ const formatSplitValue = (value: unknown): string => {
 
 const defaultConsoleSink: LoggerSink = {
 	debug: (...data): void => {
+		// eslint-disable-next-line no-console
 		if (typeof console.debug === "function") console.debug(...data);
+		// eslint-disable-next-line no-console
 		else console.log(...data);
 	},
 	log: (...data): void => {
+		// eslint-disable-next-line no-console
 		console.log(...data);
 	},
 	warn: (...data): void => {

@@ -11,6 +11,7 @@ import Pkcs7 from "crypto-js/pad-pkcs7.js";
 import ZeroPadding from "crypto-js/pad-zeropadding.js";
 import SHA1 from "crypto-js/sha1.js";
 import { decodeBase64Bytes, decodeBase64UrlBytes, encodeBase64Bytes, encodeBase64UrlBytes } from "../base64/index";
+import { runtimeGlobals } from "../internal/runtime";
 import { type DecodedText, createDecodedText, encodeUtf8, getTextDecoder } from "../internal/text";
 
 /** PBKDF2 默认迭代次数。 */
@@ -46,6 +47,11 @@ export type AesCipherMode = "CBC" | "ECB";
 /** AES 填充模式；与 .NET `PaddingMode` 中可由 CryptoJS 互操作的成员对应。 */
 export type AesPaddingMode = "None" | "PKCS7" | "Zeros" | "ANSIX923" | "ISO10126";
 
+/** 校验 JavaScript 调用方传入的 AES 分组模式。 */
+const assertAesCipherMode: (value: unknown) => asserts value is AesCipherMode = (value) => {
+	if (value !== "CBC" && value !== "ECB") throw new RangeError("`cipherMode` 必须是 `CBC` 或 `ECB`。");
+};
+
 /** Web Crypto 导出的 PEM 公私钥对。 */
 export interface PemKeyPair {
 	/** 未加密的 PKCS#8 PEM 私钥，包含标准 `PRIVATE KEY` 头尾和 64 字符换行。 */
@@ -64,7 +70,7 @@ export type EcNamedCurve = "P-256" | "P-384" | "P-521";
  * @throws `Error` 当任一必要 SubtleCrypto 方法缺失。
  */
 const requireWebCrypto = (): Crypto => {
-	const crypto = globalThis.crypto;
+	const crypto = runtimeGlobals.crypto;
 	const subtle = crypto?.subtle;
 	if (
 		typeof subtle?.decrypt !== "function" ||
@@ -80,7 +86,7 @@ const requireWebCrypto = (): Crypto => {
 	) {
 		throw new Error("当前运行环境不支持 Web Crypto SubtleCrypto。");
 	}
-	return crypto;
+	return crypto as Crypto;
 };
 
 /**
@@ -233,7 +239,7 @@ export function GenerateRandomBytes(length: number): Uint8Array {
 		throw new RangeError("`length` 必须是 0 到 65,536 之间的安全整数。");
 	}
 	const bytes = new Uint8Array(length);
-	const crypto = globalThis.crypto;
+	const crypto = runtimeGlobals.crypto;
 	if (typeof crypto?.getRandomValues === "function") return crypto.getRandomValues(bytes);
 	for (let index = 0; index < bytes.length; index += 1) bytes[index] = Math.floor(Math.random() * 0x100);
 	return bytes;
@@ -493,7 +499,7 @@ export function AESEncrypt(
 	paddingMode: AesPaddingMode = "PKCS7"
 ): string | null {
 	if (dataStr.trim().length === 0 || key.trim().length === 0 || vector.trim().length === 0) return null;
-	if (cipherMode !== "CBC" && cipherMode !== "ECB") throw new RangeError("`cipherMode` 必须是 `CBC` 或 `ECB`。");
+	assertAesCipherMode(cipherMode);
 
 	let padding = Pkcs7;
 	switch (paddingMode) {
@@ -545,7 +551,7 @@ export function AESDecrypt(
 	paddingMode: AesPaddingMode = "PKCS7"
 ): DecodedText | null {
 	if (dataStr.trim().length === 0 || key.trim().length === 0 || vector.trim().length === 0) return null;
-	if (cipherMode !== "CBC" && cipherMode !== "ECB") throw new RangeError("`cipherMode` 必须是 `CBC` 或 `ECB`。");
+	assertAesCipherMode(cipherMode);
 
 	let padding = Pkcs7;
 	switch (paddingMode) {

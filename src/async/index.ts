@@ -145,6 +145,7 @@ const assertDelay = (milliseconds: number, name = "milliseconds"): number => {
  * @returns 到期后完成的 Promise。
  * @throws 取消时抛出名称为 `AbortError` 的 `Error`；参数非法时抛出 `RangeError`。
  */
+// eslint-disable-next-line @typescript-eslint/promise-function-async -- 参数校验必须在调用时同步抛错，async 会把异常改成 rejected Promise。
 export function sleep(milliseconds: number, options: AbortOptions = {}): Promise<void> {
 	const delay = assertDelay(milliseconds);
 	const signal = options.signal;
@@ -177,6 +178,7 @@ export function sleep(milliseconds: number, options: AbortOptions = {}): Promise
  * @returns 底层 Promise 的结果。
  * @throws 超时抛出 `Error`，取消时抛出名称为 `AbortError` 的 `Error`；等待时间非法时抛出 `RangeError`。
  */
+// eslint-disable-next-line @typescript-eslint/promise-function-async -- 参数校验必须同步抛错，且返回值直接代表本次竞争结果。
 export function withTimeout<Result>(promise: PromiseLike<Result>, timeoutMs: number, options: TimeoutOptions = {}): Promise<Result> {
 	const delay = assertDelay(timeoutMs, "timeoutMs");
 	const signal = options.signal;
@@ -317,7 +319,7 @@ export async function mapConcurrent<Item, Result>(
 	};
 
 	const workerCount = Math.min(concurrency, items.length);
-	await Promise.all(Array.from({ length: workerCount }, () => worker()));
+	await Promise.all(Array.from({ length: workerCount }, worker));
 	return results;
 }
 
@@ -375,6 +377,7 @@ export function debounce<Arguments extends unknown[], Result>(
 	 * @param arguments_ - 本次调用参数；同批次中只有最后一组参数会执行。
 	 * @returns 与当前批次共享结果、但可独立结算的 Promise。
 	 */
+	// eslint-disable-next-line @typescript-eslint/promise-function-async -- 每次调用返回独立的可取消等待 Promise，不增加 async 包装层。
 	const debounced = (...arguments_: Arguments): Promise<Awaited<Result>> => {
 		latestArguments = arguments_;
 		if (timer !== undefined) clearTimeout(timer);
@@ -439,6 +442,7 @@ export function throttle<Arguments extends unknown[], Result>(
 	 * @param arguments_ - 仅新窗口首个调用会使用的参数。
 	 * @returns 当前窗口首次调用的 Promise。
 	 */
+	// eslint-disable-next-line @typescript-eslint/promise-function-async -- 同一节流窗口必须返回完全相同的 Promise 引用。
 	const throttled = (...arguments_: Arguments): Promise<Awaited<Result>> => {
 		if (current !== undefined) return current;
 		cooling = true;

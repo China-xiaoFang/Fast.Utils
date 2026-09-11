@@ -43,7 +43,7 @@ interface DecodedTextExtension {
 	 * @remarks 泛型只描述调用方期望的类型，不验证实际 JSON 结构；不可信数据仍需执行运行时校验。
 	 * @returns `JSON.parse` 生成的对象、数组、标量或 `null`；文本不是合法 JSON 时返回原始字符串。
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- 未传泛型时按公共 API 约定保留 JSON.parse 的 any 返回类型。
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-parameters -- 保留已发布的默认 any 与调用方指定返回类型。
 	parseJson: <Value = any>() => Value;
 }
 
@@ -53,8 +53,9 @@ export type DecodedText = string & DecodedTextExtension;
 const parseJsonMarker = Symbol.for("@fast-china/utils/parse-json");
 
 /** 把当前字符串解析为 JSON 值。 */
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- 返回类型由调用方声明，是已发布的链式解析 API。
 const parseJson = function <Value = ReturnType<typeof JSON.parse>>(this: string): Value {
-	const text = String(this);
+	const text = this.valueOf();
 	try {
 		return JSON.parse(text) as Value;
 	} catch {
