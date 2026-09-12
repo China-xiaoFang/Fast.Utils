@@ -42,32 +42,32 @@ afterEach(() => {
 class MemoryStorage {
 	readonly #values = new Map<string, string>();
 
-	get length(): number {
+	get length() {
 		return this.#values.size;
 	}
 
-	getItem(key: string): string | null {
+	getItem(key: string) {
 		return this.#values.get(key) ?? null;
 	}
 
-	key(index: number): string | null {
+	key(index: number) {
 		return [...this.#values.keys()][index] ?? null;
 	}
 
-	removeItem(key: string): void {
+	removeItem(key: string) {
 		this.#values.delete(key);
 	}
 
-	setItem(key: string, value: string): void {
+	setItem(key: string, value: string) {
 		this.#values.set(key, value);
 	}
 }
 
 let storageNow = 1_000;
-const storageClock = (): number => storageNow;
+const storageClock = () => storageNow;
 configureStorage({ crypto: true, now: storageClock, prefix: "test:" });
 
-const useBrowserStorage = (): { local: MemoryStorage; session: MemoryStorage } => {
+const useBrowserStorage = () => {
 	const local = new MemoryStorage();
 	const session = new MemoryStorage();
 	vi.stubGlobal("localStorage", local);
@@ -259,7 +259,7 @@ describe("Web Crypto utilities", () => {
 
 	it("keeps random generation available when only SubtleCrypto is missing", async () => {
 		vi.stubGlobal("crypto", {
-			getRandomValues: <Value extends ArrayBufferView>(value: Value): Value => value,
+			getRandomValues: <Value extends ArrayBufferView>(value: Value) => value,
 		});
 		expect(GenerateRandomBytes(2)).toEqual(Uint8Array.of(0, 0));
 		await expect(SHA256Encrypt("value")).rejects.toThrow("不支持 Web Crypto SubtleCrypto");

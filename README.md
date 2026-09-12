@@ -147,6 +147,8 @@ The package provides Vue 3 `app.use()` registration, Composition API helpers, ty
 
 Historical aggregate objects are not public. Supported behavior is exposed through named functions, improving auto-imports and Tree Shaking; this major version does not preserve every former convenience method.
 
+The `object` module includes dependency-free deep cloning and equality plus predicate-based property selection. Array utilities include a SameValueZero symmetric difference, while `once` preserves the first return value, Promise identity, or synchronous error.
+
 ## Runtime contract
 
 - The package-manager entry is pure ESM; the CDN entry is a separately minified IIFE.

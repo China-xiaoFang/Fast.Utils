@@ -46,7 +46,7 @@ const assertApp = (value: unknown): VueAppRegistrationTarget => {
 	if (typeof value !== "object" || value === null) {
 		throw new TypeError("安装 Vue 插件需要 Vue 3 App 实例。");
 	}
-	const app = value as unknown as Partial<VueAppRegistrationTarget>;
+	const app = value as Partial<VueAppRegistrationTarget>;
 	if (typeof app.component !== "function" || typeof app.directive !== "function") {
 		throw new TypeError("安装 Vue 插件需要 `component()` 和 `directive()` 注册方法。");
 	}
@@ -68,16 +68,6 @@ const getComponentName = (component: VueInstallValue): string => {
 	return name;
 };
 
-/** 预检完成、可以无失败注册的组件动作。 */
-interface ComponentRegistration {
-	/** 已校验的组件引用。 */
-	component: VueInstallValue;
-	/** 已校验的组件名称。 */
-	name: string;
-	/** 目标中是否已经注册了完全相同的组件引用。 */
-	registered: boolean;
-}
-
 /**
  * 预检单个组件注册。
  *
@@ -87,7 +77,7 @@ interface ComponentRegistration {
  * @returns 已校验的组件引用、名称和目标中是否已经存在同一引用。
  * @throws `Error` 当同名位置已由其他组件占用。
  */
-const prepareComponentRegistration = (app: VueAppRegistrationTarget, component: VueInstallValue): ComponentRegistration => {
+const prepareComponentRegistration = (app: VueAppRegistrationTarget, component: VueInstallValue) => {
 	const name = getComponentName(component);
 	const existing = app.component(name);
 	if (existing !== undefined && existing !== component) {
@@ -107,7 +97,6 @@ const prepareComponentRegistration = (app: VueAppRegistrationTarget, component: 
  * @throws `TypeError` 当组件缺少合法名称、已有 `install`、附属键或名称发生冲突。
  * @throws `Error` 当 App 中同名位置已经注册其他组件。
  */
-// eslint-disable-next-line @typescript-eslint/no-generated-empty-object-type -- 空 Record 是无附属组件时精确且已发布的默认返回契约。
 export function withInstall<Main extends VueInstallValue, Extras extends Record<string, VueInstallValue> = Record<never, never>>(
 	main: Main,
 	extras?: Extras
@@ -130,7 +119,7 @@ export function withInstall<Main extends VueInstallValue, Extras extends Record<
 	for (const [key, component] of extraEntries) {
 		Object.defineProperty(installable, key, { configurable: true, enumerable: true, value: component, writable: true });
 	}
-	installable.install = (value: App): void => {
+	installable.install = (value: App) => {
 		const app = assertApp(value);
 		// 先完成全部冲突检查，再统一注册，避免安装到一半留下部分全局组件。
 		const registrations = [main, ...extraEntries.map(([, component]) => component)].map((component) =>
@@ -155,7 +144,7 @@ export function withInstall<Main extends VueInstallValue, Extras extends Record<
 export function withNoopInstall<Value extends VueInstallValue>(component: Value): TSXWithInstall<Value> {
 	if ("install" in Object(component)) throw new TypeError("Vue 组件已定义 `install` 属性。");
 	const installable = component as TSXWithInstall<Value>;
-	installable.install = (): void => undefined;
+	installable.install = () => undefined;
 	return installable;
 }
 
@@ -176,7 +165,7 @@ export function withInstallDirective<Value extends VueInstallValue>(directive: V
 	}
 	if ("install" in Object(directive)) throw new TypeError("Vue 指令已定义 `install` 属性。");
 	const installable = directive as Installable<Value>;
-	installable.install = (value: App): void => {
+	installable.install = (value: App) => {
 		const app = assertApp(value);
 		const existing = app.directive(name);
 		if (existing !== undefined && existing !== directive) {

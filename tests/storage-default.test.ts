@@ -9,23 +9,23 @@ afterEach(() => {
 class MemoryStorage {
 	readonly #values = new Map<string, string>();
 
-	get length(): number {
+	get length() {
 		return this.#values.size;
 	}
 
-	getItem(key: string): string | null {
+	getItem(key: string) {
 		return this.#values.get(key) ?? null;
 	}
 
-	key(index: number): string | null {
+	key(index: number) {
 		return [...this.#values.keys()][index] ?? null;
 	}
 
-	removeItem(key: string): void {
+	removeItem(key: string) {
 		this.#values.delete(key);
 	}
 
-	setItem(key: string, value: string): void {
+	setItem(key: string, value: string) {
 		this.#values.set(key, value);
 	}
 }

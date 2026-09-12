@@ -24,4 +24,4 @@ interface RuntimeGlobals {
  * @remarks TypeScript 的 DOM 声明假定浏览器全局始终存在，但本包也会在 Node、WebView
  * 和 uni-app 中运行。这里只放宽能力是否存在，不改变标准 API 的属性与方法类型。
  */
-export const runtimeGlobals = globalThis as unknown as RuntimeGlobals;
+export const runtimeGlobals = globalThis as RuntimeGlobals;

@@ -2,6 +2,18 @@
 
 All notable changes to Fast.Utils are documented in this file.
 
+## [2.1.5] - 2026-09-12
+
+### Added
+
+- Added the dependency-free `cloneDeep` object utility with Lodash-compatible recursive cloning, circular-reference tracking, built-in object support, and preserved Map keys.
+- Added `isEqual`, `pickBy`, `omitBy`, `symmetricDifference`, and `once` with public type contracts and runtime coverage.
+
+### Changed
+
+- Expanded the applicable JavaScript, TypeScript, import, RegExp, JSON, Markdown, sorting, and Prettier rules from Fast.ESLint.Config 2.1.8 directly in the repository's single `eslint.config.mjs`.
+- Removed obsolete rule suppressions while preserving synchronous validation, Promise identity, public generic signatures, storage behavior, and Vue installation contracts.
+
 ## [2.1.4] - 2026-09-11
 
 ### Changed
@@ -101,6 +113,7 @@ All notable changes to Fast.Utils are documented in this file.
 
 - Added authenticated ciphertext validation, bounded crypto parameters and payloads, unbiased Web Crypto randomness, prototype-safe query/object transforms, and namespace-scoped Storage cleanup.
 
+[2.1.5]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.1.4...v2.1.5
 [2.1.4]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.1.3...v2.1.4
 [2.1.3]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.1.2...v2.1.3
 [2.1.2]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.1.1...v2.1.2

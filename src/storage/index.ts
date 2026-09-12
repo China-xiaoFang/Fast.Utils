@@ -94,7 +94,6 @@ export interface StorageArea {
 	 * @returns 解码后的值；未传泛型时静态类型默认为 `string`，键缺失或过期时返回 `undefined`。
 	 * @throws 当键非法、包络损坏、Codec 解码失败或后端不可用时抛出错误。
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- 调用方通过泛型声明解码后的业务类型，是已发布 API。
 	get: <Value = string>(key: string, options?: StorageReadOptions) => Value | undefined;
 	/**
 	 * 判断一个可成功读取且未过期的业务键是否存在。
@@ -130,7 +129,6 @@ export interface StorageArea {
 	 * @param options - 可选的单次写入 TTL 与 Base64 混淆开关。
 	 * @throws 当键、TTL、业务值或后端写入无效时抛出错误。
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- 泛型保留写入值的精确类型，供调用方和包装器复用。
 	set: <Value>(key: string, value: Value, options?: StorageWriteOptions) => void;
 }
 
@@ -196,9 +194,9 @@ const getGlobalUniStorage = (): UniStorageLike | undefined => {
 
 /** 默认 JSON Codec；显式拒绝会被 JSON.stringify 静默丢弃的顶层值。 */
 const jsonCodec: StorageCodec = {
-	decode: (value): unknown => JSON.parse(value) as unknown,
-	encode: (value): string => {
-		const encoded: unknown = JSON.stringify(value);
+	decode: (value) => JSON.parse(value) as unknown,
+	encode: (value) => {
+		const encoded = JSON.stringify(value);
 		if (typeof encoded !== "string") throw new TypeError("存储值无法序列化为 JSON。");
 		return encoded;
 	},
@@ -206,9 +204,9 @@ const jsonCodec: StorageCodec = {
 
 /** Base64 混淆 Codec；只隐藏明文外观，不提供加密、完整性或认证。 */
 export const base64StorageCodec: StorageCodec = {
-	decode: (value): unknown => JSON.parse(decodeSecureBase64(value)) as unknown,
-	encode: (value): string => {
-		const encoded: unknown = JSON.stringify(value);
+	decode: (value) => JSON.parse(decodeSecureBase64(value)) as unknown,
+	encode: (value) => {
+		const encoded = JSON.stringify(value);
 		if (typeof encoded !== "string") throw new TypeError("存储值无法序列化为 JSON。");
 		return encodeSecureBase64(encoded);
 	},
@@ -247,8 +245,8 @@ const createWebStorageBackend = (kind: "local" | "session"): StorageBackend => {
 	const storage = kind === "local" ? runtimeGlobals.localStorage : runtimeGlobals.sessionStorage;
 	if (storage === undefined) throw new Error(`当前运行环境不支持 ${kind}Storage。`);
 	return {
-		getItem: (key): string | null => storage.getItem(key),
-		keys: (): string[] => {
+		getItem: (key) => storage.getItem(key),
+		keys: () => {
 			const keys: string[] = [];
 			for (let index = 0; index < storage.length; index += 1) {
 				const key = storage.key(index);
@@ -256,10 +254,10 @@ const createWebStorageBackend = (kind: "local" | "session"): StorageBackend => {
 			}
 			return keys;
 		},
-		removeItem: (key): void => {
+		removeItem: (key) => {
 			storage.removeItem(key);
 		},
-		setItem: (key, value): void => {
+		setItem: (key, value) => {
 			storage.setItem(key, value);
 		},
 	};
@@ -273,16 +271,16 @@ const createWebStorageBackend = (kind: "local" | "session"): StorageBackend => {
  * @returns 统一的内部同步后端。
  */
 const createUniStorageBackend = (storage: UniStorageLike): StorageBackend => ({
-	getItem: (key): unknown => {
+	getItem: (key) => {
 		const value = storage.getStorageSync(key);
 		if (value !== "") return value;
 		return storage.getStorageInfoSync().keys.includes(key) ? value : undefined;
 	},
-	keys: (): readonly string[] => [...storage.getStorageInfoSync().keys],
-	removeItem: (key): void => {
+	keys: () => [...storage.getStorageInfoSync().keys],
+	removeItem: (key) => {
 		storage.removeStorageSync(key);
 	},
-	setItem: (key, value): void => {
+	setItem: (key, value) => {
 		storage.setStorageSync(key, value);
 	},
 });
@@ -329,7 +327,7 @@ const createStorageArea = (backendFactory: () => StorageBackend, prefix: string,
 	 * @param key - 已校验业务键。
 	 * @returns 带当前命名空间前缀的物理键。
 	 */
-	const toStorageKey = (key: string): string => `${prefix}${key}`;
+	const toStorageKey = (key: string) => `${prefix}${key}`;
 	/**
 	 * 解析本次读写实际使用的 Codec。
 	 *
@@ -337,7 +335,7 @@ const createStorageArea = (backendFactory: () => StorageBackend, prefix: string,
 	 * @returns 本次操作使用的全局、JSON 或 Base64 Codec。
 	 * @throws `TypeError` 当 JavaScript 调用方传入非布尔值。
 	 */
-	const resolveOperationCodec = (crypto: boolean | undefined): StorageCodec => {
+	const resolveOperationCodec = (crypto: boolean | undefined) => {
 		if (crypto === undefined) return codec;
 		if (typeof crypto !== "boolean") throw new TypeError("Storage 单次 `crypto` 选项必须是布尔值。");
 		return crypto ? base64StorageCodec : jsonCodec;
@@ -349,7 +347,7 @@ const createStorageArea = (backendFactory: () => StorageBackend, prefix: string,
 	 * @returns 已移除物理前缀、去重并排序的业务键。
 	 * @throws `TypeError` 当后端返回非字符串键。
 	 */
-	const listBusinessKeys = (backend: StorageBackend): string[] => {
+	const listBusinessKeys = (backend: StorageBackend) => {
 		const keys = backend.keys();
 		if (!Array.isArray(keys) || !keys.every((key) => typeof key === "string")) {
 			throw new TypeError("Storage 后端返回的键必须是字符串。");
@@ -382,11 +380,10 @@ const createStorageArea = (backendFactory: () => StorageBackend, prefix: string,
 
 	return {
 		prefix,
-		clear(): void {
+		clear() {
 			const backend = backendFactory();
 			for (const key of listBusinessKeys(backend)) backend.removeItem(toStorageKey(key));
 		},
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- 实现必须保留 StorageArea.get 的调用方指定返回类型。
 		get<Value>(key: string, options: StorageReadOptions = {}): Value | undefined {
 			const envelope = readStoredEnvelope(backendFactory(), key);
 			if (envelope === undefined) return undefined;
@@ -396,9 +393,9 @@ const createStorageArea = (backendFactory: () => StorageBackend, prefix: string,
 				throw new TypeError(`无法解码 Storage 条目“${toStorageKey(key)}”。`, { cause });
 			}
 		},
-		has: (key): boolean => readStoredEnvelope(backendFactory(), key) !== undefined,
-		keys: (): string[] => listBusinessKeys(backendFactory()),
-		pruneExpired(): number {
+		has: (key) => readStoredEnvelope(backendFactory(), key) !== undefined,
+		keys: () => listBusinessKeys(backendFactory()),
+		pruneExpired() {
 			const backend = backendFactory();
 			let removed = 0;
 			for (const key of listBusinessKeys(backend)) {
@@ -408,17 +405,16 @@ const createStorageArea = (backendFactory: () => StorageBackend, prefix: string,
 			}
 			return removed;
 		},
-		remove(key: string): void {
+		remove(key: string) {
 			assertKey(key);
 			backendFactory().removeItem(toStorageKey(key));
 		},
-		removeByPrefix(keyPrefix: string): void {
+		removeByPrefix(keyPrefix: string) {
 			assertKey(keyPrefix);
 			const backend = backendFactory();
 			for (const key of listBusinessKeys(backend)) if (key.startsWith(keyPrefix)) backend.removeItem(toStorageKey(key));
 		},
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- 实现必须保留 StorageArea.set 的精确值类型。
-		set<Value>(key: string, value: Value, options: StorageWriteOptions = {}): void {
+		set<Value>(key: string, value: Value, options: StorageWriteOptions = {}) {
 			assertKey(key);
 			if (value === undefined) throw new TypeError("不能存储顶层 `undefined`，请改为移除对应的键。");
 			let expiresAt: number | null = null;
@@ -467,31 +463,29 @@ const createStorageAreaProxy = (select: (configuration: ActiveStorageConfigurati
 	 * @returns 配置中的 Local 或 Session Area。
 	 * @throws `Error` 当 uni-app 模式请求 Session。
 	 */
-	const getArea = (): StorageArea => {
+	const getArea = () => {
 		const area = select(requireStorageConfiguration());
 		if (area === undefined) throw new Error(`uni-app 中不支持 ${name}。`);
 		return area;
 	};
 	return {
-		get prefix(): string {
+		get prefix() {
 			return getArea().prefix;
 		},
-		clear: (): void => {
+		clear: () => {
 			getArea().clear();
 		},
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- 代理透传 StorageArea.get 的公开泛型。
 		get: <Value>(key: string, options?: StorageReadOptions): Value | undefined => getArea().get<Value>(key, options),
-		has: (key): boolean => getArea().has(key),
-		keys: (): string[] => getArea().keys(),
-		pruneExpired: (): number => getArea().pruneExpired(),
-		remove: (key): void => {
+		has: (key) => getArea().has(key),
+		keys: () => getArea().keys(),
+		pruneExpired: () => getArea().pruneExpired(),
+		remove: (key) => {
 			getArea().remove(key);
 		},
-		removeByPrefix: (keyPrefix): void => {
+		removeByPrefix: (keyPrefix) => {
 			getArea().removeByPrefix(keyPrefix);
 		},
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- 代理透传 StorageArea.set 的公开泛型。
-		set: <Value>(key: string, value: Value, options?: StorageWriteOptions): void => {
+		set: <Value>(key: string, value: Value, options?: StorageWriteOptions) => {
 			getArea().set(key, value, options);
 		},
 	};
@@ -530,8 +524,7 @@ export function configureStorage(options: StorageConfiguration = {}): void {
 		throw new Error("Storage 已使用其他选项完成配置。");
 	}
 	const uni = getGlobalUniStorage();
-	const localBackend =
-		uni === undefined ? (): StorageBackend => createWebStorageBackend("local") : (): StorageBackend => createUniStorageBackend(uni);
+	const localBackend = uni === undefined ? () => createWebStorageBackend("local") : () => createUniStorageBackend(uni);
 	const local = createStorageArea(localBackend, prefix, codec, now);
 	const configuration: ActiveStorageConfiguration = { codec, local, now, prefix };
 	if (uni === undefined) {

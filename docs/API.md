@@ -123,7 +123,7 @@ Store passwords with `HashPasswordPBKDF2SHA256` and `VerifyPasswordPBKDF2SHA256`
 
 ## Modules
 
-- `array`: `chunk`, `removeNullishValues`, `unique`, `uniqueBy`, `groupBy`, `partition`, `difference`, `intersection`, `hasDuplicatesBy`, and `allEqualBy`.
+- `array`: `chunk`, `removeNullishValues`, `unique`, `uniqueBy`, `groupBy`, `partition`, `difference`, `intersection`, `symmetricDifference`, `hasDuplicatesBy`, and `allEqualBy`.
 - `async`: abort-aware `sleep`, timeout, retry, bounded concurrent mapping, debounce, and throttle primitives.
 - `base64`: strict UTF-8 Base64/Base64URL byte functions and chainable text results plus the historical Latin-1 and dictionary-obfuscation functions.
 - `color`: Hex parsing/formatting/mixing, explicit black/white mixing, luminance, and contrast helpers.
@@ -131,9 +131,10 @@ Store passwords with `HashPasswordPBKDF2SHA256` and `VerifyPasswordPBKDF2SHA256`
 - `date`: date validation and arithmetic, day ranges, relative formatting, and the seven historical date helpers as named functions.
 - `dom`: CSS unit and style serialization helpers.
 - `env`: capability and user-agent detection. Detection does not expand the supported runtime contract.
+- `function`: `once` execution with cached return, Promise identity, and synchronous-error behavior.
 - `logger`: isolated configurable loggers and the default `logger`.
 - `number`: ranges, rounding, aggregation, interpolation, byte formatting, and Web Crypto-preferred `randomInt`.
-- `object`: prototype-safe selection, comparison, mapping, and query serialization. Style serialization is provided by the `dom` module.
+- `object`: deep cloning and equality, prototype-safe key and predicate selection, mapping, and query serialization. Style serialization is provided by the `dom` module.
 - `string`: query parsing, casing, grapheme-aware truncation, clipboard copying, UUID, Web Crypto-preferred `randomString`, escaping, and whitespace normalization.
 - `vue`: Composition API, type, render, and `app.use()` registration helpers for Vue 3.
 

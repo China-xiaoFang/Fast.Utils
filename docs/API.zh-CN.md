@@ -122,7 +122,7 @@ const result = plaintext.parseJson<{ id: number }>();
 
 ## 模块
 
-- `array`：分块、压缩、去重、分组、分区、差集、交集和一致性判断。
+- `array`：分块、压缩、去重、分组、分区、差集、交集、对称差集和一致性判断。
 - `async`：支持取消的 Sleep、超时、重试、受限并发映射、防抖和节流。
 - `base64`：严格 UTF-8 Base64/Base64URL 字节与链式文本结果，以及 Latin-1 和 SecureBase64 兼容函数。
 - `color`：颜色解析、格式化、混合、明暗、亮度和对比度。
@@ -130,9 +130,10 @@ const result = plaintext.parseJson<{ id: number }>();
 - `date`：日期校验、加减、日范围、相对时间，以及七个历史日期功能的具名函数。
 - `dom`：CSS 单位和 Style 序列化。
 - `env`：能力与 User-Agent 检测；检测函数不扩大运行时支持范围。
+- `function`：最多执行一次并缓存返回值、Promise 引用或同步错误的 `once`。
 - `logger`：隔离的可配置 Logger 和默认 `logger`。
 - `number`：范围、舍入、聚合、插值、字节格式化，以及优先使用 Web Crypto 的 `randomInt`。
-- `object`：防原型污染的选择、比较、映射和 Query 序列化；Style 序列化由 `dom` 模块提供。
+- `object`：深复制、深度比较、防原型污染的键和条件筛选、映射及 Query 序列化；Style 序列化由 `dom` 模块提供。
 - `string`：Query 解析、大小写、字素截断、剪贴板复制、UUID、优先使用 Web Crypto 的 `randomString`、转义和空白规范化。
 - `vue`：Vue 3 的 Composition API、类型、Render 和 `app.use()` 注册 Helper。
 

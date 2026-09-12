@@ -10,6 +10,7 @@ import {
 	Session,
 	type StorageArea,
 	chunk,
+	cloneDeep,
 	configureInstallationIdentity,
 	configureLogger,
 	configureStorage,
@@ -18,15 +19,21 @@ import {
 	encodeSecureBase64,
 	formatChineseRelativeTime,
 	groupBy,
+	isEqual,
 	logger,
 	makeSlots,
 	mapConcurrent,
+	omit,
+	omitBy,
+	once,
 	parseQueryString,
 	pick,
+	pickBy,
 	randomInt,
 	randomString,
 	retry,
 	serializeStyle,
+	symmetricDifference,
 	useEmits,
 	useProps,
 	useRender,
@@ -49,13 +56,34 @@ const grouped = groupBy(
 );
 const groupedCheck: Map<"a" | "b", { kind: "a" | "b"; value: number }[]> = grouped;
 
-const selected = pick({ count: 1, label: "fast" }, ["label"] as const);
+const selected = pick({ count: 1, label: "fast" }, ["label"]);
 type PickResult = Expect<Equal<typeof selected, { label: string }>>;
 
-const retried = retry(async ({ attempt }) => (attempt > 1 ? "done" : Promise.reject(new Error("retry"))));
+const dynamicKeys: string[] = ["label"];
+const dynamicallySelected = pick({ count: 1, label: "fast" }, dynamicKeys);
+const dynamicallyOmitted = omit({ count: 1, label: "fast" }, dynamicKeys);
+type DynamicPickResult = Expect<Equal<typeof dynamicallySelected, Partial<{ count: number; label: string }>>>;
+type DynamicOmitResult = Expect<Equal<typeof dynamicallyOmitted, Partial<{ count: number; label: string }>>>;
+
+const cloned = cloneDeep({ nested: { id: 1 } });
+type CloneDeepResult = Expect<Equal<typeof cloned, { nested: { id: number } }>>;
+
+const equalityResult: boolean = isEqual({ id: 1 }, { id: 1 });
+const pickedBy = pickBy({ count: 1, label: "fast" }, (value) => typeof value === "number");
+const omittedBy = omitBy({ count: 1, label: "fast" }, (value) => typeof value === "number");
+type PickByResult = Expect<Equal<typeof pickedBy, Partial<{ count: number; label: string }>>>;
+type OmitByResult = Expect<Equal<typeof omittedBy, Partial<{ count: number; label: string }>>>;
+
+const symmetric = symmetricDifference([1, 2] as const, [2, 3] as const);
+type SymmetricDifferenceResult = Expect<Equal<typeof symmetric, (1 | 2 | 3)[]>>;
+
+const initializeOnce = once((value: number) => String(value));
+const onceResult: string = initializeOnce(1);
+
+const retried = retry(({ attempt }) => (attempt > 1 ? "done" : Promise.reject(new Error("retry"))));
 const retryCheck: Promise<string> = retried;
 
-const concurrent = mapConcurrent([1, 2], 2, async (value) => Promise.resolve(String(value)));
+const concurrent = mapConcurrent([1, 2], 2, (value) => Promise.resolve(String(value)));
 type ConcurrentResult = Expect<Equal<typeof concurrent, Promise<string[]>>>;
 
 const md5Digest: string = MD5Encrypt("Fast");
@@ -97,9 +125,8 @@ const randomText: string = randomString(16);
 
 const rawEmits = {
 	clear: null,
-	"update:modelValue": (_value: string): boolean => true,
+	"update:modelValue": (_value: string) => true,
 };
-
 defineComponent({
 	emits: rawEmits,
 	props: {
@@ -129,21 +156,29 @@ defineComponent({
 		componentSlots.item?.({ id: 1 });
 		// @ts-expect-error The item slot requires a numeric id.
 		componentSlots.item?.({ id: "1" });
-		return (): ReturnType<typeof h> => h("div");
+		return () => h("div");
 	},
 });
 
 export {
 	chunks,
+	cloned,
 	concurrent,
 	copyResult,
 	dateText,
 	defaultStored,
 	decryptedJson,
+	dynamicallyOmitted,
+	dynamicallySelected,
+	equalityResult,
 	groupedCheck,
+	initializeOnce,
 	inlineStyle,
 	localStorageArea,
 	md5Digest,
+	omittedBy,
+	onceResult,
+	pickedBy,
 	queryValue,
 	randomInteger,
 	randomText,
@@ -157,7 +192,20 @@ export {
 	singleCryptoValue,
 	slots,
 	stored,
+	symmetric,
 	typedValue,
 	uncheckedJsonId,
 };
-export type { ChunkResult, ConcurrentResult, DefaultStorageResult, PickResult, StorageResult };
+export type {
+	ChunkResult,
+	CloneDeepResult,
+	ConcurrentResult,
+	DefaultStorageResult,
+	DynamicOmitResult,
+	DynamicPickResult,
+	OmitByResult,
+	PickByResult,
+	PickResult,
+	StorageResult,
+	SymmetricDifferenceResult,
+};

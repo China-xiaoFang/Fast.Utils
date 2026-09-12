@@ -9,6 +9,7 @@ import {
 	camelCase,
 	chunk,
 	clamp,
+	cloneDeep,
 	contrastRatio,
 	copy,
 	createDateRangeShortcuts,
@@ -44,6 +45,7 @@ import {
 	inRange,
 	intersection,
 	isDateAfterNow,
+	isEqual,
 	isFuture,
 	isMobileUserAgent,
 	isPlainObject,
@@ -60,11 +62,14 @@ import {
 	mixHexColorWithWhite,
 	normalizeWhitespace,
 	omit,
+	omitBy,
+	once,
 	parseHexColor,
 	parseQueryString,
 	partition,
 	pascalCase,
 	pick,
+	pickBy,
 	pickHigherContrastColor,
 	randomInt,
 	randomString,
@@ -76,6 +81,7 @@ import {
 	splitWords,
 	startOfDay,
 	sum,
+	symmetricDifference,
 	toDate,
 	toQueryString,
 	truncateGraphemes,
@@ -118,10 +124,10 @@ const legacyBase64Dictionary = [
 	{ index: 7, randomIndex: 4 },
 	{ index: 5, randomIndex: 3 },
 	{ index: 2, randomIndex: 1 },
-] as const;
+];
 
 /** 复现旧版默认前缀和字典插入流程，作为持久化兼容格式基准。 */
-const encodeLegacySecureBase64 = (value: string): string => {
+const encodeLegacySecureBase64 = (value: string) => {
 	const source = Buffer.from(encodeURIComponent(value), "latin1").toString("base64");
 	let result = source;
 	for (const item of legacyBase64Dictionary) {
@@ -134,7 +140,7 @@ const encodeLegacySecureBase64 = (value: string): string => {
 };
 
 /** 使用旧版删除顺序解码，确认修复后的边界载荷仍可被已有消费者读取。 */
-const decodeLegacySecureBase64 = (value: string): string => {
+const decodeLegacySecureBase64 = (value: string) => {
 	const source = value.slice(6);
 	let result = source;
 	for (const item of [...legacyBase64Dictionary].reverse()) {
@@ -149,7 +155,7 @@ afterEach(() => {
 
 describe("array utilities", () => {
 	it("chunks, removes nullish values, and deduplicates without mutating input", () => {
-		const input = [1, 2, 2, 3] as const;
+		const input = [1, 2, 2, 3];
 		expect(chunk(input, 3)).toEqual([[1, 2, 2], [3]]);
 		expect(removeNullishValues([0, null, false, undefined, ""])).toEqual([0, false, ""]);
 		expect(unique(input)).toEqual([1, 2, 3]);
@@ -176,6 +182,7 @@ describe("array utilities", () => {
 	it("computes distinct set operations with SameValueZero semantics", () => {
 		expect(difference([1, 1, 2, Number.NaN], [2])).toEqual([1, Number.NaN]);
 		expect(intersection([3, 2, 2, 1], [2, 3])).toEqual([3, 2]);
+		expect(symmetricDifference([1, 2, 2, Number.NaN], [2, 3, Number.NaN])).toEqual([1, 3]);
 		expect(allEqualBy([{ value: Number.NaN }, { value: Number.NaN }], (item) => item.value)).toBe(true);
 	});
 
@@ -188,6 +195,44 @@ describe("array utilities", () => {
 		expect(allEqualBy(sparse, selector)).toBe(true);
 		expect(selector).toHaveBeenCalledOnce();
 		expect(selector).toHaveBeenCalledWith(1, 2);
+	});
+});
+
+describe("function utilities", () => {
+	it("invokes a function once and preserves its first outcome", async () => {
+		const callback = vi.fn((value: number) => ({ value }));
+		const initialize = once(callback);
+		const first = initialize(1);
+		expect(initialize(2)).toBe(first);
+		expect(first).toEqual({ value: 1 });
+		expect(callback).toHaveBeenCalledOnce();
+
+		const context = {
+			prefix: "Fast",
+			format: once(function (this: { prefix: string }, suffix: string) {
+				return `${this.prefix}${suffix}`;
+			}),
+		};
+		expect(context.format("!")).toBe("Fast!");
+		context.prefix = "Changed";
+		expect(context.format("?")).toBe("Fast!");
+
+		const promise = Promise.resolve("ready");
+		const load = once(() => promise);
+		expect(load()).toBe(promise);
+		expect(load()).toBe(promise);
+		await expect(load()).resolves.toBe("ready");
+
+		const failure = new Error("failed");
+		let attempts = 0;
+		const fail = once((): string => {
+			attempts += 1;
+			throw failure;
+		});
+		expect(() => fail()).toThrow(failure);
+		expect(() => fail()).toThrow(failure);
+		expect(attempts).toBe(1);
+		expect(() => once(undefined as never)).toThrow(TypeError);
 	});
 });
 
@@ -223,7 +268,7 @@ describe("Base64 utilities", () => {
 
 	it("preserves the dictionary-compatible SecureBase64 format", () => {
 		vi.stubGlobal("crypto", {
-			getRandomValues: (values: Uint32Array): Uint32Array => {
+			getRandomValues: (values: Uint32Array) => {
 				values.fill(1);
 				return values;
 			},
@@ -289,6 +334,8 @@ describe("object and query utilities", () => {
 		expect(hasOwn(source, "count")).toBe(true);
 		expect(pick(source, ["label"])).toEqual({ label: "fast" });
 		expect(omit(source, ["count"])).toEqual({ label: "fast" });
+		expect(pickBy(source, (value) => typeof value === "number")).toEqual({ count: 2 });
+		expect(omitBy(source, (value) => typeof value === "number")).toEqual({ label: "fast" });
 		expect(mapValues(source, (value) => String(value))).toEqual({ count: "2", label: "fast" });
 		const unusual = Object.defineProperty({} as Record<"__proto__", { safe: boolean }>, "__proto__", {
 			enumerable: true,
@@ -298,6 +345,101 @@ describe("object and query utilities", () => {
 		expect(Object.hasOwn(picked, "__proto__")).toBe(true);
 		expect(Object.getPrototypeOf(picked)).toBe(Object.prototype);
 		expect(mapValues(unusual, (value) => value)).toEqual(picked);
+	});
+
+	it("deeply clones Lodash-compatible values and preserves graph relationships", () => {
+		const symbolKey = Symbol("metadata");
+		const shared = { count: 1 };
+		const mapKey = { id: 1 };
+		const callback = () => "same reference";
+		const source: {
+			array: { count: number }[];
+			callback: () => string;
+			date: Date;
+			map: Map<object, { count: number }>;
+			pattern: RegExp;
+			self?: unknown;
+			set: Set<{ count: number }>;
+			typedArray: Uint16Array;
+			[symbolKey]: { count: number };
+		} = {
+			array: [shared],
+			callback,
+			date: new Date("2024-01-01T00:00:00.000Z"),
+			map: new Map([[mapKey, shared]]),
+			pattern: /fast/giu,
+			set: new Set([shared]),
+			typedArray: new Uint16Array([1, 2]),
+			[symbolKey]: shared,
+		};
+		source.pattern.lastIndex = 2;
+		source.self = source;
+
+		const cloned = cloneDeep(source);
+		expect(cloned).not.toBe(source);
+		expect(cloned.self).toBe(cloned);
+		expect(cloned.array[0]).not.toBe(shared);
+		expect(cloned.array[0]).toBe(cloned[symbolKey]);
+		expect(cloned.map.keys().next().value).toBe(mapKey);
+		expect(cloned.map.get(mapKey)).toBe(cloned.array[0]);
+		expect(cloned.set.values().next().value).toBe(cloned.array[0]);
+		expect(cloned.callback).toBe(callback);
+		expect(cloned.date).not.toBe(source.date);
+		expect(cloned.date.getTime()).toBe(source.date.getTime());
+		expect(cloned.pattern).not.toBe(source.pattern);
+		expect(cloned.pattern.source).toBe(source.pattern.source);
+		expect(cloned.pattern.flags).toBe(source.pattern.flags);
+		expect(cloned.pattern.lastIndex).toBe(2);
+		expect(cloned.typedArray).not.toBe(source.typedArray);
+		expect(cloned.typedArray.buffer).not.toBe(source.typedArray.buffer);
+		expect([...cloned.typedArray]).toEqual([1, 2]);
+
+		const sharedView = new Uint8Array(new SharedArrayBuffer(2));
+		sharedView.set([3, 4]);
+		const clonedSharedView = cloneDeep(sharedView);
+		expect(clonedSharedView.buffer).toBeInstanceOf(SharedArrayBuffer);
+		expect(clonedSharedView.buffer).not.toBe(sharedView.buffer);
+		expect([...clonedSharedView]).toEqual([3, 4]);
+	});
+
+	it("deeply compares supported values, unordered collections, and cycles", () => {
+		const leftTypedArray = new Float32Array([1, Number.NaN]);
+		const rightTypedArray = new Float32Array([1, Number.NaN]);
+		const left: Record<string, unknown> = {
+			array: [{ id: 1 }],
+			buffer: Uint8Array.of(1, 2).buffer,
+			date: new Date("2024-01-01T00:00:00.000Z"),
+			error: new TypeError("failed"),
+			map: new Map([[{ id: 1 }, { value: "fast" }]]),
+			pattern: /fast/giu,
+			set: new Set([{ id: 1 }, 2]),
+			typedArray: leftTypedArray,
+		};
+		const right: Record<string, unknown> = {
+			array: [{ id: 1 }],
+			buffer: Uint8Array.of(1, 2).buffer,
+			date: new Date("2024-01-01T00:00:00.000Z"),
+			error: new TypeError("failed"),
+			map: new Map([[{ id: 1 }, { value: "fast" }]]),
+			pattern: /fast/giu,
+			set: new Set([2, { id: 1 }]),
+			typedArray: rightTypedArray,
+		};
+		left["self"] = left;
+		right["self"] = right;
+
+		expect(isEqual(left, right)).toBe(true);
+		expect(isEqual(Number.NaN, Number.NaN)).toBe(true);
+		expect(isEqual(0, -0)).toBe(true);
+		expect(
+			isEqual(
+				() => undefined,
+				() => undefined
+			)
+		).toBe(false);
+
+		rightTypedArray[0] = 2;
+		expect(isEqual(left, right)).toBe(false);
 	});
 
 	it("performs SameValue shallow comparison", () => {
@@ -359,7 +501,7 @@ describe("string utilities", () => {
 		expect(setClipboardData.mock.calls[0]?.[0].data).toBe("uni text");
 
 		vi.unstubAllGlobals();
-		const writeText = vi.fn(async (_value: string) => Promise.resolve());
+		const writeText = vi.fn((_value: string) => Promise.resolve());
 		vi.stubGlobal("navigator", { clipboard: { writeText } });
 		vi.stubGlobal("isSecureContext", true);
 		await copy("browser text");
@@ -436,8 +578,7 @@ describe("date utilities", () => {
 	it("formats every supported relative-time unit against an explicit baseline", () => {
 		const now = new Date("2024-01-02T00:00:00Z");
 		expect(formatRelativeTime(new Date("2024-01-01T00:00:00Z"), { locale: "en", now, numeric: "always" })).toBe("1 day ago");
-		const formatFuture = (milliseconds: number): string =>
-			formatRelativeTime(now.getTime() + milliseconds, { locale: "en", now, numeric: "always" });
+		const formatFuture = (milliseconds: number) => formatRelativeTime(now.getTime() + milliseconds, { locale: "en", now, numeric: "always" });
 		expect(formatFuture(30_000)).toBe("in 30 seconds");
 		expect(formatFuture(120_000)).toBe("in 2 minutes");
 		expect(formatFuture(7_200_000)).toBe("in 2 hours");

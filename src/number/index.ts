@@ -1,7 +1,7 @@
 import { runtimeGlobals } from "../internal/runtime";
 
-const byteUnits = ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"] as const;
-const binaryByteUnits = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"] as const;
+const byteUnits = ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+const binaryByteUnits = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"];
 
 /** {@link formatBytes} 的格式化选项。 */
 export interface FormatBytesOptions {

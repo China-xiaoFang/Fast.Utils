@@ -45,7 +45,7 @@ export function useEmits<Emits extends EmitsOptions>(
 	ignoredEvents: readonly (keyof Emits)[] = []
 ): ComputedRef<Partial<EmitHandlers<Emits>>> {
 	const ignored = new Set<PropertyKey>(ignoredEvents);
-	const emitEvent = emit as unknown as (eventName: string, ...arguments_: unknown[]) => void;
+	const emitEvent = emit as (eventName: string, ...arguments_: unknown[]) => void;
 	return computed<Partial<EmitHandlers<Emits>>>(() => {
 		const handlers = {} as Partial<EmitHandlers<Emits>>;
 		const handlerNames = new Set<string>();
@@ -59,7 +59,7 @@ export function useEmits<Emits extends EmitsOptions>(
 			handlerNames.add(handlerName);
 			Object.defineProperty(handlers, handlerName, {
 				enumerable: true,
-				value: (...arguments_: unknown[]): void => {
+				value: (...arguments_: unknown[]) => {
 					emitEvent(eventName, ...arguments_);
 				},
 				writable: true,

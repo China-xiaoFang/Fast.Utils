@@ -12,8 +12,8 @@ import { expect, vi } from "./test-helpers";
 
 describe("Vue event and props helpers", () => {
 	it("maps event tuple types to real Vue handler names", () => {
-		const emits = { clear: null, "update:modelValue": (_value: string): boolean => true };
-		const emit = vi.fn((_eventName: string, ..._arguments_: unknown[]): void => undefined);
+		const emits = { clear: null, "update:modelValue": (_value: string) => true };
+		const emit = vi.fn((_eventName: string, ..._arguments_: unknown[]) => undefined);
 		const handlers = useEmits(emits, emit).value;
 		handlers["onUpdate:modelValue"]?.("value");
 		handlers.onClear?.();
@@ -22,7 +22,7 @@ describe("Vue event and props helpers", () => {
 	});
 
 	it("accepts the emitter provided by Vue setup", () => {
-		const emits = { clear: null, "update:modelValue": (_value: string): boolean => true };
+		const emits = { clear: null, "update:modelValue": (_value: string) => true };
 		const component = defineComponent({
 			emits,
 			setup(_props, { emit }) {
@@ -48,18 +48,18 @@ describe("Vue event and props helpers", () => {
 	it("keeps setup state visible when TSX rendering is installed separately", () => {
 		type HostNode = Record<string, unknown>;
 		const renderer = createRenderer<HostNode, HostNode>({
-			createComment: (text): HostNode => ({ text }),
-			createElement: (type): HostNode => ({ type }),
-			createText: (text): HostNode => ({ text }),
-			insert: (): void => undefined,
-			nextSibling: (): null => null,
-			parentNode: (): null => null,
-			patchProp: (): void => undefined,
-			remove: (): void => undefined,
-			setElementText: (element, text): void => {
+			createComment: (text) => ({ text }),
+			createElement: (type) => ({ type }),
+			createText: (text) => ({ text }),
+			insert: () => undefined,
+			nextSibling: () => null,
+			parentNode: () => null,
+			patchProp: () => undefined,
+			remove: () => undefined,
+			setElementText: (element, text) => {
 				element["text"] = text;
 			},
-			setText: (node, text): void => {
+			setText: (node, text) => {
 				node["text"] = text;
 			},
 		});
@@ -89,10 +89,10 @@ describe("Vue event and props helpers", () => {
 
 describe("Vue install helpers", () => {
 	it("registers main and extra named components", () => {
-		const main = { name: "FastMain", render: (): null => null };
-		const extra = { name: "FastExtra", render: (): null => null };
+		const main = { name: "FastMain", render: () => null };
+		const extra = { name: "FastExtra", render: () => null };
 		const installable = withInstall(main, { Extra: extra });
-		const app = createApp({ render: (): null => null });
+		const app = createApp({ render: () => null });
 		app.use(installable);
 		expect(app.component("FastMain")).toBe(main);
 		expect(app.component("FastExtra")).toBe(extra);
@@ -100,18 +100,18 @@ describe("Vue install helpers", () => {
 	});
 
 	it("supports no-op installation for attached components", () => {
-		const component = { name: "FastAttached", render: (): null => null };
+		const component = { name: "FastAttached", render: () => null };
 		const installable = withNoopInstall(component);
-		const app = createApp({ render: (): null => null });
+		const app = createApp({ render: () => null });
 		app.use(installable);
 		expect(app.component("FastAttached")).toBeUndefined();
 		expect(() => withNoopInstall(installable)).toThrow(TypeError);
 	});
 
 	it("does not silently overwrite components already owned by an app", () => {
-		const existing = { name: "FastMain", render: (): null => null };
-		const incoming = withInstall({ name: "FastMain", render: (): null => null });
-		const app = createApp({ render: (): null => null });
+		const existing = { name: "FastMain", render: () => null };
+		const incoming = withInstall({ name: "FastMain", render: () => null });
+		const app = createApp({ render: () => null });
 		app.component("FastMain", existing);
 
 		expect(() => app.use(incoming)).toThrow(Error);
@@ -119,11 +119,11 @@ describe("Vue install helpers", () => {
 	});
 
 	it("preflights every app registration before changing the app", () => {
-		const main = { name: "FastMain", render: (): null => null };
-		const extra = { name: "FastExtra", render: (): null => null };
-		const existing = { name: "FastExtra", render: (): null => null };
+		const main = { name: "FastMain", render: () => null };
+		const extra = { name: "FastExtra", render: () => null };
+		const existing = { name: "FastExtra", render: () => null };
 		const installable = withInstall(main, { Extra: extra });
-		const app = createApp({ render: (): null => null });
+		const app = createApp({ render: () => null });
 		app.component("FastExtra", existing);
 
 		expect(() => app.use(installable)).toThrow(Error);
@@ -134,7 +134,7 @@ describe("Vue install helpers", () => {
 	it("registers directives and validates public names", () => {
 		const directive = { mounted: vi.fn() };
 		const installable = withInstallDirective(directive, "focus");
-		const app = createApp({ render: (): null => null });
+		const app = createApp({ render: () => null });
 		app.use(installable);
 		expect(app.directive("focus")).toBe(directive);
 		expect(() => withInstallDirective(directive, "")).toThrow(TypeError);
@@ -146,7 +146,7 @@ describe("Vue install helpers", () => {
 		inheritedInstall.mounted = vi.fn();
 		expect(() => withInstallDirective(inheritedInstall, "inherited")).toThrow(TypeError);
 
-		const conflictingApp = createApp({ render: (): null => null });
+		const conflictingApp = createApp({ render: () => null });
 		const existing = { mounted: vi.fn() };
 		conflictingApp.directive("focus", existing);
 		expect(() => conflictingApp.use(installable)).toThrow(Error);
@@ -154,24 +154,24 @@ describe("Vue install helpers", () => {
 	});
 
 	it("validates every component and extra key before mutating the main component", () => {
-		const main = { name: "FastMain", render: (): null => null };
-		const extra = { name: "FastExtra", render: (): null => null };
+		const main = { name: "FastMain", render: () => null };
+		const extra = { name: "FastExtra", render: () => null };
 		expect(() => withInstall(main, { install: extra })).toThrow(TypeError);
 		expect(Object.hasOwn(main, "install")).toBe(false);
 		const existingInstall = vi.fn();
-		const alreadyInstallable = { install: existingInstall, name: "FastInstalled", render: (): null => null };
+		const alreadyInstallable = { install: existingInstall, name: "FastInstalled", render: () => null };
 		expect(() => withInstall(alreadyInstallable)).toThrow(TypeError);
 		expect(alreadyInstallable.install).toBe(existingInstall);
-		expect(() => withInstall({ name: " ", render: (): null => null })).toThrow(TypeError);
-		expect(() => withInstall({ name: " FastMain ", render: (): null => null })).toThrow(TypeError);
-		expect(() => withInstall({ name: "Fast Main", render: (): null => null })).toThrow(TypeError);
+		expect(() => withInstall({ name: " ", render: () => null })).toThrow(TypeError);
+		expect(() => withInstall({ name: " FastMain ", render: () => null })).toThrow(TypeError);
+		expect(() => withInstall({ name: "Fast Main", render: () => null })).toThrow(TypeError);
 		expect(() => withInstall(main, { constructor: extra })).toThrow(TypeError);
-		expect(() => withInstall(main, { Duplicate: { name: "FastMain", render: (): null => null } })).toThrow(TypeError);
+		expect(() => withInstall(main, { Duplicate: { name: "FastMain", render: () => null } })).toThrow(TypeError);
 	});
 
 	it("rejects duplicate or colliding event handler names", () => {
 		const emits = { "save-item": null, saveItem: null };
-		const emit = (_eventName: "save-item" | "saveItem"): void => undefined;
+		const emit = (_eventName: "save-item" | "saveItem") => undefined;
 		expect(() => useEmits(emits, emit).value).toThrow(TypeError);
 	});
 });

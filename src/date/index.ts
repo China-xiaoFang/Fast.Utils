@@ -281,7 +281,7 @@ const shiftCalendarFieldInPlace = (date: Date, amount: number, unit: CalendarUni
  */
 const createDateShortcut = (text: string, amount: number, unit: CalendarUnit): DateShortcut => ({
 	text,
-	value: (): Date => {
+	value: () => {
 		const date = new Date();
 		shiftCalendarFieldInPlace(date, amount, unit);
 		date.setHours(0, 0, 0, 0);

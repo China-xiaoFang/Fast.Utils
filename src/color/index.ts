@@ -119,7 +119,7 @@ export function mixHexColors(first: string, second: string, amount: number): str
 	 * @param end - 第二个颜色的通道值。
 	 * @returns 按外层 `amount` 线性混合后的通道值。
 	 */
-	const mix = (start: number, end: number): number => start + (end - start) * amount;
+	const mix = (start: number, end: number) => start + (end - start) * amount;
 	return formatHexColor(
 		{
 			red: mix(left.red, right.red),

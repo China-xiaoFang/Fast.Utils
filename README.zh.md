@@ -147,6 +147,8 @@ import { useEmits, useProps, withInstall } from "@fast-china/utils";
 
 历史聚合对象不再公开，继续支持的能力通过具名函数提供，便于自动导入与 Tree Shaking；当前大版本并未保留每一个旧版便捷方法。
 
+`object` 模块提供不依赖第三方库的深复制、深度比较和按条件筛选属性能力。数组工具支持 SameValueZero 对称差集，`once` 则会保留第一次调用的返回值、Promise 引用或同步错误。
+
 ## 运行时契约
 
 - 包管理器入口为纯 ESM；CDN 入口为单独压缩的 IIFE。

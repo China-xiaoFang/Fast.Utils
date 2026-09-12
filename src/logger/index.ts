@@ -108,9 +108,9 @@ const formatSplitValue = (value: unknown): string => {
 	if (value instanceof Error) return value.stack ?? `${value.name}: ${value.message}`;
 	const visited = new WeakSet();
 	try {
-		const serialized: unknown = JSON.stringify(
+		const serialized = JSON.stringify(
 			value,
-			(_key, item: unknown): unknown => {
+			(_key, item: unknown) => {
 				if (typeof item === "bigint") return `${item.toString()}n`;
 				if (typeof item !== "object" || item === null) return item;
 				if (visited.has(item)) return "[Circular]";
@@ -126,20 +126,20 @@ const formatSplitValue = (value: unknown): string => {
 };
 
 const defaultConsoleSink: LoggerSink = {
-	debug: (...data): void => {
+	debug: (...data) => {
 		// eslint-disable-next-line no-console
 		if (typeof console.debug === "function") console.debug(...data);
 		// eslint-disable-next-line no-console
 		else console.log(...data);
 	},
-	log: (...data): void => {
+	log: (...data) => {
 		// eslint-disable-next-line no-console
 		console.log(...data);
 	},
-	warn: (...data): void => {
+	warn: (...data) => {
 		console.warn(...data);
 	},
-	error: (...data): void => {
+	error: (...data) => {
 		console.error(...data);
 	},
 };
@@ -154,15 +154,13 @@ const defaultConsoleSink: LoggerSink = {
  * @throws `RangeError` 当级别未知，或前缀、作用域不是有效的非空字符串。
  */
 export function createLogger(options: LoggerOptions = {}): Logger {
-	const requestedLevel: unknown = options.level ?? "debug";
-	const requestedPrefix: unknown = options.prefix ?? "Fast";
+	const level: unknown = options.level ?? "debug";
+	const prefix: unknown = options.prefix ?? "Fast";
 	const sink = options.sink ?? defaultConsoleSink;
-	if (!isLogLevel(requestedLevel)) throw new RangeError(`未知的日志级别：${String(requestedLevel)}。`);
-	if (typeof requestedPrefix !== "string" || requestedPrefix.length === 0) {
+	if (!isLogLevel(level)) throw new RangeError(`未知的日志级别：${String(level)}。`);
+	if (typeof prefix !== "string" || prefix.length === 0) {
 		throw new RangeError("日志前缀必须是非空字符串。");
 	}
-	const level = requestedLevel;
-	const prefix = requestedPrefix;
 	const uniAppPlusSplit = options.uniAppPlusSplit ?? false;
 
 	/**
@@ -173,14 +171,14 @@ export function createLogger(options: LoggerOptions = {}): Logger {
 	 * @param content - 可选的消息与保持原始类型的附加值。
 	 * @throws `RangeError` 当作用域不是非空字符串或包含外围空白。
 	 */
-	const write = (messageLevel: LogLevel, scope: string, content: readonly unknown[]): void => {
+	const write = (messageLevel: LogLevel, scope: string, content: readonly unknown[]) => {
 		if (typeof scope !== "string") throw new TypeError("日志作用域必须是字符串。");
 		if (scope.length === 0 || scope.trim() !== scope) {
 			throw new RangeError("日志作用域必须是无外围空白的非空字符串。");
 		}
 		if (levelPriority[messageLevel] < levelPriority[level]) return;
 		const heading = `[${prefix}:${scope}]`;
-		const sinkMethod: keyof LoggerSink = messageLevel;
+		const sinkMethod = messageLevel;
 		if (uniAppPlusSplit && isUniAppPlus()) {
 			const [first, ...remaining] = content;
 			if (typeof first === "string") {
@@ -196,22 +194,22 @@ export function createLogger(options: LoggerOptions = {}): Logger {
 	};
 
 	return {
-		debug: (scope, ...content): void => {
+		debug: (scope, ...content) => {
 			write("debug", scope, content);
 		},
-		log: (scope, ...content): void => {
+		log: (scope, ...content) => {
 			write("log", scope, content);
 		},
-		warn: (scope, ...content): void => {
+		warn: (scope, ...content) => {
 			write("warn", scope, content);
 		},
-		error: (scope, ...content): void => {
+		error: (scope, ...content) => {
 			write("error", scope, content);
 		},
 	};
 }
 
-let activeDefaultLogger: Logger = createLogger();
+let activeDefaultLogger = createLogger();
 
 /**
  * 替换默认 {@link logger} 的完整配置。
@@ -226,16 +224,16 @@ export function configureLogger(options: LoggerOptions = {}): void {
 
 /** 默认使用 `Fast` 前缀和 `debug` 级别、可通过 {@link configureLogger} 配置的便捷日志器。 */
 export const logger: Logger = {
-	debug: (scope, ...content): void => {
+	debug: (scope, ...content) => {
 		activeDefaultLogger.debug(scope, ...content);
 	},
-	log: (scope, ...content): void => {
+	log: (scope, ...content) => {
 		activeDefaultLogger.log(scope, ...content);
 	},
-	warn: (scope, ...content): void => {
+	warn: (scope, ...content) => {
 		activeDefaultLogger.warn(scope, ...content);
 	},
-	error: (scope, ...content): void => {
+	error: (scope, ...content) => {
 		activeDefaultLogger.error(scope, ...content);
 	},
 };

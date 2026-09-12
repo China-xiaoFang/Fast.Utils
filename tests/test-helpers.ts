@@ -53,18 +53,18 @@ function partialMatches(actual: unknown, expected: unknown): boolean {
 	return Reflect.ownKeys(expected).every((key) => key in actual && partialMatches(Reflect.get(actual, key), Reflect.get(expected, key)));
 }
 
-function getMockCalls(value: unknown): readonly (readonly unknown[])[] {
+function getMockCalls(value: unknown) {
 	if (typeof value !== "function") assert.fail("Expected a mock function");
 	const mock = Reflect.get(value, "mock") as unknown;
 	assert.ok(isObject(mock) && Array.isArray(mock["calls"]), "Expected a mock function");
 	return mock["calls"] as readonly (readonly unknown[])[];
 }
 
-function getErrorMessage(value: unknown): string {
+function getErrorMessage(value: unknown) {
 	return value instanceof Error ? value.message : String(value);
 }
 
-function matchesThrown(thrown: unknown, expected: unknown): boolean {
+function matchesThrown(thrown: unknown, expected: unknown) {
 	if (expected === undefined) return true;
 	if (typeof expected === "string") return getErrorMessage(thrown).includes(expected);
 	if (expected instanceof RegExp) return expected.test(getErrorMessage(thrown));
@@ -75,81 +75,81 @@ function matchesThrown(thrown: unknown, expected: unknown): boolean {
 	return partialMatches(thrown, expected);
 }
 
-function assertMatch(condition: boolean, negated: boolean, message: string): void {
+function assertMatch(condition: boolean, negated: boolean, message: string) {
 	assert.equal(condition, !negated, message);
 }
 
 function createMatchers(actual: unknown, negated = false): Matchers {
 	return {
-		toBe(expected): void {
+		toBe(expected) {
 			assertMatch(Object.is(actual, expected), negated, "Expected values to be identical");
 		},
-		toBeCloseTo(expected, precision = 2): void {
+		toBeCloseTo(expected, precision = 2) {
 			if (typeof actual !== "number") assert.fail("Expected a number");
 			const tolerance = 10 ** -precision / 2;
 			assertMatch(Math.abs(actual - expected) < tolerance, negated, `Expected ${actual} to be close to ${expected}`);
 		},
-		toBeDefined(): void {
+		toBeDefined() {
 			assertMatch(actual !== undefined, negated, "Expected value to be defined");
 		},
-		toBeGreaterThanOrEqual(expected): void {
+		toBeGreaterThanOrEqual(expected) {
 			if (typeof actual !== "number") assert.fail("Expected a number");
 			assertMatch(actual >= expected, negated, `Expected ${actual} to be greater than or equal to ${expected}`);
 		},
-		toBeInstanceOf(expected): void {
+		toBeInstanceOf(expected) {
 			const prototype = typeof expected === "function" ? (Reflect.get(expected, "prototype") as unknown) : undefined;
 			const matches =
 				typeof prototype === "object" && prototype !== null && isObject(actual) && Object.prototype.isPrototypeOf.call(prototype, actual);
 			assertMatch(matches, negated, "Expected value to be an instance of the supplied constructor");
 		},
-		toBeUndefined(): void {
+		toBeUndefined() {
 			assertMatch(actual === undefined, negated, "Expected value to be undefined");
 		},
-		toContain(expected): void {
+		toContain(expected) {
 			const matches =
 				typeof actual === "string"
 					? actual.includes(String(expected))
 					: Array.isArray(actual) && actual.some((value) => isDeepStrictEqual(value, expected));
 			assertMatch(matches, negated, "Expected collection to contain the supplied value");
 		},
-		toEqual(expected): void {
+		toEqual(expected) {
 			if (negated) assert.notDeepStrictEqual(actual, expected);
 			else assert.deepStrictEqual(actual, expected);
 		},
-		toHaveBeenCalled(): void {
+		toHaveBeenCalled() {
 			assertMatch(getMockCalls(actual).length > 0, negated, "Expected mock to have been called");
 		},
-		toHaveBeenCalledOnce(): void {
+		toHaveBeenCalledOnce() {
 			assertMatch(getMockCalls(actual).length === 1, negated, "Expected mock to have been called once");
 		},
-		toHaveBeenCalledTimes(expected): void {
+		toHaveBeenCalledTimes(expected) {
 			assertMatch(getMockCalls(actual).length === expected, negated, `Expected mock to have been called ${expected} times`);
 		},
-		toHaveBeenCalledWith(...expected): void {
+		toHaveBeenCalledWith(...expected) {
 			assertMatch(
 				getMockCalls(actual).some((arguments_) => isDeepStrictEqual(arguments_, expected)),
 				negated,
 				"Expected mock to have been called with the supplied arguments"
 			);
 		},
-		toHaveBeenNthCalledWith(callNumber, ...expected): void {
+		toHaveBeenNthCalledWith(callNumber, ...expected) {
 			assertMatch(
 				isDeepStrictEqual(getMockCalls(actual)[callNumber - 1], expected),
 				negated,
 				`Expected mock call ${callNumber} to contain the supplied arguments`
 			);
 		},
-		toHaveLength(expected): void {
+		toHaveLength(expected) {
 			const length = isObject(actual) ? Reflect.get(actual, "length") : undefined;
 			assertMatch(length === expected, negated, `Expected value to have length ${expected}`);
 		},
-		toMatch(expected): void {
+		toMatch(expected) {
 			assertMatch(expected.test(String(actual)), negated, `Expected value to match ${String(expected)}`);
 		},
-		toMatchObject(expected): void {
+		toMatchObject(expected) {
 			assertMatch(partialMatches(actual, expected), negated, "Expected value to contain the supplied properties");
 		},
-		toThrow(expected): void {
+		toThrow(expected) {
 			if (typeof actual !== "function") assert.fail("Expected a function");
 			let thrown: unknown;
 			try {
@@ -162,7 +162,7 @@ function createMatchers(actual: unknown, negated = false): Matchers {
 	};
 }
 
-async function settle(value: unknown): Promise<{ readonly rejected: boolean; readonly value: unknown }> {
+async function settle(value: unknown) {
 	try {
 		return { rejected: false, value: await Promise.resolve(value) };
 	} catch (error) {
@@ -171,19 +171,19 @@ async function settle(value: unknown): Promise<{ readonly rejected: boolean; rea
 }
 
 function createPromiseMatchers(actual: unknown, expectRejection: boolean): PromiseMatchers {
-	const getValue = async (): Promise<unknown> => {
+	const getValue = async () => {
 		const result = await settle(actual);
 		assert.equal(result.rejected, expectRejection, expectRejection ? "Expected Promise to reject" : "Expected Promise to resolve");
 		return result.value;
 	};
 	return {
-		async toBe(expected): Promise<void> {
+		async toBe(expected) {
 			assert.strictEqual(await getValue(), expected);
 		},
-		async toMatchObject(expected): Promise<void> {
+		async toMatchObject(expected) {
 			assert.ok(partialMatches(await getValue(), expected), "Expected Promise result to contain the supplied properties");
 		},
-		async toThrow(expected): Promise<void> {
+		async toThrow(expected) {
 			assert.ok(expectRejection, "toThrow is only supported for rejected Promises");
 			assert.ok(matchesThrown(await getValue(), expected), "Expected Promise to reject with the supplied error");
 		},
@@ -205,7 +205,7 @@ export const expect = expectImplementation;
 export const vi = {
 	fn<Arguments extends unknown[] = [], Result = void>(implementation?: (...arguments_: Arguments) => Result): MockFunction<Arguments, Result> {
 		const calls: Arguments[] = [];
-		const mockFunction = ((...arguments_: Arguments): Result => {
+		const mockFunction = ((...arguments_: Arguments) => {
 			calls.push(arguments_);
 			return implementation ? implementation(...arguments_) : (undefined as Result);
 		}) as MockFunction<Arguments, Result>;

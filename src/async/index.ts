@@ -145,7 +145,6 @@ const assertDelay = (milliseconds: number, name = "milliseconds"): number => {
  * @returns 到期后完成的 Promise。
  * @throws 取消时抛出名称为 `AbortError` 的 `Error`；参数非法时抛出 `RangeError`。
  */
-// eslint-disable-next-line @typescript-eslint/promise-function-async -- 参数校验必须在调用时同步抛错，async 会把异常改成 rejected Promise。
 export function sleep(milliseconds: number, options: AbortOptions = {}): Promise<void> {
 	const delay = assertDelay(milliseconds);
 	const signal = options.signal;
@@ -154,7 +153,7 @@ export function sleep(milliseconds: number, options: AbortOptions = {}): Promise
 	return new Promise<void>((resolve, reject) => {
 		let timer: ReturnType<typeof setTimeout>;
 		/** 取消计时器并使用标准取消错误拒绝等待。 */
-		function onAbort(): void {
+		function onAbort() {
 			if (signal === undefined) return;
 			clearTimeout(timer);
 			reject(createAbortError(signal));
@@ -178,7 +177,6 @@ export function sleep(milliseconds: number, options: AbortOptions = {}): Promise
  * @returns 底层 Promise 的结果。
  * @throws 超时抛出 `Error`，取消时抛出名称为 `AbortError` 的 `Error`；等待时间非法时抛出 `RangeError`。
  */
-// eslint-disable-next-line @typescript-eslint/promise-function-async -- 参数校验必须同步抛错，且返回值直接代表本次竞争结果。
 export function withTimeout<Result>(promise: PromiseLike<Result>, timeoutMs: number, options: TimeoutOptions = {}): Promise<Result> {
 	const delay = assertDelay(timeoutMs, "timeoutMs");
 	const signal = options.signal;
@@ -188,7 +186,7 @@ export function withTimeout<Result>(promise: PromiseLike<Result>, timeoutMs: num
 		let settled = false;
 		let timer: ReturnType<typeof setTimeout>;
 		/** 清理竞争结束后不再需要的计时器和监听器。 */
-		function cleanup(): void {
+		function cleanup() {
 			clearTimeout(timer);
 			signal?.removeEventListener("abort", onAbort);
 		}
@@ -197,14 +195,14 @@ export function withTimeout<Result>(promise: PromiseLike<Result>, timeoutMs: num
 		 *
 		 * @param action - 首个完成来源的结算动作。
 		 */
-		function settle(action: () => void): void {
+		function settle(action: () => void) {
 			if (settled) return;
 			settled = true;
 			cleanup();
 			action();
 		}
 		/** 使用调用方取消原因结束当前等待。 */
-		function onAbort(): void {
+		function onAbort() {
 			if (signal === undefined) return;
 			settle(() => {
 				reject(createAbortError(signal));
@@ -302,7 +300,7 @@ export async function mapConcurrent<Item, Result>(
 	 * @returns 当前 Worker 没有剩余任务时完成。
 	 * @throws 原样传播取消错误或 Mapper 错误，并阻止其他 Worker 领取新任务。
 	 */
-	const worker = async (): Promise<void> => {
+	const worker = async () => {
 		while (!failed) {
 			throwIfAborted(options.signal);
 			const index = nextIndex;
@@ -377,8 +375,7 @@ export function debounce<Arguments extends unknown[], Result>(
 	 * @param arguments_ - 本次调用参数；同批次中只有最后一组参数会执行。
 	 * @returns 与当前批次共享结果、但可独立结算的 Promise。
 	 */
-	// eslint-disable-next-line @typescript-eslint/promise-function-async -- 每次调用返回独立的可取消等待 Promise，不增加 async 包装层。
-	const debounced = (...arguments_: Arguments): Promise<Awaited<Result>> => {
+	const debounced = (...arguments_: Arguments) => {
 		latestArguments = arguments_;
 		if (timer !== undefined) clearTimeout(timer);
 		timer = setTimeout(() => {
@@ -389,7 +386,7 @@ export function debounce<Arguments extends unknown[], Result>(
 		});
 	};
 
-	debounced.cancel = (reason?: unknown): void => {
+	debounced.cancel = (reason?: unknown) => {
 		if (timer !== undefined) clearTimeout(timer);
 		timer = undefined;
 		latestArguments = undefined;
@@ -399,12 +396,12 @@ export function debounce<Arguments extends unknown[], Result>(
 		});
 		waiters = [];
 	};
-	debounced.flush = (): Promise<Awaited<Result>> | undefined => {
+	debounced.flush = () => {
 		if (timer === undefined) return undefined;
 		clearTimeout(timer);
 		return execute();
 	};
-	debounced.pending = (): boolean => timer !== undefined;
+	debounced.pending = () => timer !== undefined;
 	return debounced;
 }
 
@@ -433,7 +430,7 @@ export function throttle<Arguments extends unknown[], Result>(
 	 *
 	 * @remarks 只有回调和冷却计时器都结束后才清空共享 Promise，避免长回调发生重入。
 	 */
-	const release = (): void => {
+	const release = () => {
 		if (!cooling && settled) current = undefined;
 	};
 	/**
@@ -442,8 +439,7 @@ export function throttle<Arguments extends unknown[], Result>(
 	 * @param arguments_ - 仅新窗口首个调用会使用的参数。
 	 * @returns 当前窗口首次调用的 Promise。
 	 */
-	// eslint-disable-next-line @typescript-eslint/promise-function-async -- 同一节流窗口必须返回完全相同的 Promise 引用。
-	const throttled = (...arguments_: Arguments): Promise<Awaited<Result>> => {
+	const throttled = (...arguments_: Arguments) => {
 		if (current !== undefined) return current;
 		cooling = true;
 		settled = false;
@@ -472,12 +468,12 @@ export function throttle<Arguments extends unknown[], Result>(
 		return invocation;
 	};
 
-	throttled.cancel = (): void => {
+	throttled.cancel = () => {
 		if (timer !== undefined) clearTimeout(timer);
 		timer = undefined;
 		cooling = false;
 		release();
 	};
-	throttled.pending = (): boolean => current !== undefined;
+	throttled.pending = () => current !== undefined;
 	return throttled;
 }

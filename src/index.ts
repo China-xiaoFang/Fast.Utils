@@ -11,6 +11,7 @@ export * from "./crypto/index";
 export * from "./date/index";
 export * from "./dom/index";
 export * from "./env/index";
+export * from "./function/index";
 export * from "./identity/index";
 export * from "./logger/index";
 export * from "./number/index";

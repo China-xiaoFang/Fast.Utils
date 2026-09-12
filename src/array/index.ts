@@ -129,6 +129,21 @@ export function intersection<Item>(left: readonly Item[], right: readonly Item[]
 }
 
 /**
+ * 返回只存在于其中一个数组的不同值。
+ *
+ * @param left - 决定左侧结果顺序的数组。
+ * @param right - 决定右侧结果顺序的数组。
+ * @returns 先按左侧、再按右侧首次出现顺序排列的对称差集；使用 SameValueZero 比较并忽略稀疏空位。
+ */
+export function symmetricDifference<Item>(left: readonly Item[], right: readonly Item[]): Item[] {
+	const leftValues = unique(left);
+	const rightValues = unique(right);
+	const leftSet = new Set(leftValues);
+	const rightSet = new Set(rightValues);
+	return [...leftValues.filter((item) => !rightSet.has(item)), ...rightValues.filter((item) => !leftSet.has(item))];
+}
+
+/**
  * 判断选择器产生的键是否重复。
  *
  * @param items - 不会被修改的输入数组。

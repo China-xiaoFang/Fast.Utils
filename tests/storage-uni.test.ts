@@ -4,12 +4,12 @@ import { expect, vi } from "./test-helpers";
 
 const values = new Map<string, unknown>();
 const uni = {
-	getStorageInfoSync: (): { keys: string[] } => ({ keys: [...values.keys()] }),
-	getStorageSync: (key: string): unknown => values.get(key) ?? "",
-	removeStorageSync: (key: string): void => {
+	getStorageInfoSync: () => ({ keys: [...values.keys()] }),
+	getStorageSync: (key: string) => values.get(key) ?? "",
+	removeStorageSync: (key: string) => {
 		values.delete(key);
 	},
-	setStorageSync: (key: string, value: string): void => {
+	setStorageSync: (key: string, value: string) => {
 		values.set(key, value);
 	},
 };
