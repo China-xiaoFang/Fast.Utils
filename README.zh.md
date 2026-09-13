@@ -10,7 +10,7 @@
 
 面向现代浏览器、WebView、Vue 3 与 uni-app 的 TypeScript 前端工具库。
 
-[![npm 版本](https://img.shields.io/npm/v/@fast-china/utils?color=orange)](https://www.npmjs.com/package/@fast-china/utils) [![node](https://img.shields.io/badge/node-%5E22.18%20%7C%7C%20%5E24.18-brightgreen)](https://nodejs.org/) [![Vue](https://img.shields.io/badge/vue-%5E3.3-42b883)](https://vuejs.org/) [![开源协议](https://img.shields.io/npm/l/@fast-china/utils)](./LICENSE)
+[![npm 版本](https://img.shields.io/npm/v/@fast-china/utils?color=orange)](https://www.npmjs.com/package/@fast-china/utils) [![node](https://img.shields.io/badge/node-%5E22.18%20%7C%7C%20%5E24.18-brightgreen)](https://nodejs.org/) [![Vue](https://img.shields.io/badge/vue-%5E3.5.11-42b883)](https://vuejs.org/) [![开源协议](https://img.shields.io/npm/l/@fast-china/utils)](./LICENSE)
 
 ## 特性
 
@@ -136,10 +136,18 @@ Base64 与 Crypto 的文本解码/解密入口返回原始字符串类型 `Decod
 ## Vue 3
 
 ```ts
-import { useEmits, useProps, withInstall } from "@fast-china/utils";
+import { useBreakpoints, useElementSize, useEventListener, useNow, useWindowSize } from "@fast-china/utils";
+import { useTemplateRef } from "vue";
+
+const elementRef = useTemplateRef<HTMLElement>("element");
+const { width: windowWidth } = useWindowSize();
+const { width: elementWidth } = useElementSize(elementRef);
+const now = useNow();
+const breakpoints = useBreakpoints({ desktop: 1280, mobile: 0, tablet: 768 });
+useEventListener(document, "visibilitychange", () => console.log(document.visibilityState));
 ```
 
-包内提供 Vue 3 `app.use()` 注册、Composition API Helper、Props/Emits/Slots 类型和 TSX 渲染。Vue 不会打进构建产物，并作为必须安装的 Peer Dependency。
+包内提供基于原生浏览器 API 的轻量 Composable、Vue 3 `app.use()` 注册、Props/Emits/Slots 类型和 TSX 渲染。浏览器 Composable 随当前 Vue 作用域自动清理；高级调度、控制、SSR 配置和设备 API 不在本包范围内。Vue 不会打进构建产物，并作为必须安装的 Peer Dependency。
 
 ## 模块
 
@@ -153,7 +161,7 @@ import { useEmits, useProps, withInstall } from "@fast-china/utils";
 
 - 包管理器入口为纯 ESM；CDN 入口为单独压缩的 IIFE。
 - 面向 ES2022 现代浏览器与 WebView。
-- Vue 3.3 及以上版本通过必须安装的 Peer Dependency 接入。
+- Vue 3.5.11 及以上版本通过必须安装的 Peer Dependency 接入。
 - 配置 Storage 时自动检测全局 `uni` 并接入 uni-app。
 - 导入阶段不访问 `window`、Storage 或 `uni`；不支持的调用明确失败。
 - 不注入 Web Crypto、URL、Intl、TextEncoder 等 Polyfill。

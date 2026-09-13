@@ -4,7 +4,8 @@
 
 - Runtime platforms: ES2022 modern browsers, WebViews, Vue 3 applications, and uni-app.
 - Package format: one public named-export ESM entry for package managers and one separately minified IIFE entry for CDN use; CommonJS and UMD are not shipped.
-- Framework boundary: Vue remains external to the package-manager build and is a required peer in `^3.3.0`.
+- Framework boundary: Vue remains external to the package-manager build and is a required peer in `^3.5.11`.
+- Vue browser composables: event and observer helpers use native platform APIs, return manual stop handles where exposed, and clean up automatically with the current Vue scope. Window size and breakpoints use `0`/`false` outside browsers; `useNow` returns a non-updating initial Date during SSR.
 - uni-app boundary: the first Storage operation, or an earlier `configureStorage({ prefix })` call, detects global `uni` and uses its synchronous Storage API.
 - Browser storage: applications import `Local` and `Session` directly; `configureStorage()` is needed only to override defaults before the first operation.
 - Storage operation overrides: `set/get({ crypto })` select JSON or Base64 for one operation without mutating global configuration. The v3 envelope does not identify its codec, so callers must use matching options for the same entry.
@@ -28,7 +29,8 @@ Importing a module does not itself read `window`, browser Storage, or `uni`, so 
 
 - 运行平台：ES2022 现代浏览器、WebView、Vue 3 应用和 uni-app。
 - 包格式：包管理器使用单一公开具名导出 ESM 入口，CDN 使用单独压缩的 IIFE；不发布 CommonJS 或 UMD。
-- Vue 边界：Vue 不会打进包管理器使用的构建产物，是 `^3.3.0` 的必需 Peer。
+- Vue 边界：Vue 不会打进包管理器使用的构建产物，是 `^3.5.11` 的必需 Peer。
+- Vue 浏览器 Composable：事件和观察器 Helper 直接使用原生平台 API，在公开停止函数时支持手动清理，并随当前 Vue 作用域自动清理。非浏览器环境下窗口尺寸和断点状态分别使用 `0` 与 `false`，`useNow` 在 SSR 时只返回调用时的静态 Date。
 - uni-app：首次 Storage 操作或更早的 `configureStorage({ prefix })` 调用会检测全局 `uni`，并使用其同步 Storage API。
 - Storage：直接从包导入 `Local` 和 `Session` 即可；只有覆盖默认值时才需在首次操作前调用 `configureStorage()`。
 - Storage 单次覆盖：`set/get({ crypto })` 只为当前操作选择 JSON 或 Base64，不修改全局配置。v3 包络不记录 Codec，调用方必须对同一条目使用匹配的读写选项。

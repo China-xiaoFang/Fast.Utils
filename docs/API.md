@@ -136,7 +136,7 @@ Store passwords with `HashPasswordPBKDF2SHA256` and `VerifyPasswordPBKDF2SHA256`
 - `number`: ranges, rounding, aggregation, interpolation, byte formatting, and Web Crypto-preferred `randomInt`.
 - `object`: deep cloning and equality, prototype-safe key and predicate selection, mapping, and query serialization. Style serialization is provided by the `dom` module.
 - `string`: query parsing, casing, grapheme-aware truncation, clipboard copying, UUID, Web Crypto-preferred `randomString`, escaping, and whitespace normalization.
-- `vue`: Composition API, type, render, and `app.use()` registration helpers for Vue 3.
+- `vue`: Vue 3 helpers plus native-backed `useEventListener`, `useWindowSize`, `useResizeObserver`, `useElementSize`, `useNow`, and `useBreakpoints` composables. They intentionally cover common browser use rather than the full VueUse option surface.
 
 ## Security and limits
 

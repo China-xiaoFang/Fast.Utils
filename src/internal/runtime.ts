@@ -13,9 +13,10 @@ interface RuntimeGlobals {
 	readonly navigator?: Partial<Navigator>;
 	readonly plus?: unknown;
 	readonly process?: unknown;
+	readonly ResizeObserver?: typeof ResizeObserver;
 	readonly sessionStorage?: Storage;
 	readonly uni?: unknown;
-	readonly window?: Partial<Window>;
+	readonly window?: Window;
 }
 
 /**

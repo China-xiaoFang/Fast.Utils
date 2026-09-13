@@ -10,7 +10,7 @@
 
 Browser-first TypeScript utilities for modern browsers, WebViews, Vue 3, and uni-app.
 
-[![npm version](https://img.shields.io/npm/v/@fast-china/utils?color=orange)](https://www.npmjs.com/package/@fast-china/utils) [![node](https://img.shields.io/badge/node-%5E22.18%20%7C%7C%20%5E24.18-brightgreen)](https://nodejs.org/) [![vue](https://img.shields.io/badge/vue-%5E3.3-42b883)](https://vuejs.org/) [![license](https://img.shields.io/npm/l/@fast-china/utils)](./LICENSE)
+[![npm version](https://img.shields.io/npm/v/@fast-china/utils?color=orange)](https://www.npmjs.com/package/@fast-china/utils) [![node](https://img.shields.io/badge/node-%5E22.18%20%7C%7C%20%5E24.18-brightgreen)](https://nodejs.org/) [![vue](https://img.shields.io/badge/vue-%5E3.5.11-42b883)](https://vuejs.org/) [![license](https://img.shields.io/npm/l/@fast-china/utils)](./LICENSE)
 
 ## Highlights
 
@@ -136,10 +136,18 @@ Store passwords with `HashPasswordPBKDF2SHA256` and `VerifyPasswordPBKDF2SHA256`
 ## Vue 3
 
 ```ts
-import { useEmits, useProps, withInstall } from "@fast-china/utils";
+import { useBreakpoints, useElementSize, useEventListener, useNow, useWindowSize } from "@fast-china/utils";
+import { useTemplateRef } from "vue";
+
+const elementRef = useTemplateRef<HTMLElement>("element");
+const { width: windowWidth } = useWindowSize();
+const { width: elementWidth } = useElementSize(elementRef);
+const now = useNow();
+const breakpoints = useBreakpoints({ desktop: 1280, mobile: 0, tablet: 768 });
+useEventListener(document, "visibilitychange", () => console.log(document.visibilityState));
 ```
 
-The package provides Vue 3 `app.use()` registration, Composition API helpers, typed props/emits/slots, and TSX rendering. Vue remains external to the build and is required as a peer dependency.
+The package provides lightweight native-backed browser composables, Vue 3 `app.use()` registration, typed props/emits/slots, and TSX rendering. Browser composables clean up with the current Vue scope; advanced scheduling, controls, SSR configuration, and device APIs remain outside this package. Vue remains external to the build and is required as a peer dependency.
 
 ## Modules
 
@@ -153,7 +161,7 @@ The `object` module includes dependency-free deep cloning and equality plus pred
 
 - The package-manager entry is pure ESM; the CDN entry is a separately minified IIFE.
 - ES2022 modern browsers and WebViews.
-- Vue 3.3 or newer through a required peer dependency.
+- Vue 3.5.11 or newer through a required peer dependency.
 - uni-app through automatic global `uni` detection when Storage is configured.
 - No import-time access to `window`, Storage, or `uni`; unsupported calls fail explicitly.
 - Web Crypto, URL, Intl, TextEncoder, and related platform capabilities are not polyfilled.

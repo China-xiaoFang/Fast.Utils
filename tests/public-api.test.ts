@@ -1,5 +1,5 @@
 // 本文件只参与 TypeScript 编译，用于验证消费者可见的公开 API 和预期类型错误。
-import { defineComponent, h } from "vue";
+import { defineComponent, h, shallowRef } from "vue";
 import {
 	AESDecrypt,
 	AESEncrypt,
@@ -34,9 +34,15 @@ import {
 	retry,
 	serializeStyle,
 	symmetricDifference,
+	useBreakpoints,
+	useElementSize,
 	useEmits,
+	useEventListener,
+	useNow,
 	useProps,
 	useRender,
+	useResizeObserver,
+	useWindowSize,
 	withDefineType,
 } from "@fast-china/utils";
 import type { ComputedRef } from "vue";
@@ -123,6 +129,15 @@ const copyResult: Promise<void> = copy("Fast");
 const randomInteger: number = randomInt(0, 10);
 const randomText: string = randomString(16);
 
+const eventTarget = shallowRef<EventTarget | null>(null);
+const stopEventListener: () => void = useEventListener<CustomEvent<string>>(eventTarget, "change", (event) => event.detail.length);
+const stopResizeObserver: () => void = useResizeObserver(null, () => undefined);
+const elementSize = useElementSize(null, { height: 20, width: 10 });
+const windowSize = useWindowSize();
+const currentTime = useNow();
+const responsive = useBreakpoints({ desktop: 1280, mobile: 0 });
+const activeBreakpoint: ComputedRef<"desktop" | "mobile" | ""> = responsive.active();
+
 const rawEmits = {
 	clear: null,
 	"update:modelValue": (_value: string) => true,
@@ -165,11 +180,13 @@ export {
 	cloned,
 	concurrent,
 	copyResult,
+	currentTime,
 	dateText,
 	defaultStored,
 	decryptedJson,
 	dynamicallyOmitted,
 	dynamicallySelected,
+	elementSize,
 	equalityResult,
 	groupedCheck,
 	initializeOnce,
@@ -182,12 +199,17 @@ export {
 	queryValue,
 	randomInteger,
 	randomText,
+	responsive,
 	requiredQueryValue,
 	retryCheck,
 	rsaKeys,
 	secureBase64Json,
 	secureBase64Text,
 	selected,
+	stopEventListener,
+	stopResizeObserver,
+	activeBreakpoint,
+	windowSize,
 	sessionStorageArea,
 	singleCryptoValue,
 	slots,

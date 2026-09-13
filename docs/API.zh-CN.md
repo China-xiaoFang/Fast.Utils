@@ -135,7 +135,7 @@ const result = plaintext.parseJson<{ id: number }>();
 - `number`：范围、舍入、聚合、插值、字节格式化，以及优先使用 Web Crypto 的 `randomInt`。
 - `object`：深复制、深度比较、防原型污染的键和条件筛选、映射及 Query 序列化；Style 序列化由 `dom` 模块提供。
 - `string`：Query 解析、大小写、字素截断、剪贴板复制、UUID、优先使用 Web Crypto 的 `randomString`、转义和空白规范化。
-- `vue`：Vue 3 的 Composition API、类型、Render 和 `app.use()` 注册 Helper。
+- `vue`：Vue 3 Helper，以及基于原生能力的 `useEventListener`、`useWindowSize`、`useResizeObserver`、`useElementSize`、`useNow` 和 `useBreakpoints`。这些 Composable 面向常用浏览器场景，不提供 VueUse 的完整选项面。
 
 ## 安全与限制
 

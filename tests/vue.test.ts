@@ -1,12 +1,18 @@
 import { describe, it } from "node:test";
-import { createApp, createRenderer, defineComponent, h, reactive } from "vue";
+import { createApp, createRenderer, defineComponent, effectScope, h, reactive, shallowRef } from "vue";
+import { useBreakpoints } from "../src/vue/breakpoints";
+import { useElementSize } from "../src/vue/element-size";
 import { useEmits } from "../src/vue/emits";
+import { useEventListener } from "../src/vue/event-listener";
 import { useExpose } from "../src/vue/expose";
 import { callOptionalFunction } from "../src/vue/func";
 import { withInstall, withInstallDirective, withNoopInstall } from "../src/vue/install";
+import { useNow } from "../src/vue/now";
 import { definePropType, useProps } from "../src/vue/props";
 import { useRender } from "../src/vue/render";
+import { useResizeObserver } from "../src/vue/resize-observer";
 import { makeSlots } from "../src/vue/slots";
+import { useWindowSize } from "../src/vue/window-size";
 import { withDefineType } from "../src/vue/with";
 import { expect, vi } from "./test-helpers";
 
@@ -84,6 +90,179 @@ describe("Vue event and props helpers", () => {
 		await expect(callOptionalFunction((amount: number) => amount + 1, 1)).resolves.toBe(2);
 		await expect(callOptionalFunction(async (amount: number) => Promise.resolve(amount + 2), 1)).resolves.toBe(3);
 		await expect(callOptionalFunction(undefined)).resolves.toBe(undefined);
+	});
+});
+
+describe("Vue browser composables", () => {
+	it("validates automatic cleanup scopes and public numeric inputs", () => {
+		vi.stubGlobal("window", new EventTarget());
+		try {
+			expect(() => useWindowSize()).toThrow(Error);
+			expect(() => useNow()).toThrow(Error);
+			expect(() => useBreakpoints({ mobile: 0 })).toThrow(Error);
+			expect(() => useNow(-1)).toThrow(RangeError);
+			expect(() => useBreakpoints({ desktop: -1 })).toThrow(RangeError);
+			expect(() => useBreakpoints({ active: 0 })).toThrow(TypeError);
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+
+	it("moves event listeners with reactive targets and supports manual cleanup", () => {
+		const first = new EventTarget();
+		const second = new EventTarget();
+		const target = shallowRef<EventTarget | null>(first);
+		const listener = vi.fn((_event: Event) => undefined);
+		const scope = effectScope();
+		let stop: () => void = () => undefined;
+		scope.run(() => {
+			stop = useEventListener(target, "change", listener);
+		});
+		first.dispatchEvent(new Event("change"));
+		target.value = second;
+		first.dispatchEvent(new Event("change"));
+		second.dispatchEvent(new Event("change"));
+		stop();
+		second.dispatchEvent(new Event("change"));
+		expect(listener).toHaveBeenCalledTimes(2);
+		scope.stop();
+	});
+
+	it("tracks window size and removes its listener with the scope", () => {
+		const windowTarget = new EventTarget() as EventTarget & { innerHeight: number; innerWidth: number };
+		windowTarget.innerWidth = 1280;
+		windowTarget.innerHeight = 720;
+		vi.stubGlobal("window", windowTarget);
+		try {
+			const scope = effectScope();
+			const size = scope.run(() => useWindowSize());
+			expect(size?.width.value).toBe(1280);
+			expect(size?.height.value).toBe(720);
+			windowTarget.innerWidth = 1440;
+			windowTarget.innerHeight = 900;
+			windowTarget.dispatchEvent(new Event("resize"));
+			expect(size?.width.value).toBe(1440);
+			expect(size?.height.value).toBe(900);
+			scope.stop();
+			windowTarget.innerWidth = 1920;
+			windowTarget.dispatchEvent(new Event("resize"));
+			expect(size?.width.value).toBe(1440);
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+
+	it("observes element size and disconnects when stopped", () => {
+		let observerCallback: ResizeObserverCallback | undefined;
+		const observe = vi.fn((_target: Element, _options?: ResizeObserverOptions) => undefined);
+		const disconnect = vi.fn(() => undefined);
+		class TestResizeObserver {
+			constructor(callback: ResizeObserverCallback) {
+				observerCallback = callback;
+			}
+			observe = observe;
+			disconnect = disconnect;
+		}
+		vi.stubGlobal("ResizeObserver", TestResizeObserver);
+		try {
+			const element = {} as Element;
+			const scope = effectScope();
+			const size = scope.run(() => useElementSize(element, { height: 20, width: 10 }));
+			expect(size?.width.value).toBe(10);
+			expect(size?.height.value).toBe(20);
+			expect(observe).toHaveBeenCalledWith(element, undefined);
+			observerCallback?.([{ contentRect: { height: 80, width: 160 } } as ResizeObserverEntry], {} as ResizeObserver);
+			expect(size?.width.value).toBe(160);
+			expect(size?.height.value).toBe(80);
+			size?.stop();
+			expect(disconnect).toHaveBeenCalledOnce();
+			scope.stop();
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+
+	it("exposes the native ResizeObserver callback and stop handle", () => {
+		const observe = vi.fn((_target: Element, _options?: ResizeObserverOptions) => undefined);
+		const disconnect = vi.fn(() => undefined);
+		class TestResizeObserver {
+			constructor(readonly callback: ResizeObserverCallback) {}
+			observe = observe;
+			disconnect = disconnect;
+		}
+		vi.stubGlobal("ResizeObserver", TestResizeObserver);
+		try {
+			const target = {} as Element;
+			const stop = useResizeObserver(target, () => undefined, { box: "border-box" });
+			expect(observe).toHaveBeenCalledWith(target, { box: "border-box" });
+			stop();
+			expect(disconnect).toHaveBeenCalledOnce();
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+
+	it("updates the current time on its interval and clears the timer", () => {
+		let tick: () => void = () => undefined;
+		const timer = { id: 1 };
+		const setInterval = vi.fn((callback: () => void, milliseconds?: number) => {
+			tick = callback;
+			expect(milliseconds).toBe(1000);
+			return timer;
+		});
+		const clearInterval = vi.fn((_timer: unknown) => undefined);
+		vi.stubGlobal("window", {});
+		vi.stubGlobal("setInterval", setInterval);
+		vi.stubGlobal("clearInterval", clearInterval);
+		try {
+			const scope = effectScope();
+			const now = scope.run(() => useNow());
+			const initial = now?.value;
+			tick();
+			expect(now?.value).not.toBe(initial);
+			scope.stop();
+			expect(clearInterval).toHaveBeenCalledWith(timer);
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+
+	it("tracks native media queries and resolves the largest active breakpoint", () => {
+		class TestMediaQueryList extends EventTarget {
+			constructor(public matches: boolean) {
+				super();
+			}
+		}
+		let viewportWidth = 800;
+		const queries: TestMediaQueryList[] = [];
+		const windowTarget = Object.assign(new EventTarget(), {
+			matchMedia(query: string) {
+				const minimumWidth = Number(/\d+/u.exec(query)?.[0]);
+				const result = new TestMediaQueryList(viewportWidth >= minimumWidth);
+				queries.push(result);
+				return result;
+			},
+		});
+		vi.stubGlobal("window", windowTarget);
+		try {
+			const scope = effectScope();
+			const breakpoints = scope.run(() => useBreakpoints({ desktop: 1280, mobile: 0, tablet: 640 }));
+			expect(breakpoints?.mobile.value).toBe(true);
+			expect(breakpoints?.tablet.value).toBe(true);
+			expect(breakpoints?.desktop.value).toBe(false);
+			expect(breakpoints?.active().value).toBe("tablet");
+			viewportWidth = 1440;
+			for (const [index, minimumWidth] of [0, 640, 1280].entries()) {
+				const query = queries[index];
+				if (query === undefined) continue;
+				query.matches = viewportWidth >= minimumWidth;
+				query.dispatchEvent(new Event("change"));
+			}
+			expect(breakpoints?.active().value).toBe("desktop");
+			scope.stop();
+		} finally {
+			vi.unstubAllGlobals();
+		}
 	});
 });
 

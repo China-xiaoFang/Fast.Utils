@@ -2,6 +2,13 @@
 
 All notable changes to Fast.Utils are documented in this file.
 
+## [2.1.6] - 2026-09-13
+
+### Added
+
+- Added lightweight Vue 3 composables for native event listeners, window size, ResizeObserver, element size, current time, and minimum-width breakpoints.
+- Added automatic Vue scope cleanup, manual stop handles where applicable, SSR-safe initial state, runtime validation, and public type coverage for the new composables.
+
 ## [2.1.5] - 2026-09-12
 
 ### Added
@@ -113,6 +120,7 @@ All notable changes to Fast.Utils are documented in this file.
 
 - Added authenticated ciphertext validation, bounded crypto parameters and payloads, unbiased Web Crypto randomness, prototype-safe query/object transforms, and namespace-scoped Storage cleanup.
 
+[2.1.6]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.1.5...v2.1.6
 [2.1.5]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.1.4...v2.1.5
 [2.1.4]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.1.3...v2.1.4
 [2.1.3]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.1.2...v2.1.3
