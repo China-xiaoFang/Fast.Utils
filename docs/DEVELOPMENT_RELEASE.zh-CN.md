@@ -39,7 +39,7 @@ pnpm install --frozen-lockfile
 4. 增加源码类型、消费者类型、单元和真实包测试。
 5. 更新双语 README、API 和 Changelog。
 
-禁止在导入阶段访问浏览器或 uni-app 全局对象。平台能力应在调用阶段解析；`configureStorage` 在调用时自动检测全局 `uni`。
+禁止在导入阶段访问浏览器或 uni-app 运行时对象。平台能力应在调用阶段解析；`uni` 和 App-Plus `plus` 必须优先通过受 `typeof` 保护的运行时标识符读取，并兼容对应的 `globalThis` 属性。
 
 ## 依赖与锁文件
 

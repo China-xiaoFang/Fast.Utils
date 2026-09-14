@@ -109,6 +109,21 @@ const verifyBundledCrypto = () => {
 	assert.doesNotMatch(source, /["']crypto-js(?:\/|["'])/u, "ESM artifacts must not retain crypto-js package imports.");
 };
 
+/** 验证 uni-app 的运行时自由标识符不会被错误收窄为 `globalThis` 属性。 */
+const verifyAppRuntimeLookup = () => {
+	const source = fs.readFileSync(path.join(distRoot, "internal", "runtime.mjs"), "utf8");
+	assert.match(
+		source,
+		/typeof plus\s*===\s*["']undefined["']\s*\?\s*runtimeGlobals\.plus\s*:\s*plus/u,
+		"App-Plus runtime lookup must prefer the guarded plus identifier and retain the global-property fallback."
+	);
+	assert.match(
+		source,
+		/typeof uni\s*===\s*["']undefined["']\s*\?\s*runtimeGlobals\.uni\s*:\s*uni/u,
+		"uni-app runtime lookup must prefer the guarded uni identifier and retain the global-property fallback."
+	);
+};
+
 if (fs.existsSync(consumerPath)) throw new Error(`Refusing to overwrite existing fixture: ${consumerPath}`);
 
 try {
@@ -116,6 +131,7 @@ try {
 	verifyRelativeImports();
 	verifySourceMaps();
 	verifyBundledCrypto();
+	verifyAppRuntimeLookup();
 	assert.throws(
 		() => vm.runInNewContext(fs.readFileSync(path.join(distRoot, "index.global.min.js"), "utf8"), { TextDecoder, TextEncoder }),
 		/Vue is not defined/u

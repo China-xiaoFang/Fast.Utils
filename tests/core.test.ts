@@ -51,6 +51,7 @@ import {
 	isPlainObject,
 	isSameDay,
 	isTabletUserAgent,
+	isUniApp,
 	isUuidV4,
 	isValidDate,
 	isValidJson,
@@ -638,6 +639,14 @@ describe("color, style, environment, and logger utilities", () => {
 		vi.unstubAllGlobals();
 		vi.stubGlobal("window", { document: {} });
 		expect(detectRuntime()).toBe("browser");
+	});
+
+	it("detects uni-app after its runtime object is injected", () => {
+		expect(isUniApp()).toBe(false);
+		vi.stubGlobal("uni", {});
+		expect(isUniApp()).toBe(true);
+		vi.unstubAllGlobals();
+		expect(isUniApp()).toBe(false);
 	});
 
 	it("creates isolated scoped loggers with severity filtering", () => {

@@ -59,7 +59,7 @@ configureStorage({
 });
 ```
 
-The active global configuration is immutable. Repeating the same configuration is idempotent; a conflicting configuration throws. The `crypto` option on `set/get` overrides only that operation and must match when writing and reading the same entry; it does not mutate global configuration. A custom `codec` may be supplied instead of global `crypto`. In uni-app, `Local` automatically uses the global synchronous Storage API; `Session` throws because uni-app has no sessionStorage equivalent. `clear()` removes only keys inside the active prefix.
+The active global configuration is immutable. Repeating the same configuration is idempotent; a conflicting configuration throws. The `crypto` option on `set/get` overrides only that operation and must match when writing and reading the same entry; it does not mutate global configuration. A custom `codec` may be supplied instead of global `crypto`. In uni-app, `Local` automatically resolves the runtime-injected `uni` object and uses its synchronous Storage API; `Session` throws because uni-app has no sessionStorage equivalent. `clear()` removes only keys inside the active prefix.
 
 ## Base64
 
@@ -164,7 +164,7 @@ The `object` module includes dependency-free deep cloning and equality plus pred
 - The package-manager entry is pure ESM; the CDN entry is a separately minified IIFE.
 - ES2022 modern browsers and WebViews.
 - Vue 3.5.11 or newer through a required peer dependency.
-- uni-app through automatic global `uni` detection when Storage is configured.
+- uni-app through call-time detection of runtime-injected `uni` and App-Plus `plus`, with global-property fallbacks.
 - No import-time access to `window`, Storage, or `uni`; unsupported calls fail explicitly.
 - Web Crypto, URL, Intl, TextEncoder, and related platform capabilities are not polyfilled.
 

@@ -7,7 +7,7 @@
 - CryptoJS-backed compatibility hashes and AES are bundled into both JavaScript artifacts; consumers do not resolve `crypto-js` CommonJS subpaths, and the independent crypto module remains tree-shakeable.
 - Framework boundary: Vue remains external to the package-manager build and is a required peer in `^3.5.11`.
 - Vue browser composables: event and observer helpers use native platform APIs, return manual stop handles where exposed, and clean up automatically with the current Vue scope. Window size and breakpoints use `0`/`false` outside browsers; `useNow` returns a non-updating initial Date during SSR.
-- uni-app boundary: the first Storage operation, or an earlier `configureStorage({ prefix })` call, detects global `uni` and uses its synchronous Storage API.
+- uni-app boundary: platform APIs resolve the runtime-injected `uni` and App-Plus `plus` identifiers at call time, with `globalThis` property fallbacks. The first Storage operation, or an earlier `configureStorage({ prefix })` call, uses the detected synchronous Storage API.
 - Browser storage: applications import `Local` and `Session` directly; `configureStorage()` is needed only to override defaults before the first operation.
 - Storage operation overrides: `set/get({ crypto })` select JSON or Base64 for one operation without mutating global configuration. The v3 envelope does not identify its codec, so callers must use matching options for the same entry.
 - Storage read typing: `get<Value = string>()` defaults to `string | undefined` when no generic is supplied; codecs still restore the original runtime JSON value.
@@ -33,7 +33,7 @@ Importing a module does not itself read `window`, browser Storage, or `uni`, so 
 - 兼容哈希与 AES 使用的 CryptoJS 已内联到两类 JavaScript 产物；消费项目不再解析 `crypto-js` CommonJS 子路径，独立加密模块仍可被 Tree Shaking 移除。
 - Vue 边界：Vue 不会打进包管理器使用的构建产物，是 `^3.5.11` 的必需 Peer。
 - Vue 浏览器 Composable：事件和观察器 Helper 直接使用原生平台 API，在公开停止函数时支持手动清理，并随当前 Vue 作用域自动清理。非浏览器环境下窗口尺寸和断点状态分别使用 `0` 与 `false`，`useNow` 在 SSR 时只返回调用时的静态 Date。
-- uni-app：首次 Storage 操作或更早的 `configureStorage({ prefix })` 调用会检测全局 `uni`，并使用其同步 Storage API。
+- uni-app：平台 API 会在调用时解析运行时注入的 `uni` 和 App-Plus `plus` 标识符，并兼容对应的 `globalThis` 属性。首次 Storage 操作或更早的 `configureStorage({ prefix })` 调用会使用检测到的同步 Storage API。
 - Storage：直接从包导入 `Local` 和 `Session` 即可；只有覆盖默认值时才需在首次操作前调用 `configureStorage()`。
 - Storage 单次覆盖：`set/get({ crypto })` 只为当前操作选择 JSON 或 Base64，不修改全局配置。v3 包络不记录 Codec，调用方必须对同一条目使用匹配的读写选项。
 - Storage 读取类型：`get<Value = string>()` 未传泛型时默认推断为 `string | undefined`，Codec 在运行时仍恢复原始 JSON 值。

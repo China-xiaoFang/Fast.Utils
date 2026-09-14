@@ -30,7 +30,7 @@ Local.get<{ name: string }>("private-profile", { crypto: true });
 
 `get<Value = string>()` has the static return type `string | undefined` when its generic is omitted, so string entries can be read directly. The codec still restores the original JSON value at runtime and does not convert objects, arrays, or other non-string values to strings; pass an explicit generic when accurate type information is required.
 
-For uni-app, the first Storage operation or an explicit `configureStorage` call detects the global `uni` object and uses its synchronous Storage API. uni-app has no separate session backend, so `Session` throws when called in this mode.
+For uni-app, the first Storage operation or an explicit `configureStorage` call resolves the runtime-injected `uni` object and uses its synchronous Storage API. A `globalThis.uni` property remains a compatibility fallback. uni-app has no separate session backend, so `Session` throws when called in this mode.
 
 ```ts
 import { Local } from "@fast-china/utils";

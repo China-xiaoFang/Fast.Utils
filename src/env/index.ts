@@ -1,4 +1,4 @@
-import { runtimeGlobals } from "../internal/runtime";
+import { getRuntimeUni, runtimeGlobals } from "../internal/runtime";
 
 /** 可识别的主要 JavaScript 运行环境。 */
 export type RuntimeKind = "browser" | "node" | "unknown" | "worker";
@@ -56,12 +56,12 @@ export function isNode(): boolean {
 }
 
 /**
- * 判断当前运行时是否暴露 uni-app 的 `uni` 全局对象。
+ * 判断当前运行时是否暴露 uni-app 的 `uni` 运行时对象。
  *
- * @returns 全局属性存在且不为 `undefined` 时返回 `true`；不调用任何平台 API。
+ * @returns `uni` 标识符或兼容全局属性存在时返回 `true`；不调用任何平台 API。
  */
 export function isUniApp(): boolean {
-	return runtimeGlobals.uni !== undefined;
+	return getRuntimeUni() !== undefined;
 }
 
 /**

@@ -1,5 +1,5 @@
 import { getCurrentScope, onScopeDispose, readonly, shallowRef } from "vue";
-import { runtimeGlobals } from "../internal/runtime";
+import { getRuntimeUni, runtimeGlobals } from "../internal/runtime";
 import type { ShallowRef } from "vue";
 
 /**
@@ -15,7 +15,7 @@ export function useNow(intervalMilliseconds = 1000): Readonly<ShallowRef<Date>> 
 		throw new RangeError("`intervalMilliseconds` 必须是 0 至 2,147,483,647 的整数。");
 	}
 	const now = shallowRef(new Date());
-	if (runtimeGlobals.window !== undefined || runtimeGlobals.uni !== undefined) {
+	if (runtimeGlobals.window !== undefined || getRuntimeUni() !== undefined) {
 		if (getCurrentScope() === undefined) throw new Error("`useNow` 必须在 Vue 响应式作用域内调用。");
 		const timer = setInterval(() => {
 			now.value = new Date();

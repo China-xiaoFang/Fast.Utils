@@ -1,5 +1,5 @@
 import { decodeSecureBase64, encodeSecureBase64 } from "../base64/index";
-import { runtimeGlobals } from "../internal/runtime";
+import { getRuntimeUni, runtimeGlobals } from "../internal/runtime";
 
 /** uni-app 同步存储信息中本库实际读取的字段。 */
 interface UniStorageInfo {
@@ -175,7 +175,7 @@ interface ActiveStorageConfiguration {
  * @throws `TypeError` 当全局 `uni` 存在但缺少本库需要的同步 Storage 方法。
  */
 const getGlobalUniStorage = (): UniStorageLike | undefined => {
-	const value = runtimeGlobals.uni;
+	const value = getRuntimeUni();
 	if (value === undefined) return undefined;
 	if ((typeof value !== "object" && typeof value !== "function") || value === null) {
 		throw new TypeError("全局 uni 对象未提供同步 Storage API。");

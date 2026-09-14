@@ -1,4 +1,4 @@
-import { runtimeGlobals } from "../internal/runtime";
+import { getRuntimePlus, getRuntimeUni } from "../internal/runtime";
 
 /** 日志严重级别，按从低到高排列。 */
 export type LogLevel = "debug" | "log" | "warn" | "error";
@@ -92,7 +92,7 @@ const isLogLevel = (value: unknown): value is LogLevel => typeof value === "stri
  * @returns 全局 `uni` 与 `plus` 同时存在时返回 `true`。
  */
 const isUniAppPlus = (): boolean => {
-	return runtimeGlobals.uni !== undefined && runtimeGlobals.plus !== undefined;
+	return getRuntimeUni() !== undefined && getRuntimePlus() !== undefined;
 };
 
 /**

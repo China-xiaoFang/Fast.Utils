@@ -1,4 +1,4 @@
-import { runtimeGlobals } from "../internal/runtime";
+import { getRuntimeUni, runtimeGlobals } from "../internal/runtime";
 
 const defaultRandomAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 const defaultStringLocale = "en-US";
@@ -232,7 +232,7 @@ export function truncateGraphemes(value: string, maxLength: number, suffix = "�
  * @throws `Error` 当运行时没有可用的剪贴板能力或复制失败。
  */
 export async function copy(value: string): Promise<void> {
-	const uni = runtimeGlobals.uni;
+	const uni = getRuntimeUni();
 	if (uni !== undefined) {
 		if ((typeof uni !== "object" && typeof uni !== "function") || uni === null) {
 			throw new TypeError("全局 uni 对象未提供 `setClipboardData`。");

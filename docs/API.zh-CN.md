@@ -30,7 +30,7 @@ Local.get<{ name: string }>("private-profile", { crypto: true });
 
 `get<Value = string>()` 在未传泛型时的静态返回类型为 `string | undefined`，可以直接读取字符串条目。Codec 在运行时仍通过 JSON 反序列化恢复原值，因此对象、数组或其他非字符串值不会被转换成字符串；需要准确类型提示时显式传入对应泛型。
 
-uni-app 中，首次 Storage 操作或显式调用 `configureStorage` 会自动检测全局 `uni` 并使用其同步 Storage API。uni-app 没有独立 Session 后端，因此该模式调用 `Session` 会明确抛错。
+uni-app 中，首次 Storage 操作或显式调用 `configureStorage` 会解析运行时注入的 `uni` 对象并使用其同步 Storage API，同时保留 `globalThis.uni` 兼容回退。uni-app 没有独立 Session 后端，因此该模式调用 `Session` 会明确抛错。
 
 ```ts
 import { Local } from "@fast-china/utils";

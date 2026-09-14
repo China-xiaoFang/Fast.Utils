@@ -59,7 +59,7 @@ configureStorage({
 });
 ```
 
-激活后的全局配置不可变；相同配置重复调用保持幂等，不同配置会抛错。`set/get` 的 `crypto` 选项只覆盖单次操作，读写同一条目时必须保持一致，不会改变全局配置。自定义 `codec` 与全局 `crypto` 不能同时使用。uni-app 中 `Local` 会自动使用全局同步 Storage API；由于没有等价的 sessionStorage，`Session` 会明确抛错。`clear()` 只清理当前前缀。
+激活后的全局配置不可变；相同配置重复调用保持幂等，不同配置会抛错。`set/get` 的 `crypto` 选项只覆盖单次操作，读写同一条目时必须保持一致，不会改变全局配置。自定义 `codec` 与全局 `crypto` 不能同时使用。uni-app 中 `Local` 会自动解析运行时注入的 `uni` 对象并使用其同步 Storage API；由于没有等价的 sessionStorage，`Session` 会明确抛错。`clear()` 只清理当前前缀。
 
 ## Base64
 
@@ -164,7 +164,7 @@ useEventListener(document, "visibilitychange", () => console.log(document.visibi
 - 包管理器入口为纯 ESM；CDN 入口为单独压缩的 IIFE。
 - 面向 ES2022 现代浏览器与 WebView。
 - Vue 3.5.11 及以上版本通过必须安装的 Peer Dependency 接入。
-- 配置 Storage 时自动检测全局 `uni` 并接入 uni-app。
+- 调用时检测运行时注入的 `uni` 和 App-Plus `plus`，并兼容对应全局属性。
 - 导入阶段不访问 `window`、Storage 或 `uni`；不支持的调用明确失败。
 - 不注入 Web Crypto、URL、Intl、TextEncoder 等 Polyfill。
 
