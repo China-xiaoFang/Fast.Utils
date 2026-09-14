@@ -1,6 +1,6 @@
 {
 	"name": "@fast-china/utils",
-	"version": "2.1.6",
+	"version": "2.1.7",
 	"description": "Typed utilities for modern browsers, WebViews, Vue 3, and uni-app applications.",
 	"type": "module",
 	"keywords": [
@@ -27,8 +27,8 @@
 		"README.md",
 		"README.zh.md",
 		"SECURITY.md",
-		"dist",
-		"docs"
+		"THIRD_PARTY_LICENSES.md",
+		"dist"
 	],
 	"main": "./dist/index.mjs",
 	"module": "./dist/index.mjs",
@@ -64,14 +64,12 @@
 	"peerDependencies": {
 		"vue": "^3.5.11"
 	},
-	"dependencies": {
-		"crypto-js": "^4.2.0"
-	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
 		"@eslint/markdown": "^8.0.3",
 		"@types/crypto-js": "^4.2.2",
 		"@types/node": "^24.13.4",
+		"crypto-js": "^4.2.0",
 		"eslint": "^10.10.0",
 		"eslint-config-flat-gitignore": "^2.4.0",
 		"eslint-config-prettier": "^10.1.8",

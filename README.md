@@ -133,6 +133,8 @@ Base64 and Crypto text decoding/decryption functions return the primitive-string
 
 Store passwords with `HashPasswordPBKDF2SHA256` and `VerifyPasswordPBKDF2SHA256`. MD5, SHA-1, AES-CBC, and AES-ECB do not provide password-storage or authenticated-encryption guarantees. See the [API reference](./docs/API.md#crypto) for the complete method list and security boundaries.
 
+CryptoJS is bundled into the ESM and CDN artifacts for the compatibility hash and AES APIs. Consumers do not install or resolve `crypto-js` subpaths; applications that do not use Crypto APIs can still remove the independent crypto module through Tree Shaking.
+
 ## Vue 3
 
 ```ts

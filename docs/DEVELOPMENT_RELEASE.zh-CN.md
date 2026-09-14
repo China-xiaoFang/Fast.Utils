@@ -35,7 +35,7 @@ pnpm install --frozen-lockfile
 
 1. 在 `src/<module>/index.ts` 定义具名 API 和 TSDoc。
 2. 在 `src/index.ts` 统一重新导出公共 API。
-3. 不为模块增加 `package.json#exports` 子路径或独立构建入口。
+3. 新模块由 `src/**/*.ts` 构建入口自动纳入产物，但不增加 `package.json#exports` 公共子路径。
 4. 增加源码类型、消费者类型、单元和真实包测试。
 5. 更新双语 README、API 和 Changelog。
 
@@ -45,6 +45,7 @@ pnpm install --frozen-lockfile
 
 - Runtime Dependency 必须证明无法由平台能力或小型实现替代。
 - Vue 3.3+ 是必须安装的 Peer Dependency；ESM 与 IIFE 均保持外部引用，不打包进发布产物。
+- CryptoJS 仅作为构建期 Dev Dependency，兼容哈希与 AES 实现会内联到 ESM 和 IIFE，产物不得保留 `crypto-js/*` 外部导入。
 - 依赖升级后使用当前 pnpm 11 更新 Lockfile，并通过 Frozen Lockfile 安装验证。
 - 不混用 npm、Yarn 或不同 pnpm 主版本改写 Lockfile。
 

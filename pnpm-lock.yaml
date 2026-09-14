@@ -7,10 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      crypto-js:
-        specifier: ^4.2.0
-        version: 4.2.0
     devDependencies:
       '@eslint/js':
         specifier: ^10.0.1
@@ -24,6 +20,9 @@ importers:
       '@types/node':
         specifier: ^24.13.4
         version: 24.13.4
+      crypto-js:
+        specifier: ^4.2.0
+        version: 4.2.0
       eslint:
         specifier: ^10.10.0
         version: 10.10.0

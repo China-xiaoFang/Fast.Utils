@@ -102,12 +102,20 @@ const verifySourceMaps = () => {
 	}
 };
 
+/** 验证 ESM 加密模块已内联 CryptoJS，不再把 CommonJS 子路径交给消费项目解析。 */
+const verifyBundledCrypto = () => {
+	const source = fs.readFileSync(path.join(distRoot, "crypto", "index.mjs"), "utf8");
+	assert.match(source, /CryptoJS/u, "crypto-js implementation is missing from the ESM crypto module.");
+	assert.doesNotMatch(source, /["']crypto-js(?:\/|["'])/u, "ESM artifacts must not retain crypto-js package imports.");
+};
+
 if (fs.existsSync(consumerPath)) throw new Error(`Refusing to overwrite existing fixture: ${consumerPath}`);
 
 try {
 	verifyBuildArtifacts();
 	verifyRelativeImports();
 	verifySourceMaps();
+	verifyBundledCrypto();
 	assert.throws(
 		() => vm.runInNewContext(fs.readFileSync(path.join(distRoot, "index.global.min.js"), "utf8"), { TextDecoder, TextEncoder }),
 		/Vue is not defined/u
@@ -185,6 +193,8 @@ try {
 	assert.ok(manifest["files"].includes("dist"));
 	assert.ok(!manifest["files"].includes("src"));
 	assert.equal(typeof manifest["peerDependencies"]?.["vue"], "string", "Vue must be declared as a peer dependency.");
+	assert.equal(manifest["dependencies"]?.["crypto-js"], undefined, "Bundled crypto-js must not remain a runtime dependency.");
+	assert.equal(typeof manifest["devDependencies"]?.["crypto-js"], "string", "The build must declare crypto-js as a development dependency.");
 	assert.match(manifest["peerDependencies"]["vue"], /^\^3\./u, "Vue must use the supported Vue 3 peer range.");
 	assert.doesNotMatch(manifest["peerDependencies"]["vue"], /2\.7/u, "Vue 2 must not be declared as supported.");
 	assert.notEqual(manifest["peerDependenciesMeta"]?.["vue"]?.["optional"], true, "Vue must not be an optional peer dependency.");
@@ -226,6 +236,7 @@ try {
 	assert.ok(packedFiles.includes("dist/index.d.mts"));
 	assert.ok(packedFiles.includes("dist/index.global.min.js"));
 	assert.ok(packedFiles.includes("dist/index.global.min.js.map"));
+	assert.ok(packedFiles.includes("THIRD_PARTY_LICENSES.md"));
 	assert.ok(packedFiles.every((file) => !/^(?:@fast-china|tests)\//u.test(file)));
 	assert.ok(
 		packedFiles.every((file) => !file.startsWith("src/")),

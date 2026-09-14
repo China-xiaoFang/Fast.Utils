@@ -2,6 +2,12 @@
 
 All notable changes to Fast.Utils are documented in this file.
 
+## [2.1.7] - 2026-09-14
+
+### Changed
+
+- Bundled CryptoJS into the ESM package output to avoid CommonJS subpath resolution failures in strict ESM and uni-app toolchains while preserving module-level tree-shaking.
+
 ## [2.1.6] - 2026-09-13
 
 ### Added
@@ -120,6 +126,7 @@ All notable changes to Fast.Utils are documented in this file.
 
 - Added authenticated ciphertext validation, bounded crypto parameters and payloads, unbiased Web Crypto randomness, prototype-safe query/object transforms, and namespace-scoped Storage cleanup.
 
+[2.1.7]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.1.6...v2.1.7
 [2.1.6]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.1.5...v2.1.6
 [2.1.5]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.1.4...v2.1.5
 [2.1.4]: https://github.com/China-xiaoFang/Fast.Utils/compare/v2.1.3...v2.1.4

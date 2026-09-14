@@ -133,6 +133,8 @@ Base64 与 Crypto 的文本解码/解密入口返回原始字符串类型 `Decod
 
 密码存储使用 `HashPasswordPBKDF2SHA256` 和 `VerifyPasswordPBKDF2SHA256`。MD5、SHA-1、AES-CBC 与 AES-ECB 不提供密码存储或认证加密保证。完整方法列表和安全边界见 [API 文档](./docs/API.zh-CN.md#crypto)。
 
+兼容哈希与 AES API 使用的 CryptoJS 已内联到 ESM 和 CDN 产物，消费项目无需安装或解析 `crypto-js` 子路径；未使用 Crypto API 的应用仍可通过 Tree Shaking 移除独立的加密模块。
+
 ## Vue 3
 
 ```ts

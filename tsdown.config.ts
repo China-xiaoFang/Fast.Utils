@@ -2,11 +2,11 @@ import { defineConfig } from "tsdown";
 
 export default defineConfig([
 	{
-		// 只构建 package.json exports 承诺的唯一根入口。
-		entry: { index: "src/index.ts" },
+		// 将每个源码模块作为入口，保留可被消费端独立裁剪的模块边界。
+		entry: ["src/**/*.ts"],
 		// 将全部发布文件写入仓库根目录的唯一 dist 目录。
 		outDir: "dist",
-		// 以 src 为构建根，保持 dist/<module>/index.mjs 与源码目录结构一致。
+		// 以 src 为构建根，统一解析入口及其内部模块。
 		root: "src",
 		// 仅输出未压缩 ESM，与 package.json 的 module 类型和 exports.import 保持一致。
 		format: "esm",
@@ -16,20 +16,24 @@ export default defineConfig([
 		target: "es2022",
 		// 固定生成 .mjs 和 .d.mts，与 package.json exports 的公开路径保持一致。
 		fixedExtension: true,
-		// 保留源码模块结构，使根入口直接复用各功能目录中的内部模块。
-		unbundle: true,
-		// 生成类型声明，不生成会指向未发布 src 的声明 Source Map。
-		dts: true,
+		// 按入口分别打包，使 crypto-js 内联到 crypto 模块而不污染其他模块。
+		unbundle: false,
+		// 公共 API 只有根入口，类型声明也只从根入口生成。
+		dts: { entry: ["src/index.ts"] },
 		// 生成内嵌源码的 JavaScript Source Map，无需把 src 目录发布到 npm。
 		sourcemap: true,
 		// 每次构建前由 ESM 配置清空完整 dist，避免入口删除或重命名后残留陈旧产物。
 		clean: true,
 		// 移除未被公共入口引用的内部代码，减小发布产物体积。
 		treeshake: true,
-		// 控制依赖在 JavaScript 和声明构建中的外部化行为。
+		// 控制依赖在 JavaScript 和声明构建中的内联与外部化行为。
 		deps: {
-			// 包管理器产物保留依赖引用，由消费项目解析 crypto-js 和必需的 Vue Peer。
-			neverBundle: ["crypto-js", "vue"],
+			// 内联 crypto-js，避免 uni-app 等严格 ESM 工具链解析其 CommonJS 子路径。
+			alwaysBundle: [/^crypto-js(?:\/|$)/],
+			// Vue 是公共 Peer，继续由消费项目提供。
+			neverBundle: ["vue"],
+			// 除 crypto-js 外不额外内联第三方依赖。
+			onlyBundle: [/^crypto-js(?:\/|$)/],
 			// 声明生成不内联 Vue 类型，避免复制第三方声明并固定其具体版本。
 			dts: { neverBundle: ["vue"] },
 		},
